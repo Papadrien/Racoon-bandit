@@ -45,12 +45,16 @@ class _Logo extends StatelessWidget {
       children: [
         Text(
           'RACCOON',
-          style: Theme.of(context).textTheme.displayLarge
+          style: Theme.of(context)
+              .textTheme
+              .displayLarge
               ?.copyWith(color: AppTheme.primary),
         ),
         Text(
           'BANDIT',
-          style: Theme.of(context).textTheme.displayLarge
+          style: Theme.of(context)
+              .textTheme
+              .displayLarge
               ?.copyWith(color: AppTheme.accent),
         ),
         const SizedBox(height: 12),
