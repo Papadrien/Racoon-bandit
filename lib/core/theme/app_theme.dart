@@ -9,42 +9,42 @@ class AppTheme {
   static const Color textMuted = Color(0xFF8C8F98);
 
   static ThemeData get dark => ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: background,
-        colorScheme: const ColorScheme.dark(
-          primary: primary,
-          secondary: accent,
-          surface: surface,
+    brightness: Brightness.dark,
+    scaffoldBackgroundColor: background,
+    colorScheme: const ColorScheme.dark(
+      primary: primary,
+      secondary: accent,
+      surface: surface,
+    ),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(
+        fontSize: 48,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 2,
+        color: textPrimary,
+      ),
+      bodyMedium: TextStyle(color: textPrimary),
+      labelLarge: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 18,
+        letterSpacing: 1.2,
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primary,
+        foregroundColor: Colors.black,
+        padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(32),
         ),
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 2,
-            color: textPrimary,
-          ),
-          bodyMedium: TextStyle(color: textPrimary),
-          labelLarge: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            letterSpacing: 1.2,
-          ),
+        textStyle: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.5,
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primary,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(32),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
-            elevation: 6,
-          ),
-        ),
-      );
+        elevation: 6,
+      ),
+    ),
+  );
 }

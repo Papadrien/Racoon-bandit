@@ -46,14 +46,14 @@ class _Logo extends StatelessWidget {
         Text(
           'RACCOON',
           style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: AppTheme.primary,
-              ),
+            color: AppTheme.primary,
+          ),
         ),
         Text(
           'BANDIT',
           style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: AppTheme.accent,
-              ),
+            color: AppTheme.accent,
+          ),
         ),
         const SizedBox(height: 12),
         const Text(
