@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/primary_button.dart';
@@ -45,17 +46,15 @@ class _Logo extends StatelessWidget {
       children: [
         Text(
           'RACCOON',
-          style: Theme.of(context)
-              .textTheme
-              .displayLarge
-              ?.copyWith(color: AppTheme.primary),
+          style: Theme.of(
+            context,
+          ).textTheme.displayLarge?.copyWith(color: AppTheme.primary),
         ),
         Text(
           'BANDIT',
-          style: Theme.of(context)
-              .textTheme
-              .displayLarge
-              ?.copyWith(color: AppTheme.accent),
+          style: Theme.of(
+            context,
+          ).textTheme.displayLarge?.copyWith(color: AppTheme.accent),
         ),
         const SizedBox(height: 12),
         const Text(

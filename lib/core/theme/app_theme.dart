@@ -9,7 +9,7 @@ class AppTheme {
 
   static final ThemeData dark = ThemeData(
     brightness: Brightness.dark,
-    colorScheme: ColorScheme.dark(
+    colorScheme: const ColorScheme.dark(
       primary: primary,
       secondary: accent,
     ),
