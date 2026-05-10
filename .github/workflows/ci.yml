@@ -67,7 +67,7 @@ jobs:
           restore-keys: pub-${{ runner.os }}-
 
       - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed .
+      - run: dart format .
       - run: flutter analyze --no-fatal-infos
       - run: flutter test --coverage
 
