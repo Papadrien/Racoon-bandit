@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/navigation/app_router.dart';
 import '../../core/theme/app_theme.dart';
-import '../../widgets/lives_indicator.dart';
 import '../../widgets/primary_button.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -15,18 +15,33 @@ class HomeScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           child: Column(
             children: [
-              const Align(
-                alignment: Alignment.topRight,
-                child: LivesIndicator(lives: 3),
+              // Top bar : settings + premium
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.workspace_premium),
+                    color: AppTheme.accent,
+                    tooltip: 'Premium',
+                    onPressed: () =>
+                        Navigator.pushNamed(context, AppRoutes.premium),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    color: AppTheme.textMuted,
+                    tooltip: 'Paramètres',
+                    onPressed: () =>
+                        Navigator.pushNamed(context, AppRoutes.settings),
+                  ),
+                ],
               ),
               const Spacer(),
               const _Logo(),
               const Spacer(),
               PrimaryButton(
                 label: 'JOUER',
-                onPressed: () {
-                  // TODO: navigation vers l'écran de jeu
-                },
+                onPressed: () =>
+                    Navigator.pushNamed(context, AppRoutes.lobby),
               ),
               const SizedBox(height: 48),
             ],
@@ -46,15 +61,17 @@ class _Logo extends StatelessWidget {
       children: [
         Text(
           'RACCOON',
-          style: Theme.of(
-            context,
-          ).textTheme.displayLarge?.copyWith(color: AppTheme.primary),
+          style: Theme.of(context)
+              .textTheme
+              .displayLarge
+              ?.copyWith(color: AppTheme.primary),
         ),
         Text(
           'BANDIT',
-          style: Theme.of(
-            context,
-          ).textTheme.displayLarge?.copyWith(color: AppTheme.accent),
+          style: Theme.of(context)
+              .textTheme
+              .displayLarge
+              ?.copyWith(color: AppTheme.accent),
         ),
         const SizedBox(height: 12),
         const Text(

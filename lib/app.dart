@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'core/navigation/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'features/home/home_screen.dart';
 
 class RaccoonBanditApp extends StatelessWidget {
   const RaccoonBanditApp({super.key});
@@ -11,7 +12,8 @@ class RaccoonBanditApp extends StatelessWidget {
       title: 'Raccoon Bandit',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
-      home: const HomeScreen(),
+      initialRoute: AppRoutes.home,
+      onGenerateRoute: AppRouter.generateRoute,
     );
   }
 }

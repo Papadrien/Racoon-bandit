@@ -1,0 +1,61 @@
+import 'package:flutter/material.dart';
+
+import '../../features/game/game_screen.dart';
+import '../../features/home/home_screen.dart';
+import '../../features/lobby/lobby_screen.dart';
+import '../../features/premium/premium_screen.dart';
+import '../../features/result/result_screen.dart';
+import '../../features/settings/settings_screen.dart';
+
+class AppRoutes {
+  AppRoutes._();
+
+  static const String home = '/';
+  static const String lobby = '/lobby';
+  static const String game = '/game';
+  static const String result = '/result';
+  static const String settings = '/settings';
+  static const String premium = '/premium';
+}
+
+class AppRouter {
+  AppRouter._();
+
+  static Route<dynamic> generateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case AppRoutes.home:
+        return _fade(const HomeScreen());
+      case AppRoutes.lobby:
+        return _fade(const LobbyScreen());
+      case AppRoutes.game:
+        return _fade(const GameScreen());
+      case AppRoutes.result:
+        return _fade(const ResultScreen());
+      case AppRoutes.settings:
+        return _slide(const SettingsScreen());
+      case AppRoutes.premium:
+        return _slide(const PremiumScreen());
+      default:
+        return _fade(const HomeScreen());
+    }
+  }
+
+  static PageRouteBuilder _fade(Widget page) => PageRouteBuilder(
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 200),
+      );
+
+  static PageRouteBuilder _slide(Widget page) => PageRouteBuilder(
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, anim, __, child) => SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 250),
+      );
+}
