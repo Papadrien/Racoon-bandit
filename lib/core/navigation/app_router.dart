@@ -40,16 +40,16 @@ class AppRouter {
     }
   }
 
-  static PageRouteBuilder _fade(Widget page) => PageRouteBuilder(
+  static PageRouteBuilder<void> _fade(Widget page) => PageRouteBuilder<void>(
         pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, anim, __, child) =>
+        transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 200),
       );
 
-  static PageRouteBuilder _slide(Widget page) => PageRouteBuilder(
+  static PageRouteBuilder<void> _slide(Widget page) => PageRouteBuilder<void>(
         pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, anim, __, child) => SlideTransition(
+        transitionsBuilder: (_, anim, _, child) => SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(0, 1),
             end: Offset.zero,
