@@ -15,7 +15,7 @@ class LivesIndicator extends StatelessWidget {
           child: Icon(
             Icons.favorite,
             size: 18,
-            color: AppTheme.accent.withOpacity(0.85),
+            color: AppTheme.accent.withValues(alpha: 0.85),
           ),
         );
       }),
