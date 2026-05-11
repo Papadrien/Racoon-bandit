@@ -21,33 +21,37 @@ class AppRoutes {
 class AppRouter {
   AppRouter._();
 
-  static Route<dynamic> generateRoute(RouteSettings settings) {
-    switch (settings.name) {
+  static Route<dynamic> generateRoute(RouteSettings routeSettings) {
+    switch (routeSettings.name) {
       case AppRoutes.home:
-        return _fade(const HomeScreen());
+        return _fade(const HomeScreen(), routeSettings);
       case AppRoutes.lobby:
-        return _fade(const LobbyScreen());
+        return _fade(const LobbyScreen(), routeSettings);
       case AppRoutes.game:
-        return _fade(const GameScreen());
+        return _fade(const GameScreen(), routeSettings);
       case AppRoutes.result:
-        return _fade(const ResultScreen());
+        return _fade(const ResultScreen(), routeSettings);
       case AppRoutes.settings:
-        return _slide(const SettingsScreen());
+        return _slide(const SettingsScreen(), routeSettings);
       case AppRoutes.premium:
-        return _slide(const PremiumScreen());
+        return _slide(const PremiumScreen(), routeSettings);
       default:
-        return _fade(const HomeScreen());
+        return _fade(const HomeScreen(), routeSettings);
     }
   }
 
-  static PageRouteBuilder<void> _fade(Widget page) => PageRouteBuilder<void>(
+  static PageRouteBuilder<void> _fade(Widget page, RouteSettings s) =>
+      PageRouteBuilder<void>(
+        settings: s,
         pageBuilder: (_, __, ___) => page,
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 200),
       );
 
-  static PageRouteBuilder<void> _slide(Widget page) => PageRouteBuilder<void>(
+  static PageRouteBuilder<void> _slide(Widget page, RouteSettings s) =>
+      PageRouteBuilder<void>(
+        settings: s,
         pageBuilder: (_, __, ___) => page,
         transitionsBuilder: (_, anim, _, child) => SlideTransition(
           position: Tween<Offset>(
