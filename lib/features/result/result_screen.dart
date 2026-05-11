@@ -4,6 +4,7 @@ import '../../core/game/game_state.dart';
 import '../../core/models/player_state.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/primary_button.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key});
@@ -15,96 +16,52 @@ class ResultScreen extends StatelessWidget {
     final winner = ranking.first;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Résultats')),
+      appBar: AppBar(title: const Text('RÉSULTATS')),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           child: Column(
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppTheme.accent.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppTheme.accent, width: 2),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.emoji_events_rounded,
-                      size: 72,
-                      color: AppTheme.accent,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${winner.name} gagne !',
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Score : ${winner.foodCount} nourritures',
-                      style: const TextStyle(color: AppTheme.textMuted),
-                    ),
-                  ],
-                ),
+              const Icon(Icons.emoji_events, size: 64, color: AppTheme.accent),
+              const SizedBox(height: 12),
+              Text(
+                '${winner.name} gagne !',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 28),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Classement final',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+              const SizedBox(height: 4),
+              Text(
+                '🍎 ${winner.foodCount} nourriture${winner.foodCount > 1 ? 's' : ''}',
+                style: const TextStyle(color: AppTheme.textMuted),
+              ),
+              const SizedBox(height: 24),
+              const Divider(),
+              const SizedBox(height: 8),
+              ...ranking.asMap().entries.map(
+                    (entry) => _RankRow(
+                      rank: entry.key + 1,
+                      player: entry.value,
+                      isWinner: entry.key == 0,
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: ranking.length,
-                  itemBuilder: (context, index) {
-                    return _RankingTile(
-                      player: ranking[index],
-                      rank: index + 1,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.lobby,
-                      (route) => route.settings.name == AppRoutes.home,
-                    );
-                  },
-                  child: const Text('REJOUER'),
+              const Spacer(),
+              PrimaryButton(
+                label: 'REJOUER',
+                onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.lobby,
+                  (r) => r.settings.name == AppRoutes.home,
                 ),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.home,
-                      (route) => false,
-                    );
-                  },
-                  child: const Text('RETOUR ACCUEIL'),
+              TextButton(
+                onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.home,
+                  (r) => false,
                 ),
+                child: const Text('Retour au menu'),
               ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -113,51 +70,51 @@ class ResultScreen extends StatelessWidget {
   }
 }
 
-class _RankingTile extends StatelessWidget {
-  const _RankingTile({required this.player, required this.rank});
+class _RankRow extends StatelessWidget {
+  const _RankRow({required this.rank, required this.player, required this.isWinner});
 
-  final PlayerState player;
   final int rank;
+  final PlayerState player;
+  final bool isWinner;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white12),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: player.avatarColor.withOpacity(0.18),
+          SizedBox(
+            width: 32,
             child: Text(
-              '$rank',
+              '#$rank',
               style: TextStyle(
-                color: player.avatarColor,
                 fontWeight: FontWeight.bold,
+                color: isWinner ? AppTheme.accent : AppTheme.textMuted,
+                fontSize: 16,
               ),
             ),
           ),
-          const SizedBox(width: 14),
-          Icon(player.avatarIcon, color: player.avatarColor),
-          const SizedBox(width: 10),
+          Icon(
+            isWinner ? Icons.emoji_events : player.avatarIcon,
+            color: isWinner ? AppTheme.accent : player.avatarColor,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               player.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+              style: TextStyle(
                 fontSize: 16,
+                fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
+                color: isWinner ? Colors.white : AppTheme.textMuted,
               ),
             ),
           ),
           Text(
             '🍎 ${player.foodCount}',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 18,
+              color: isWinner ? AppTheme.accent : Colors.white,
             ),
           ),
         ],

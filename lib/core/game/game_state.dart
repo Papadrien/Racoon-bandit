@@ -1,7 +1,23 @@
+import 'dart:math';
+
 import '../models/card_type.dart';
 import '../models/game_card.dart';
 import '../models/player_state.dart';
 import 'deck.dart';
+
+class CardResolution {
+  final String message;
+  final int? targetPlayerId;
+  final bool trashDestroyed;
+  final bool foodStolen;
+
+  const CardResolution({
+    required this.message,
+    this.targetPlayerId,
+    this.trashDestroyed = false,
+    this.foodStolen = false,
+  });
+}
 
 class GameState {
   final List<PlayerState> players;
@@ -9,6 +25,7 @@ class GameState {
   List<GameCard> remainingDeck;
   GameCard? revealedCard;
   bool isGameOver;
+  final Random _random = Random();
 
   GameState({required this.players})
       : currentPlayerIndex = 0,
@@ -20,43 +37,81 @@ class GameState {
 
   int get remainingCards => remainingDeck.length;
 
-  /// Pioche une carte, applique son effet, passe au joueur suivant.
-  void drawCard() {
+  CardResolution drawCard() {
     if (remainingDeck.isEmpty) {
       isGameOver = true;
-      return;
+      return const CardResolution(message: 'Fin de partie');
     }
 
     revealedCard = remainingDeck.removeLast();
-    _applyEffect(revealedCard!);
+    final result = _applyEffect(revealedCard!);
 
     if (remainingDeck.isEmpty) {
       isGameOver = true;
     } else {
       _advance();
     }
+
+    return result;
   }
 
-  void _applyEffect(GameCard card) {
+  CardResolution _applyEffect(GameCard card) {
     final player = players[currentPlayerIndex];
+
     switch (card.type) {
       case CardType.food:
         player.foodCount++;
+        return CardResolution(message: '${player.name} gagne 1 nourriture');
 
       case CardType.trash:
         player.hasTrash = true;
+        return CardResolution(message: '${player.name} pose une poubelle');
 
       case CardType.raccoon:
-        // La poubelle protège : elle absorbe le raton et est détruite.
         if (player.hasTrash) {
           player.hasTrash = false;
-        } else {
-          player.foodCount = 0;
+          return CardResolution(
+            message: 'Le raton détruit la poubelle',
+            targetPlayerId: player.id,
+            trashDestroyed: true,
+          );
         }
 
+        player.foodCount = 0;
+        return CardResolution(
+          message: 'Le raton mange toute la nourriture',
+          targetPlayerId: player.id,
+          foodStolen: true,
+        );
+
       case CardType.bandit:
-        // TODO: implémenter l'effet bandit
-        break;
+        final validTargets = players
+            .where((p) => p.id != player.id && p.foodCount > 0)
+            .toList();
+
+        if (validTargets.isEmpty) {
+          return const CardResolution(message: 'Aucune cible valide');
+        }
+
+        final target = validTargets[_random.nextInt(validTargets.length)];
+
+        if (target.hasTrash) {
+          target.hasTrash = false;
+          return CardResolution(
+            message: 'Bandit détruit la poubelle de ${target.name}',
+            targetPlayerId: target.id,
+            trashDestroyed: true,
+          );
+        }
+
+        player.foodCount += target.foodCount;
+        target.foodCount = 0;
+
+        return CardResolution(
+          message: 'Bandit vole toute la nourriture de ${target.name}',
+          targetPlayerId: target.id,
+          foodStolen: true,
+        );
     }
   }
 
