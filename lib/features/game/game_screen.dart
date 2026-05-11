@@ -216,12 +216,31 @@ class _GameScreenState extends State<GameScreen> {
                     ],
                   ),
                   child: Center(
-                    child: Text(
-                      _cardLabel(),
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _cardLabel(),
+                          style: const TextStyle(fontSize: 44),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _gameState.revealedCard?.name ?? 'Pioche',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            _gameState.revealedCard?.description ?? '',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
