@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/game/game_state.dart';
-import '../../core/models/player_model.dart';
+import '../../core/models/player_state.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/primary_button.dart';
@@ -16,10 +16,10 @@ class LobbyScreen extends StatefulWidget {
 class _LobbyScreenState extends State<LobbyScreen> {
   int _playerCount = 2;
 
-  List<PlayerModel> _generatePlayers(int count) {
+  List<PlayerState> _generatePlayers(int count) {
     return List.generate(
       count,
-      (i) => PlayerModel(id: i + 1, name: 'Joueur ${i + 1}'),
+      (i) => PlayerState(id: i + 1, name: 'Joueur ${i + 1}'),
     );
   }
 

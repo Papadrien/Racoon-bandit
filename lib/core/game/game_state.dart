@@ -1,41 +1,72 @@
-import '../models/player_model.dart';
+import '../models/card_type.dart';
+import '../models/game_card.dart';
+import '../models/player_state.dart';
+import 'deck.dart';
 
 class GameState {
-  final List<PlayerModel> players;
-  final int roundsPerPlayer;
+  final List<PlayerState> players;
   int currentPlayerIndex;
-  int currentTurn;
+  List<GameCard> remainingDeck;
+  GameCard? revealedCard;
+  bool isGameOver;
 
-  GameState({
-    required this.players,
-    this.roundsPerPlayer = 3,
-    this.currentPlayerIndex = 0,
-    this.currentTurn = 1,
-  });
+  GameState({required this.players})
+      : currentPlayerIndex = 0,
+        remainingDeck = buildShuffledDeck(),
+        revealedCard = null,
+        isGameOver = false;
 
-  int get totalTurns => players.length * roundsPerPlayer;
-  int get currentRound => ((currentTurn - 1) ~/ players.length) + 1;
-  bool get isGameOver => currentTurn > totalTurns;
+  PlayerState get currentPlayer => players[currentPlayerIndex];
 
-  PlayerModel get currentPlayer => players[currentPlayerIndex];
+  int get remainingCards => remainingDeck.length;
 
-  List<PlayerModel> get ranking {
-    final sorted = List<PlayerModel>.from(players);
-    sorted.sort((a, b) => b.score.compareTo(a.score));
-    return sorted;
+  /// Pioche une carte, applique son effet, passe au joueur suivant.
+  void drawCard() {
+    if (remainingDeck.isEmpty) {
+      isGameOver = true;
+      return;
+    }
+
+    revealedCard = remainingDeck.removeLast();
+    _applyEffect(revealedCard!);
+
+    if (remainingDeck.isEmpty) {
+      isGameOver = true;
+    } else {
+      _advance();
+    }
   }
 
-  void correctAnswer() {
-    players[currentPlayerIndex].score++;
-    _advance();
-  }
+  void _applyEffect(GameCard card) {
+    final player = players[currentPlayerIndex];
+    switch (card.type) {
+      case CardType.food:
+        player.foodCount++;
 
-  void wrongAnswer() {
-    _advance();
+      case CardType.trash:
+        player.hasTrash = true;
+
+      case CardType.raccoon:
+        // La poubelle protège : elle absorbe le raton et est détruite.
+        if (player.hasTrash) {
+          player.hasTrash = false;
+        } else {
+          player.foodCount = 0;
+        }
+
+      case CardType.bandit:
+        // TODO: implémenter l'effet bandit
+        break;
+    }
   }
 
   void _advance() {
-    currentTurn++;
     currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+  }
+
+  List<PlayerState> get ranking {
+    final sorted = List<PlayerState>.from(players);
+    sorted.sort((a, b) => b.foodCount.compareTo(a.foodCount));
+    return sorted;
   }
 }

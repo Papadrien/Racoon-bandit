@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/game/game_state.dart';
-import '../../core/models/player_model.dart';
+import '../../core/models/player_state.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/primary_button.dart';
@@ -11,8 +11,7 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gameState =
-        ModalRoute.of(context)!.settings.arguments as GameState;
+    final gameState = ModalRoute.of(context)!.settings.arguments as GameState;
     final ranking = gameState.ranking;
     final winner = ranking.first;
 
@@ -23,22 +22,15 @@ class ResultScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           child: Column(
             children: [
-              const Icon(
-                Icons.emoji_events,
-                size: 64,
-                color: AppTheme.accent,
-              ),
+              const Icon(Icons.emoji_events, size: 64, color: AppTheme.accent),
               const SizedBox(height: 12),
               Text(
                 '${winner.name} gagne !',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Text(
-                '${winner.score} point${winner.score > 1 ? 's' : ''}',
+                '🍎 ${winner.foodCount} nourriture${winner.foodCount > 1 ? 's' : ''}',
                 style: const TextStyle(color: AppTheme.textMuted),
               ),
               const SizedBox(height: 24),
@@ -79,14 +71,10 @@ class ResultScreen extends StatelessWidget {
 }
 
 class _RankRow extends StatelessWidget {
-  const _RankRow({
-    required this.rank,
-    required this.player,
-    required this.isWinner,
-  });
+  const _RankRow({required this.rank, required this.player, required this.isWinner});
 
   final int rank;
-  final PlayerModel player;
+  final PlayerState player;
   final bool isWinner;
 
   @override
@@ -117,14 +105,13 @@ class _RankRow extends StatelessWidget {
               player.name,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight:
-                    isWinner ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
                 color: isWinner ? Colors.white : AppTheme.textMuted,
               ),
             ),
           ),
           Text(
-            '${player.score} pt${player.score > 1 ? 's' : ''}',
+            '🍎 ${player.foodCount}',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: isWinner ? AppTheme.accent : Colors.white,

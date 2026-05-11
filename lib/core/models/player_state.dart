@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 
-class PlayerModel {
+class PlayerState {
   final int id;
   final String name;
-  int score;
+  int foodCount;
+  bool hasTrash;
 
-  PlayerModel({required this.id, required this.name, this.score = 0});
+  PlayerState({
+    required this.id,
+    required this.name,
+    this.foodCount = 0,
+    this.hasTrash = false,
+  });
 
   Color get avatarColor {
     const colors = [
