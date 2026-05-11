@@ -21,6 +21,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     if (!_initialized) {
       _gameState = ModalRoute.of(context)!.settings.arguments as GameState;
       _initialized = true;
@@ -28,199 +29,352 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _drawCard() {
-    setState(() => _gameState.drawCard());
+    setState(() {
+      _gameState.drawCard();
+    });
 
     if (_gameState.isGameOver) {
-      Navigator.pushReplacementNamed(
-        context,
-        AppRoutes.result,
-        arguments: _gameState,
-      );
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (!mounted) return;
+
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.result,
+          arguments: _gameState,
+        );
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_initialized) return const SizedBox.shrink();
-
-    final player = _gameState.currentPlayer;
+    if (!_initialized) {
+      return const SizedBox.shrink();
+    }
 
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        title: const Text('Raccoon Bandit'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.home,
+                (route) => false,
+              );
+            },
+            icon: const Icon(Icons.home_rounded),
+          ),
+        ],
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            _PlayerBar(gameState: _gameState),
-            const SizedBox(height: 8),
-            Text(
-              '${_gameState.remainingCards} cartes restantes',
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(player.avatarIcon, color: player.avatarColor, size: 24),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${player.name} pioche…',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: player.avatarColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-                child: _CardSlot(card: _gameState.revealedCard),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 24),
-              child: SizedBox(
-                width: double.infinity,
-                height: 64,
-                child: ElevatedButton.icon(
-                  onPressed: _drawCard,
-                  icon: const Icon(Icons.style, size: 24),
-                  label: const Text(
-                    'PIOCHER',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              _CurrentPlayerBanner(player: _gameState.currentPlayer),
+              const SizedBox(height: 16),
+              Text(
+                '${_gameState.remainingCards} cartes restantes',
+                style: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView(
+                  children: [
+                    ..._gameState.players.map(
+                      (player) => Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _PlayerZone(
+                          player: player,
+                          isActive:
+                              player.id == _gameState.currentPlayer.id,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _CenterBoard(card: _gameState.revealedCard),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: GestureDetector(
+                        onTap: _gameState.isGameOver ? null : _drawCard,
+                        child: Container(
+                          width: 120,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: const [
+                              BoxShadow(
+                                blurRadius: 10,
+                                offset: Offset(0, 4),
+                                color: Colors.black38,
+                              ),
+                            ],
+                          ),
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.style_rounded,
+                                size: 42,
+                                color: Colors.white,
+                              ),
+                              SizedBox(height: 10),
+                              Text(
+                                'PIOCHE',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _CardSlot extends StatelessWidget {
-  const _CardSlot({required this.card});
+class _CurrentPlayerBanner extends StatelessWidget {
+  const _CurrentPlayerBanner({required this.player});
+
+  final PlayerState player;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: player.avatarColor.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: player.avatarColor, width: 2),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(player.avatarIcon, color: player.avatarColor),
+          const SizedBox(width: 10),
+          Text(
+            'Tour de ${player.name}',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: player.avatarColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CenterBoard extends StatelessWidget {
+  const _CenterBoard({required this.card});
+
   final GameCard? card;
 
   @override
   Widget build(BuildContext context) {
-    if (card == null) {
-      return Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.textMuted.withOpacity(0.3), width: 2),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(
-          child: Text(
-            'Appuie sur PIOCHER',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
-          ),
-        ),
-      );
-    }
-
-    final (color, description) = _cardInfo(card!.type);
+    final data = _cardData(card?.type);
 
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color, width: 2),
+        color: Colors.white.withOpacity(0.04),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white12),
       ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(card!.label, style: const TextStyle(fontSize: 36)),
-            const SizedBox(height: 16),
-            Text(
-              description,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: color, fontWeight: FontWeight.w600),
+      child: Column(
+        children: [
+          const Text(
+            'Carte révélée',
+            style: TextStyle(
+              color: AppTheme.textMuted,
+              fontWeight: FontWeight.w600,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: 140,
+            height: 180,
+            decoration: BoxDecoration(
+              color: data.color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: data.color, width: 2),
+            ),
+            child: card == null
+                ? const Center(
+                    child: Text(
+                      'Pioche une carte',
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(card!.label, style: const TextStyle(fontSize: 54)),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          data.label,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: data.color,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }
 
-  (Color, String) _cardInfo(CardType type) {
+  ({Color color, String label}) _cardData(CardType? type) {
     switch (type) {
       case CardType.food:
-        return (Colors.greenAccent, '+1 nourriture');
+        return (color: Colors.greenAccent, label: '+1 nourriture');
       case CardType.trash:
-        return (Colors.blueAccent, 'Protection activée !\n(protège du prochain raton)');
+        return (color: Colors.lightBlueAccent, label: 'Poubelle active');
       case CardType.raccoon:
-        return (Colors.orangeAccent, 'Toute ta nourriture est volée !\n(ou poubelle détruite)');
+        return (color: Colors.orangeAccent, label: 'Le raton attaque');
       case CardType.bandit:
-        return (Colors.redAccent, 'TODO – Bandit');
+        return (color: Colors.redAccent, label: 'Bandit');
+      case null:
+        return (color: Colors.white24, label: '');
     }
   }
 }
 
-class _PlayerBar extends StatelessWidget {
-  const _PlayerBar({required this.gameState});
-  final GameState gameState;
+class _PlayerZone extends StatelessWidget {
+  const _PlayerZone({required this.player, required this.isActive});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black26,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: gameState.players.map((p) => _PlayerChip(
-          player: p,
-          isCurrent: p.id == gameState.currentPlayer.id,
-        )).toList(),
-      ),
-    );
-  }
-}
-
-class _PlayerChip extends StatelessWidget {
-  const _PlayerChip({required this.player, required this.isCurrent});
   final PlayerState player;
-  final bool isCurrent;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          player.name,
-          style: TextStyle(
-            fontSize: 11,
-            color: isCurrent ? player.avatarColor : AppTheme.textMuted,
-            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-          ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isActive
+            ? player.avatarColor.withOpacity(0.16)
+            : Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isActive ? player.avatarColor : Colors.white12,
+          width: isActive ? 2 : 1,
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '🍎${player.foodCount}',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isCurrent ? player.avatarColor : Colors.white,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 72,
+                  height: 92,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.greenAccent),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '🍎',
+                      style: TextStyle(fontSize: 34),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          player.avatarIcon,
+                          color: player.avatarColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          player.name,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isActive
+                                ? Colors.white
+                                : AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Nourriture : ${player.foodCount}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 82,
+            height: 82,
+            decoration: BoxDecoration(
+              color: player.hasTrash
+                  ? Colors.blue.withOpacity(0.15)
+                  : Colors.white10,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: player.hasTrash
+                    ? Colors.lightBlueAccent
+                    : Colors.white24,
               ),
             ),
-            if (player.hasTrash) const Text(' 🗑️', style: TextStyle(fontSize: 14)),
-          ],
-        ),
-      ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('🗑️', style: TextStyle(fontSize: 30)),
+                const SizedBox(height: 4),
+                Text(
+                  player.hasTrash ? 'ACTIVE' : 'VIDE',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: player.hasTrash
+                        ? Colors.lightBlueAccent
+                        : AppTheme.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
