@@ -40,7 +40,7 @@ class _GameScreenState extends State<GameScreen> {
 
     HapticFeedback.lightImpact();
 
-    await Future.delayed(const Duration(milliseconds: 400));
+    await Future<void>.delayed(const Duration(milliseconds: 400));
 
     final result = _gameState.drawCard();
 
@@ -53,7 +53,7 @@ class _GameScreenState extends State<GameScreen> {
               : Offset.zero;
     });
 
-    await Future.delayed(const Duration(milliseconds: 1400));
+    await Future<void>.delayed(const Duration(milliseconds: 1400));
 
     setState(() {
       _trashOffset = Offset.zero;
