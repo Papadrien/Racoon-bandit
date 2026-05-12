@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,6 @@ import 'package:flutter/services.dart';
 import '../../core/game/game_state.dart';
 import '../../core/models/game_card.dart';
 import '../../core/navigation/app_router.dart';
-import '../../core/theme/app_theme.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -17,32 +17,23 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen>
     with TickerProviderStateMixin {
-  // ── Game state ──────────────────────────────────────────────────
   late GameState _gameState;
   bool _initialized = false;
   bool _isAnimating = false;
   String _effectText = '';
-  Offset _trashOffset = Offset.zero;
+  GameCard? _revealedCard;
 
-  // ── Card animation ──────────────────────────────────────────────
-  // _flipCtrl  : 0 → 1, drives the 3-D flip (back face → front face)
-  // _slideCtrl : 0 → 1, drives the slide-out after reveal
-  late final AnimationController _flipCtrl;
-  late final AnimationController _slideCtrl;
-
-  // Card currently being revealed (null = pile shows back face / empty)
-  GameCard? _localRevealedCard;
-
-  // ── Lifecycle ───────────────────────────────────────────────────
+  late final AnimationController _flipController;
+  late final AnimationController _slideController;
 
   @override
   void initState() {
     super.initState();
-    _flipCtrl = AnimationController(
+    _flipController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 380),
+      duration: const Duration(milliseconds: 350),
     );
-    _slideCtrl = AnimationController(
+    _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
@@ -50,8 +41,8 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
-    _flipCtrl.dispose();
-    _slideCtrl.dispose();
+    _flipController.dispose();
+    _slideController.dispose();
     super.dispose();
   }
 
@@ -64,77 +55,184 @@ class _GameScreenState extends State<GameScreen>
     }
   }
 
-  // ── Draw logic ──────────────────────────────────────────────────
-
   Future<void> _drawCard() async {
     if (_isAnimating || _gameState.isGameOver) return;
+
+    HapticFeedback.lightImpact();
 
     setState(() {
       _isAnimating = true;
       _effectText = '';
     });
 
-    HapticFeedback.lightImpact();
-
-    // Apply effect immediately so game state is ready before the animation
     final result = _gameState.drawCard();
 
     setState(() {
-      _localRevealedCard = _gameState.revealedCard;
-      _trashOffset = result.trashDestroyed
-          ? const Offset(120, 120)
-          : result.foodStolen
-              ? const Offset(-120, -60)
-              : Offset.zero;
+      _revealedCard = _gameState.revealedCard;
     });
 
-    // 1) Flip animation (back → front)
-    _flipCtrl.reset();
-    await _flipCtrl.forward();
+    await _flipController.forward(from: 0);
 
-    // 2) Show effect text once the card face is fully visible
-    setState(() => _effectText = result.message);
-
-    // 3) Hold the revealed card for ~900 ms
-    await Future<void>.delayed(const Duration(milliseconds: 900));
-
-    // 4) Slide the card off downward
-    _slideCtrl.reset();
-    await _slideCtrl.forward();
-
-    // 5) Reset everything for the next draw
-    if (!mounted) return;
     setState(() {
-      _localRevealedCard = null;
-      _effectText = '';
-      _trashOffset = Offset.zero;
+      _effectText = result.message;
+    });
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    await _slideController.forward(from: 0);
+
+    if (!mounted) return;
+
+    setState(() {
+      _revealedCard = null;
       _isAnimating = false;
     });
-    _flipCtrl.reset();
-    _slideCtrl.reset();
+
+    _flipController.reset();
+    _slideController.reset();
 
     if (_gameState.isGameOver && mounted) {
-      Navigator.pushReplacementNamed(
-        context,
-        AppRoutes.result,
-        arguments: _gameState,
+      unawaited(
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.result,
+          arguments: _gameState,
+        ),
       );
     }
   }
 
-  // ── Build ────────────────────────────────────────────────────────
+  Widget _buildPlayerCard(int index) {
+    final player = _gameState.players[index];
+    final active = index == _gameState.currentPlayerIndex;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: active
+            ? Colors.deepPurple.withValues(alpha: 0.35)
+            : Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: active ? Colors.deepPurpleAccent : Colors.white24,
+          width: active ? 2 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: player.avatarColor,
+            child: Icon(player.avatarIcon, color: Colors.white),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  player.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    ...List.generate(
+                      player.foodCount,
+                      (_) => const Text('🍎'),
+                    ),
+                    ...List.generate(
+                      player.trashCount,
+                      (_) => const Text('🗑️'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeck() {
+    final empty = _gameState.remainingCards == 0;
+
+    return GestureDetector(
+      onTap: empty ? null : _drawCard,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([
+          _flipController,
+          _slideController,
+        ]),
+        builder: (context, child) {
+          final flip = _flipController.value;
+          final slide = _slideController.value;
+
+          final angle = flip * math.pi;
+          final showFront = angle > math.pi / 2;
+
+          return Transform.translate(
+            offset: Offset(0, slide * 300),
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001)
+                ..rotateY(angle),
+              child: Container(
+                width: 120,
+                height: 170,
+                decoration: BoxDecoration(
+                  color: empty
+                      ? Colors.grey.shade800
+                      : showFront && _revealedCard != null
+                          ? _revealedCard!.color
+                          : Colors.deepPurple,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Center(
+                  child: Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..rotateY(showFront ? math.pi : 0),
+                    child: Text(
+                      empty
+                          ? 'X'
+                          : showFront && _revealedCard != null
+                              ? _revealedCard!.emoji
+                              : '?',
+                      style: const TextStyle(fontSize: 52),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (!_initialized) return const SizedBox.shrink();
+    if (!_initialized) {
+      return const Scaffold(body: SizedBox.shrink());
+    }
 
     return Scaffold(
+      backgroundColor: const Color(0xFF1B1525),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // ── Header ──────────────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -146,62 +244,49 @@ class _GameScreenState extends State<GameScreen>
                     ),
                     child: const Text('Accueil'),
                   ),
-                  
+                  Text(
+                    '${_gameState.remainingCards} cartes',
+                    style: const TextStyle(color: Colors.white70),
                   ),
                 ],
               ),
-
               const SizedBox(height: 8),
-
               Text(
                 'Tour de ${_gameState.currentPlayer.name}',
                 style: const TextStyle(
-                  fontSize: 22,
+                  color: Colors.white,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              // ── Player list ──────────────────────────────────────
+              const SizedBox(height: 12),
               Expanded(
                 child: ListView.builder(
                   itemCount: _gameState.players.length,
-                  itemBuilder: (context, index) {
-                    final player = _gameState.players[index];
-                    final active = index == _gameState.currentPlayerIndex;
-
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-  color: card.color,
-  borderRadius: BorderRadius.circular(18),
-  boxShadow: const [
-    BoxShadow(
-      color: Colors.black54,
-      blurRadius: 12,
-      offset: Offset(0, 5),
-    ),
-  ],
-      boxShadow: const [
-        BoxShadow(
-          color: Colors.black54,
-          blurRadius: 12,
-          offset: Offset(0, 5),
-        ),
-      ],
-    ),
-    child: const Center(
-      child: Text(
-        '?',
-        style: TextStyle(
-          fontSize: 46,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
+                  itemBuilder: (context, index) => _buildPlayerCard(index),
+                ),
+              ),
+              SizedBox(
+                height: 40,
+                child: Center(
+                  child: Text(
+                    _effectText,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildDeck(),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
