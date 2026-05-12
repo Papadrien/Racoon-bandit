@@ -146,9 +146,7 @@ class _GameScreenState extends State<GameScreen>
                     ),
                     child: const Text('Accueil'),
                   ),
-                  Text(
-                    '${_gameState.remainingCards} cartes',
-                    style: const TextStyle(color: AppTheme.textMuted),
+                  
                   ),
                 ],
               ),
@@ -178,248 +176,32 @@ class _GameScreenState extends State<GameScreen>
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: active
-                            ? AppTheme.primary.withOpacity(0.22)
-                            : Colors.white10,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: active ? AppTheme.primary : Colors.white12,
-                          width: 2,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          // Name + food dots
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  player.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: List.generate(
-                                    player.foodCount,
-                                    (i) => AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 400),
-                                      margin: const EdgeInsets.only(right: 4),
-                                      width: 18,
-                                      height: 18,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.accent,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Food count + trash icon
-                          Column(
-                            children: [
-                              Text('🍎 ${player.foodCount}'),
-                              const SizedBox(height: 12),
-                              AnimatedSlide(
-                                duration: const Duration(milliseconds: 500),
-                                offset: player.hasTrash
-                                    ? Offset.zero
-                                    : _trashOffset,
-                                child: AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 400),
-                                  opacity: player.hasTrash ? 1.0 : 0.2,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.delete,
-                                        size: 34,
-                                        color: Colors.greenAccent,
-                                      ),
-                                      if (player.trashCount > 1)
-                                        Text(
-                                          '×${player.trashCount}',
-                                          style: const TextStyle(
-                                            color: Colors.greenAccent,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              // ── Effect text (above the pile) ─────────────────────
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 280),
-                opacity: _effectText.isEmpty ? 0.0 : 1.0,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Text(
-                    _effectText,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppTheme.accent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-
-              // ── Single draw pile ─────────────────────────────────
-              _buildPile(),
-
-              const SizedBox(height: 24),
-            ],
-          ),
+  color: card.color,
+  borderRadius: BorderRadius.circular(18),
+  boxShadow: const [
+    BoxShadow(
+      color: Colors.black54,
+      blurRadius: 12,
+      offset: Offset(0, 5),
+    ),
+  ],
+      boxShadow: const [
+        BoxShadow(
+          color: Colors.black54,
+          blurRadius: 12,
+          offset: Offset(0, 5),
+        ),
+      ],
+    ),
+    child: const Center(
+      child: Text(
+        '?',
+        style: TextStyle(
+          fontSize: 46,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
       ),
-    );
-  }
-
-  // ── Pile widget ──────────────────────────────────────────────────
-
-  Widget _buildPile() {
-    // "visually empty" only once all animation has completed
-    final isDeckEmpty =
-        _gameState.remainingCards == 0 && _localRevealedCard == null;
-
-    return GestureDetector(
-      onTap: (isDeckEmpty || _isAnimating) ? null : _drawCard,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_flipCtrl, _slideCtrl]),
-        builder: (context, _) {
-          final fv = _flipCtrl.value; // 0 → 1
-          final sv = _slideCtrl.value; // 0 → 1 (slide-out)
-
-          // ── Flip geometry ───────────────────────────────────────
-          // [0, 0.5) : back face rotating away  (  0   → π/2 )
-          // [0.5, 1] : front face rotating in   ( -π/2 → 0   )
-          final showFront = fv >= 0.5 && _localRevealedCard != null;
-          final angle = fv < 0.5 ? fv * math.pi : (fv - 1.0) * math.pi;
-
-          // ── Slide-out ────────────────────────────────────────────
-          final slideOffsetY = sv * 280.0;
-          final cardOpacity = (1.0 - sv).clamp(0.0, 1.0);
-
-          final Widget face = showFront
-              ? _buildFrontFace(_localRevealedCard!)
-              : _buildBackFace(empty: isDeckEmpty);
-
-          return Opacity(
-            opacity: isDeckEmpty ? 0.35 : cardOpacity,
-            child: Transform.translate(
-              offset: Offset(0, slideOffsetY),
-              child: Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.001) // perspective
-                  ..rotateY(angle),
-                child: face,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // Back face of the pile card (face-down / empty state)
-  Widget _buildBackFace({required bool empty}) {
-    return Container(
-      width: 110,
-      height: 150,
-      decoration: BoxDecoration(
-        gradient: empty
-            ? null
-            : const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppTheme.primary, AppTheme.accent],
-              ),
-        color: empty ? Colors.transparent : null,
-        borderRadius: BorderRadius.circular(18),
-        border: empty
-            ? Border.all(color: Colors.white24, width: 1.5)
-            : null,
-        boxShadow: empty
-            ? null
-            : const [
-                BoxShadow(
-                  color: Colors.black54,
-                  blurRadius: 12,
-                  offset: Offset(0, 5),
-                ),
-              ],
-      ),
-      child: Center(
-        child: empty
-            ? const Icon(Icons.layers_clear, color: Colors.white24, size: 32)
-            : const Text(
-                '?',
-                style: TextStyle(
-                  fontSize: 46,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-      ),
-    );
-  }
-
-  // Front face of the pile card (revealed)
-  Widget _buildFrontFace(GameCard card) {
-    return Container(
-      width: 110,
-      height: 150,
-      decoration: BoxDecoration(
-        color: card.color,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black54,
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(card.emoji, style: const TextStyle(fontSize: 40)),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                card.name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }
