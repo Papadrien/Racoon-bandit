@@ -1,8 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/game/game_state.dart';
-import '../../core/models/card_type.dart';
+import '../../core/models/game_card.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -13,22 +15,56 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen>
+    with TickerProviderStateMixin {
+  // ── Game state ──────────────────────────────────────────────────
   late GameState _gameState;
   bool _initialized = false;
   bool _isAnimating = false;
   String _effectText = '';
   Offset _trashOffset = Offset.zero;
 
+  // ── Card animation ──────────────────────────────────────────────
+  // _flipCtrl  : 0 → 1, drives the 3-D flip (back face → front face)
+  // _slideCtrl : 0 → 1, drives the slide-out after reveal
+  late final AnimationController _flipCtrl;
+  late final AnimationController _slideCtrl;
+
+  // Card currently being revealed (null = pile shows back face / empty)
+  GameCard? _localRevealedCard;
+
+  // ── Lifecycle ───────────────────────────────────────────────────
+
+  @override
+  void initState() {
+    super.initState();
+    _flipCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _slideCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+  }
+
+  @override
+  void dispose() {
+    _flipCtrl.dispose();
+    _slideCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     if (!_initialized) {
       _gameState = ModalRoute.of(context)!.settings.arguments as GameState;
       _initialized = true;
     }
   }
+
+  // ── Draw logic ──────────────────────────────────────────────────
 
   Future<void> _drawCard() async {
     if (_isAnimating || _gameState.isGameOver) return;
@@ -40,12 +76,11 @@ class _GameScreenState extends State<GameScreen> {
 
     HapticFeedback.lightImpact();
 
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-
+    // Apply effect immediately so game state is ready before the animation
     final result = _gameState.drawCard();
 
     setState(() {
-      _effectText = result.message;
+      _localRevealedCard = _gameState.revealedCard;
       _trashOffset = result.trashDestroyed
           ? const Offset(120, 120)
           : result.foodStolen
@@ -53,12 +88,30 @@ class _GameScreenState extends State<GameScreen> {
               : Offset.zero;
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 1400));
+    // 1) Flip animation (back → front)
+    _flipCtrl.reset();
+    await _flipCtrl.forward();
 
+    // 2) Show effect text once the card face is fully visible
+    setState(() => _effectText = result.message);
+
+    // 3) Hold the revealed card for ~900 ms
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+
+    // 4) Slide the card off downward
+    _slideCtrl.reset();
+    await _slideCtrl.forward();
+
+    // 5) Reset everything for the next draw
+    if (!mounted) return;
     setState(() {
+      _localRevealedCard = null;
+      _effectText = '';
       _trashOffset = Offset.zero;
       _isAnimating = false;
     });
+    _flipCtrl.reset();
+    _slideCtrl.reset();
 
     if (_gameState.isGameOver && mounted) {
       Navigator.pushReplacementNamed(
@@ -68,6 +121,8 @@ class _GameScreenState extends State<GameScreen> {
       );
     }
   }
+
+  // ── Build ────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +134,7 @@ class _GameScreenState extends State<GameScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // ── Header ────────────────────────────────────────
+              // ── Header ──────────────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -97,7 +152,9 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 8),
+
               Text(
                 'Tour de ${_gameState.currentPlayer.name}',
                 style: const TextStyle(
@@ -105,9 +162,10 @@ class _GameScreenState extends State<GameScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 20),
 
-              // ── Liste des joueurs ──────────────────────────────
+              // ── Player list ──────────────────────────────────────
               Expanded(
                 child: ListView.builder(
                   itemCount: _gameState.players.length,
@@ -131,6 +189,7 @@ class _GameScreenState extends State<GameScreen> {
                       ),
                       child: Row(
                         children: [
+                          // Name + food dots
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -162,6 +221,7 @@ class _GameScreenState extends State<GameScreen> {
                               ],
                             ),
                           ),
+                          // Food count + trash icon
                           Column(
                             children: [
                               Text('🍎 ${player.foodCount}'),
@@ -173,7 +233,7 @@ class _GameScreenState extends State<GameScreen> {
                                     : _trashOffset,
                                 child: AnimatedOpacity(
                                   duration: const Duration(milliseconds: 400),
-                                  opacity: player.hasTrash ? 1 : 0.2,
+                                  opacity: player.hasTrash ? 1.0 : 0.2,
                                   child: const Icon(
                                     Icons.delete,
                                     size: 34,
@@ -190,55 +250,28 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
 
-              // ── Texte effet ────────────────────────────────────
+              // ── Effect text (above the pile) ─────────────────────
               AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: _effectText.isEmpty ? 0 : 1,
+                duration: const Duration(milliseconds: 280),
+                opacity: _effectText.isEmpty ? 0.0 : 1.0,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: 14),
                   child: Text(
                     _effectText,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: AppTheme.accent,
                       fontWeight: FontWeight.bold,
+                      fontSize: 15,
                     ),
                   ),
                 ),
               ),
 
-              // ── Zone carte révélée (centre) ────────────────────
-              SizedBox(
-                height: 186,
-                child: Center(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 360),
-                    transitionBuilder: (child, animation) {
-                      final slide = Tween<Offset>(
-                        begin: const Offset(0, 0.4),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      ));
-                      return SlideTransition(
-                        position: slide,
-                        child: FadeTransition(opacity: animation, child: child),
-                      );
-                    },
-                    child: _gameState.revealedCard != null
-                        ? _buildRevealedCard()
-                        : _buildEmptyCenter(),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              // ── Pile de cartes ─────────────────────────────────
+              // ── Single draw pile ─────────────────────────────────
               _buildPile(),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -246,130 +279,58 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  // ── Carte révélée ─────────────────────────────────────────────
-
-  Widget _buildRevealedCard() {
-    return Container(
-      key: ValueKey(_gameState.revealedCard?.id ?? -1),
-      width: 148,
-      height: 186,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.primary, AppTheme.accent],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black54,
-            blurRadius: 18,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _cardLabel(),
-              style: const TextStyle(fontSize: 44),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _gameState.revealedCard?.name ?? '',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: Text(
-                _gameState.revealedCard?.description ?? '',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyCenter() {
-    return Container(
-      key: const ValueKey(-1),
-      width: 148,
-      height: 186,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white12, width: 1.5),
-      ),
-      child: const Center(
-        child: Text(
-          'Appuie sur\nla pile',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white24, fontSize: 13, height: 1.6),
-        ),
-      ),
-    );
-  }
-
-  // ── Pile de cartes ────────────────────────────────────────────
+  // ── Pile widget ──────────────────────────────────────────────────
 
   Widget _buildPile() {
-    final empty = _gameState.remainingCards == 0;
+    // "visually empty" only once all animation has completed
+    final isDeckEmpty =
+        _gameState.remainingCards == 0 && _localRevealedCard == null;
 
     return GestureDetector(
-      onTap: empty || _isAnimating ? null : _drawCard,
-      child: SizedBox(
-        width: 118,
-        height: 158,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Couche 3 – fond
-            if (!empty && _gameState.remainingCards > 2)
-              Positioned(
-                top: 8,
-                left: 8,
-                right: -8,
-                bottom: -8,
-                child: _pileLayer(0.22),
-              ),
-            // Couche 2 – milieu
-            if (!empty && _gameState.remainingCards > 1)
-              Positioned(
-                top: 4,
-                left: 4,
-                right: -4,
-                bottom: -4,
-                child: _pileLayer(0.50),
-              ),
-            // Couche 1 – carte du dessus (interactive)
-            Positioned.fill(
-              child: AnimatedSlide(
-                offset: _isAnimating ? const Offset(0, -0.10) : Offset.zero,
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                child: AnimatedScale(
-                  scale: _isAnimating ? 1.05 : 1.0,
-                  duration: const Duration(milliseconds: 220),
-                  child: _buildTopCard(empty),
-                ),
+      onTap: (isDeckEmpty || _isAnimating) ? null : _drawCard,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_flipCtrl, _slideCtrl]),
+        builder: (context, _) {
+          final fv = _flipCtrl.value; // 0 → 1
+          final sv = _slideCtrl.value; // 0 → 1 (slide-out)
+
+          // ── Flip geometry ───────────────────────────────────────
+          // [0, 0.5) : back face rotating away  (  0   → π/2 )
+          // [0.5, 1] : front face rotating in   ( -π/2 → 0   )
+          final showFront = fv >= 0.5 && _localRevealedCard != null;
+          final angle = fv < 0.5 ? fv * math.pi : (fv - 1.0) * math.pi;
+
+          // ── Slide-out ────────────────────────────────────────────
+          final slideOffsetY = sv * 280.0;
+          final cardOpacity = (1.0 - sv).clamp(0.0, 1.0);
+
+          final Widget face = showFront
+              ? _buildFrontFace(_localRevealedCard!)
+              : _buildBackFace(empty: isDeckEmpty);
+
+          return Opacity(
+            opacity: isDeckEmpty ? 0.35 : cardOpacity,
+            child: Transform.translate(
+              offset: Offset(0, slideOffsetY),
+              child: Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.001) // perspective
+                  ..rotateY(angle),
+                child: face,
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildTopCard(bool empty) {
+  // Back face of the pile card (face-down / empty state)
+  Widget _buildBackFace({required bool empty}) {
     return Container(
+      width: 110,
+      height: 150,
       decoration: BoxDecoration(
         gradient: empty
             ? null
@@ -395,59 +356,56 @@ class _GameScreenState extends State<GameScreen> {
       ),
       child: Center(
         child: empty
-            ? const Icon(Icons.layers_clear, color: Colors.white24, size: 30)
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.style, size: 30, color: Colors.white),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${_gameState.remainingCards}',
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Text(
-                    'cartes',
-                    style: TextStyle(fontSize: 10, color: Colors.white70),
-                  ),
-                ],
+            ? const Icon(Icons.layers_clear, color: Colors.white24, size: 32)
+            : const Text(
+                '?',
+                style: TextStyle(
+                  fontSize: 46,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
       ),
     );
   }
 
-  Widget _pileLayer(double opacity) {
+  // Front face of the pile card (revealed)
+  Widget _buildFrontFace(GameCard card) {
     return Container(
+      width: 110,
+      height: 150,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.primary.withOpacity(opacity),
-            AppTheme.accent.withOpacity(opacity),
+        color: card.color,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(card.emoji, style: const TextStyle(fontSize: 40)),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                card.name,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(18),
       ),
     );
-  }
-
-  // ── Label emoji ───────────────────────────────────────────────
-
-  String _cardLabel() {
-    switch (_gameState.revealedCard?.type) {
-      case CardType.food:
-        return '🍎';
-      case CardType.trash:
-        return '🗑️';
-      case CardType.raccoon:
-        return '🦝';
-      case CardType.bandit:
-        return '🥷';
-      default:
-        return '?';
-    }
   }
 }
