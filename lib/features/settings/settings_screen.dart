@@ -95,28 +95,3 @@ class _SettingTile extends StatelessWidget {
     );
   }
 }
-
-class _SettingTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _SettingTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      secondary: Icon(icon, color: AppTheme.primary),
-      title: Text(label),
-      value: value,
-      onChanged: onChanged,
-      activeThumbColor: AppTheme.primary,
-    );
-  }
-}
