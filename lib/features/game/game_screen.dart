@@ -234,10 +234,24 @@ class _GameScreenState extends State<GameScreen>
                                 child: AnimatedOpacity(
                                   duration: const Duration(milliseconds: 400),
                                   opacity: player.hasTrash ? 1.0 : 0.2,
-                                  child: const Icon(
-                                    Icons.delete,
-                                    size: 34,
-                                    color: Colors.greenAccent,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.delete,
+                                        size: 34,
+                                        color: Colors.greenAccent,
+                                      ),
+                                      if (player.trashCount > 1)
+                                        Text(
+                                          '×${player.trashCount}',
+                                          style: const TextStyle(
+                                            color: Colors.greenAccent,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ),

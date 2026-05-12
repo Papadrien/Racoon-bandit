@@ -4,14 +4,17 @@ class PlayerState {
   final int id;
   final String name;
   int foodCount;
-  bool hasTrash;
+  int trashCount;
 
   PlayerState({
     required this.id,
     required this.name,
     this.foodCount = 0,
-    this.hasTrash = false,
+    this.trashCount = 0,
   });
+
+  /// True si le joueur possède au moins une poubelle.
+  bool get hasTrash => trashCount > 0;
 
   Color get avatarColor {
     const colors = [

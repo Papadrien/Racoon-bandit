@@ -64,14 +64,14 @@ class GameState {
         return CardResolution(message: '${player.name} gagne 1 nourriture');
 
       case CardType.trash:
-        player.hasTrash = true;
+        player.trashCount++;
         return CardResolution(message: '${player.name} pose une poubelle');
 
       case CardType.raccoon:
-        if (player.hasTrash) {
-          player.hasTrash = false;
+        if (player.trashCount > 0) {
+          player.trashCount--;
           return CardResolution(
-            message: 'Le raton détruit la poubelle',
+            message: 'Le Raccoon est bloqué par une poubelle !',
             targetPlayerId: player.id,
             trashDestroyed: true,
           );
@@ -79,7 +79,7 @@ class GameState {
 
         player.foodCount = 0;
         return CardResolution(
-          message: 'Le raton mange toute la nourriture',
+          message: 'Le raton mange toute la nourriture de ${player.name}',
           targetPlayerId: player.id,
           foodStolen: true,
         );
@@ -95,20 +95,11 @@ class GameState {
 
         final target = validTargets[_random.nextInt(validTargets.length)];
 
-        if (target.hasTrash) {
-          target.hasTrash = false;
-          return CardResolution(
-            message: 'Bandit détruit la poubelle de ${target.name}',
-            targetPlayerId: target.id,
-            trashDestroyed: true,
-          );
-        }
-
-        player.foodCount += target.foodCount;
-        target.foodCount = 0;
+        player.foodCount++;
+        target.foodCount--;
 
         return CardResolution(
-          message: 'Bandit vole toute la nourriture de ${target.name}',
+          message: 'Bandit vole 1 nourriture à ${target.name}',
           targetPlayerId: target.id,
           foodStolen: true,
         );
