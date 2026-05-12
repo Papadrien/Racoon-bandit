@@ -73,7 +73,7 @@ class _SettingTile extends StatelessWidget {
       title: Text(label),
       value: value,
       onChanged: onChanged,
-      activeColor: AppTheme.primary,
+      activeThumbColor: AppTheme.primary,
     );
   }
 }

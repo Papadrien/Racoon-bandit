@@ -43,8 +43,8 @@ class AppRouter {
   static PageRouteBuilder<void> _fade(Widget page, RouteSettings s) =>
       PageRouteBuilder<void>(
         settings: s,
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, anim, _, child) =>
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionsBuilder: (context, anim, secondaryAnimation, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 200),
       );
@@ -52,8 +52,8 @@ class AppRouter {
   static PageRouteBuilder<void> _slide(Widget page, RouteSettings s) =>
       PageRouteBuilder<void>(
         settings: s,
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, anim, _, child) => SlideTransition(
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionsBuilder: (context, anim, secondaryAnimation, child) => SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(0, 1),
             end: Offset.zero,
