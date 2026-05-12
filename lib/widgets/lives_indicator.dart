@@ -6,6 +6,8 @@ class LivesIndicator extends StatelessWidget {
   final int lives;
   final Duration remainingDuration;
 
+  static const int _maxLives = 3;
+
   const LivesIndicator({
     super.key,
     required this.lives,
@@ -30,21 +32,23 @@ class LivesIndicator extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.favorite,
-            color: AppTheme.accent,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '$lives/3',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          // 3 cœurs visuels : rouge rempli = vie active, gris contour = vie vide
+          ...List.generate(_maxLives, (i) {
+            final filled = i < lives;
+            return Padding(
+              padding: const EdgeInsets.only(right: 3),
+              child: Icon(
+                filled ? Icons.favorite : Icons.favorite_border,
+                size: 20,
+                color: filled
+                    ? AppTheme.accent
+                    : AppTheme.textMuted.withValues(alpha: 0.4),
+              ),
+            );
+          }),
+          // Timer de recharge
           if (remainingDuration > Duration.zero) ...[
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Text(
               _formatDuration(remainingDuration),
               style: const TextStyle(
