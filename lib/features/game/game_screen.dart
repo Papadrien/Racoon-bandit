@@ -225,7 +225,7 @@ class _GameScreenState extends State<GameScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _gameState.revealedCard?.name ?? 'Pioche',
+                          _gameState.revealedCard?.name ?? '',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -246,26 +246,83 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              GestureDetector(
-                onTap: _drawCard,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: _isAnimating
-                        ? Colors.grey.shade700
-                        : AppTheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.style, size: 52),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text('Pioche'),
+              _buildPileCard(),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPileCard() {
+    final empty = _gameState.remainingCards == 0;
+    return GestureDetector(
+      onTap: empty || _isAnimating ? null : _drawCard,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          // Carte du dessous (effet de profondeur)
+          if (!empty && _gameState.remainingCards > 1)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                width: 90,
+                height: 124,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.45),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          // Carte principale de la pile
+          AnimatedScale(
+            scale: _isAnimating ? 0.88 : 1.0,
+            duration: const Duration(milliseconds: 220),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _isAnimating ? 0.6 : 1.0,
+              child: Container(
+                width: 90,
+                height: 124,
+                decoration: BoxDecoration(
+                  gradient: empty
+                      ? null
+                      : const LinearGradient(
+                          colors: [AppTheme.primary, AppTheme.accent],
+                        ),
+                  color: empty ? Colors.transparent : null,
+                  borderRadius: BorderRadius.circular(16),
+                  border: empty
+                      ? Border.all(color: Colors.white24, width: 2, strokeAlign: BorderSide.strokeAlignCenter)
+                      : null,
+                  boxShadow: empty
+                      ? null
+                      : const [BoxShadow(color: Colors.black45, blurRadius: 10)],
+                ),
+                child: Center(
+                  child: empty
+                      ? const Icon(Icons.layers_clear, color: Colors.white24, size: 36)
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.style, size: 34, color: Colors.white),
+                            const SizedBox(height: 6),
+                            Text(
+                              '${_gameState.remainingCards}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
