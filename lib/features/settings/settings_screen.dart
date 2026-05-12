@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/services/settings_service.dart';
 import '../../core/theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -10,8 +11,25 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _soundEnabled = true;
-  bool _vibrationEnabled = true;
+  late bool _soundEnabled;
+  late bool _vibrationEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _soundEnabled = SettingsService.soundEnabled;
+    _vibrationEnabled = SettingsService.vibrationEnabled;
+  }
+
+  void _onSoundChanged(bool value) {
+    setState(() => _soundEnabled = value);
+    SettingsService.setSoundEnabled(value);
+  }
+
+  void _onVibrationChanged(bool value) {
+    setState(() => _vibrationEnabled = value);
+    SettingsService.setVibrationEnabled(value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,14 +47,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.volume_up,
               label: 'Sons',
               value: _soundEnabled,
-              onChanged: (v) => setState(() => _soundEnabled = v),
+              onChanged: _onSoundChanged,
             ),
             const Divider(color: AppTheme.textMuted, height: 1),
             _SettingTile(
               icon: Icons.vibration,
               label: 'Vibrations',
               value: _vibrationEnabled,
-              onChanged: (v) => setState(() => _vibrationEnabled = v),
+              onChanged: _onVibrationChanged,
             ),
             const Divider(color: AppTheme.textMuted, height: 1),
             const SizedBox(height: 32),
@@ -49,6 +67,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SettingTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SettingTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      secondary: Icon(icon, color: AppTheme.primary),
+      title: Text(label),
+      value: value,
+      onChanged: onChanged,
+      activeThumbColor: AppTheme.primary,
     );
   }
 }

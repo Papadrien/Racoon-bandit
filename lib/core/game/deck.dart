@@ -3,10 +3,10 @@ import 'dart:math';
 import '../models/card_type.dart';
 import '../models/game_card.dart';
 
-const int totalCards = 45;
+const int totalCards = 35;
 
 const Map<CardType, int> deckComposition = {
-  CardType.food: 30,
+  CardType.food: 20,
   CardType.raccoon: 6,
   CardType.trash: 3,
   CardType.bandit: 6,

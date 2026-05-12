@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../core/game/game_state.dart';
+import '../../core/models/card_type.dart';
 import '../../core/models/game_card.dart';
 import '../../core/navigation/app_router.dart';
+import '../../core/services/audio_service.dart';
+import '../../core/services/haptic_service.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -58,7 +60,8 @@ class _GameScreenState extends State<GameScreen>
   Future<void> _drawCard() async {
     if (_isAnimating || _gameState.isGameOver) return;
 
-    HapticFeedback.lightImpact();
+    HapticService.trigger(HapticType.light);
+    AudioService.instance.playSfx(SoundEffect.draw);
 
     setState(() {
       _isAnimating = true;
@@ -66,12 +69,16 @@ class _GameScreenState extends State<GameScreen>
     });
 
     final result = _gameState.drawCard();
+    final card = _gameState.revealedCard;
 
     setState(() {
-      _revealedCard = _gameState.revealedCard;
+      _revealedCard = card;
     });
 
     await _flipController.forward(from: 0);
+
+    // Son + haptic selon l'effet de la carte
+    _playCardFeedback(card, result);
 
     setState(() {
       _effectText = result.message;
@@ -92,6 +99,8 @@ class _GameScreenState extends State<GameScreen>
     _slideController.reset();
 
     if (_gameState.isGameOver && mounted) {
+      HapticService.trigger(HapticType.heavy);
+      AudioService.instance.playSfx(SoundEffect.gameOver);
       unawaited(
         Navigator.pushReplacementNamed(
           context,
@@ -99,6 +108,29 @@ class _GameScreenState extends State<GameScreen>
           arguments: _gameState,
         ),
       );
+    }
+  }
+
+  void _playCardFeedback(GameCard? card, CardResolution result) {
+    if (card == null) return;
+
+    switch (card.type) {
+      case CardType.trash:
+        HapticService.trigger(HapticType.medium);
+        AudioService.instance.playSfx(SoundEffect.trash);
+      case CardType.raccoon:
+        HapticService.trigger(HapticType.medium);
+        if (result.trashDestroyed) {
+          AudioService.instance.playSfx(SoundEffect.trash);
+        } else {
+          AudioService.instance.playSfx(SoundEffect.steal);
+        }
+      case CardType.bandit:
+        HapticService.trigger(HapticType.medium);
+        AudioService.instance.playSfx(SoundEffect.steal);
+      case CardType.food:
+        HapticService.trigger(HapticType.light);
+        AudioService.instance.playSfx(SoundEffect.cardPlayed);
     }
   }
 

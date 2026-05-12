@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/services/haptic_service.dart';
+
 class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -14,7 +16,15 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(onPressed: onPressed, child: Text(label)),
+      child: ElevatedButton(
+        onPressed: onPressed == null
+            ? null
+            : () {
+                HapticService.trigger(HapticType.selection);
+                onPressed!();
+              },
+        child: Text(label),
+      ),
     );
   }
 }
