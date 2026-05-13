@@ -236,7 +236,7 @@ class _GameScreenState extends State<GameScreen>
                       if (isBack)
                         Image.asset(
                           AppAssets.cardBackPurple,
-                          fit: BoxFit.cover,
+                          fit: BoxFit.fill,
                           width: _cardWidth,
                           height: _cardHeight,
                         )
@@ -263,16 +263,7 @@ class _GameScreenState extends State<GameScreen>
                           ),
                         ),
                       ),
-                      // Bordure par-dessus tout
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(_cardRadius),
-                          border: Border.all(
-                            color: Colors.white24,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
+
                     ],
                   ),
                 ),
