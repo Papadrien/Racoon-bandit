@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/navigation/app_router.dart';
 import '../../core/services/settings_service.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -55,6 +56,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: 'Vibrations',
               value: _vibrationEnabled,
               onChanged: _onVibrationChanged,
+            ),
+            const Divider(color: AppTheme.textMuted, height: 1),
+            ListTile(
+              leading: const Icon(Icons.person_outline, color: AppTheme.primary),
+              title: const Text('Gestion des profils'),
+              trailing: const Icon(Icons.chevron_right, color: AppTheme.textMuted),
+              onTap: () => Navigator.pushNamed(context, AppRoutes.profiles),
             ),
             const Divider(color: AppTheme.textMuted, height: 1),
             const SizedBox(height: 32),

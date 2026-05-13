@@ -5,6 +5,7 @@ import '../../features/home/home_screen.dart';
 import '../../features/lobby/lobby_screen.dart';
 import '../../features/premium/premium_screen.dart';
 import '../../features/result/result_screen.dart';
+import '../../features/profiles/profiles_screen.dart';
 import '../../features/settings/settings_screen.dart';
 
 class AppRoutes {
@@ -16,6 +17,7 @@ class AppRoutes {
   static const String result = '/result';
   static const String settings = '/settings';
   static const String premium = '/premium';
+  static const String profiles = '/profiles';
 }
 
 class AppRouter {
@@ -35,6 +37,8 @@ class AppRouter {
         return _slide(const SettingsScreen(), routeSettings);
       case AppRoutes.premium:
         return _slide(const PremiumScreen(), routeSettings);
+      case AppRoutes.profiles:
+        return _slide(const ProfilesScreen(), routeSettings);
       default:
         return _fade(const HomeScreen(), routeSettings);
     }
