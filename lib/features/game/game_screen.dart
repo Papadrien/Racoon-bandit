@@ -232,21 +232,19 @@ class _GameScreenState extends State<GameScreen>
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // Dos de carte : image officielle violette
-                      if (isBack)
-                        Image.asset(
-                          AppAssets.cardBackPurple,
-                          fit: BoxFit.fill,
-                          width: _cardWidth,
-                          height: _cardHeight,
-                        )
-                      else
-                        // Face de carte ou état vide (deck épuisé)
-                        ColoredBox(
-                          color: empty
-                              ? Colors.grey.shade800
-                              : _revealedCard?.color ?? Colors.deepPurple,
-                        ),
+                      // Fond commun : même taille garantie pour dos ET face
+                      Positioned.fill(
+                        child: isBack
+                            ? Image.asset(
+                                AppAssets.cardBackPurple,
+                                fit: BoxFit.fill,
+                              )
+                            : ColoredBox(
+                                color: empty
+                                    ? Colors.grey.shade800
+                                    : _revealedCard?.color ?? Colors.deepPurple,
+                              ),
+                      ),
                       // Contenu centré (emoji ou X) — contre-rotation pour rester lisible
                       Center(
                         child: Transform(
