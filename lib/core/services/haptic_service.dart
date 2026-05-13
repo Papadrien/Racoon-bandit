@@ -11,7 +11,7 @@ enum HapticType {
   /// Carte piochée.
   light,
 
-  /// Effet notable (vol, poubelle détruite).
+  /// Effet notable (vol, frigo détruite).
   medium,
 
   /// Fin de partie.

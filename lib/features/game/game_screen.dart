@@ -11,6 +11,7 @@ import '../../core/navigation/app_router.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../widgets/player_avatar.dart';
+import 'widgets/gameplay_overlay_animation_manager.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -26,6 +27,12 @@ class _GameScreenState extends State<GameScreen>
   bool _isAnimating = false;
   String _effectText = '';
   GameCard? _revealedCard;
+  final List<GameplayOverlayAnimation> _overlayAnimations = [];
+  late final GameplayOverlayCoordinator _overlayCoordinator;
+  final GlobalKey _deckKey = GlobalKey();
+  final Map<int, GlobalKey> _playerKeys = {};
+  int? _lastResolvedPlayerId;
+
 
   late final AnimationController _flipController;
   late final AnimationController _slideController;
@@ -41,6 +48,7 @@ class _GameScreenState extends State<GameScreen>
       vsync: this,
       duration: const Duration(milliseconds: 350),
     );
+    _overlayCoordinator = GameplayOverlayCoordinator(_addOverlayAnimation);
     _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 550),
@@ -74,6 +82,7 @@ class _GameScreenState extends State<GameScreen>
       _effectText = '';
     });
 
+    _lastResolvedPlayerId = _gameState.currentPlayer.id;
     final result = _gameState.drawCard();
     final card = _gameState.revealedCard;
 
@@ -83,6 +92,7 @@ class _GameScreenState extends State<GameScreen>
 
     await _flipController.forward(from: 0);
     _playCardFeedback(card, result);
+    _playOverlayAnimations(card);
 
     setState(() {
       _effectText = result.message;
@@ -114,6 +124,61 @@ class _GameScreenState extends State<GameScreen>
     }
   }
 
+
+
+  void _addOverlayAnimation(GameplayOverlayAnimation animation) {
+    setState(() {
+      _overlayAnimations.add(animation);
+    });
+
+    Future<void>.delayed(animation.duration, () {
+      if (!mounted) return;
+
+      setState(() {
+        _overlayAnimations.removeWhere((item) => item.id == animation.id);
+      });
+    });
+  }
+
+  Offset _widgetCenter(GlobalKey key) {
+    final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
+
+    if (renderBox == null) {
+      return const Offset(200, 300);
+    }
+
+    final origin = renderBox.localToGlobal(Offset.zero);
+
+    return Offset(
+      origin.dx + (renderBox.size.width / 2) - 36,
+      origin.dy + (renderBox.size.height / 2) - 36,
+    );
+  }
+
+  void _playOverlayAnimations(GameCard? card) {
+    if (card == null) return;
+
+    final start = _widgetCenter(_deckKey);
+    final currentPlayerId = _lastResolvedPlayerId;
+    final targetKey = _playerKeys[currentPlayerId];
+
+    if (targetKey == null) return;
+
+    final end = _widgetCenter(targetKey);
+
+    switch (card.type) {
+      case CardType.food:
+        _overlayCoordinator.playFoodGain(start: start, end: end);
+        break;
+      case CardType.trash:
+        _overlayCoordinator.playFridgeDeposit(start: start, end: end);
+        break;
+      case CardType.raccoon:
+      case CardType.bandit:
+        break;
+    }
+  }
+
   void _playCardFeedback(GameCard? card, CardResolution result) {
     if (card == null) return;
 
@@ -121,17 +186,21 @@ class _GameScreenState extends State<GameScreen>
       case CardType.trash:
         HapticService.trigger(HapticType.medium);
         AudioService.instance.playSfx(SoundEffect.trash);
+        break;
       case CardType.raccoon:
         HapticService.trigger(HapticType.medium);
         AudioService.instance.playSfx(
           result.trashDestroyed ? SoundEffect.trash : SoundEffect.steal,
         );
+        break;
       case CardType.bandit:
         HapticService.trigger(HapticType.medium);
         AudioService.instance.playSfx(SoundEffect.steal);
+        break;
       case CardType.food:
         HapticService.trigger(HapticType.light);
         AudioService.instance.playSfx(SoundEffect.cardPlayed);
+        break;
     }
   }
 
@@ -139,7 +208,10 @@ class _GameScreenState extends State<GameScreen>
     final player = _gameState.players[index];
     final active = index == _gameState.currentPlayerIndex;
 
+    _playerKeys.putIfAbsent(player.id, GlobalKey.new);
+
     return Container(
+      key: _playerKeys[player.id],
       width: 150,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -302,6 +374,7 @@ class _GameScreenState extends State<GameScreen>
         ),
         const SizedBox(height: 18),
         SizedBox(
+          key: _deckKey,
           width: _cardWidth + 16,
           height: _cardHeight + 16,
           child: Stack(
@@ -373,6 +446,7 @@ class _GameScreenState extends State<GameScreen>
                 ),
               ),
             ),
+            GameplayOverlayAnimationManager(animations: _overlayAnimations),
           ],
         ),
       ),

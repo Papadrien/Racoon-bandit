@@ -53,6 +53,6 @@ class PlayerState {
 
   // ── Logique jeu ───────────────────────────────────────────────────────────
 
-  /// True si le joueur possède au moins une poubelle.
+  /// True si le joueur possède au moins une frigo.
   bool get hasTrash => trashCount > 0;
 }
