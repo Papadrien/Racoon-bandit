@@ -3,12 +3,18 @@ import 'package:flutter/material.dart';
 class PlayerState {
   final int id;
   final String name;
+
+  /// ID du profil joueur associé.
+  /// Prêt pour l'injection future dans le gameplay et le classement.
+  final String? profileId;
+
   int foodCount;
   int trashCount;
 
   PlayerState({
     required this.id,
     required this.name,
+    this.profileId,
     this.foodCount = 0,
     this.trashCount = 0,
   });
