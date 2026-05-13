@@ -194,6 +194,11 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
+  // Dimensions de la carte — une seule source de vérité
+  static const double _cardWidth = 240;
+  static const double _cardHeight = 340;
+  static const double _cardRadius = 24;
+
   Widget _buildDeck() {
     final empty = _gameState.remainingCards == 0;
 
@@ -210,6 +215,7 @@ class _GameScreenState extends State<GameScreen>
 
           final angle = flip * math.pi;
           final showFront = angle > math.pi / 2;
+          final isBack = !empty && !(showFront && _revealedCard != null);
 
           return Transform.translate(
             offset: Offset(0, slide * 300),
@@ -218,48 +224,57 @@ class _GameScreenState extends State<GameScreen>
               transform: Matrix4.identity()
                 ..setEntry(3, 2, 0.001)
                 ..rotateY(angle),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Stack(
-                  children: [
-                    // Dos de carte : image officielle violet
-                    if (!empty && !(showFront && _revealedCard != null))
-                      Positioned.fill(
-                        child: Image.asset(
+              child: SizedBox(
+                width: _cardWidth,
+                height: _cardHeight,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(_cardRadius),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Dos de carte : image officielle violette
+                      if (isBack)
+                        Image.asset(
                           AppAssets.cardBackPurple,
                           fit: BoxFit.cover,
+                          width: _cardWidth,
+                          height: _cardHeight,
+                        )
+                      else
+                        // Face de carte ou état vide (deck épuisé)
+                        ColoredBox(
+                          color: empty
+                              ? Colors.grey.shade800
+                              : _revealedCard?.color ?? Colors.deepPurple,
                         ),
-                      ),
-                    // Face de carte ou état vide
-                    Container(
-                      width: 120,
-                      height: 170,
-                      decoration: BoxDecoration(
-                        color: empty
-                            ? Colors.grey.shade800
-                            : showFront && _revealedCard != null
-                                ? _revealedCard!.color
-                                : Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Center(
+                      // Contenu centré (emoji ou X) — contre-rotation pour rester lisible
+                      Center(
                         child: Transform(
                           alignment: Alignment.center,
                           transform: Matrix4.identity()
                             ..rotateY(showFront ? math.pi : 0),
                           child: Text(
                             empty
-                                ? 'X'
+                                ? '✕'
                                 : showFront && _revealedCard != null
                                     ? _revealedCard!.emoji
                                     : '',
-                            style: const TextStyle(fontSize: 52),
+                            style: const TextStyle(fontSize: 72),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      // Bordure par-dessus tout
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(_cardRadius),
+                          border: Border.all(
+                            color: Colors.white24,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
