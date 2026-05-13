@@ -30,6 +30,10 @@ class _GameScreenState extends State<GameScreen>
   late final AnimationController _flipController;
   late final AnimationController _slideController;
 
+  static const double _cardWidth = 180;
+  static const double _cardHeight = 260;
+  static const double _cardRadius = 24;
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +43,7 @@ class _GameScreenState extends State<GameScreen>
     );
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 550),
     );
   }
 
@@ -78,16 +82,13 @@ class _GameScreenState extends State<GameScreen>
     });
 
     await _flipController.forward(from: 0);
-
-    // Son + haptic selon l'effet de la carte
     _playCardFeedback(card, result);
 
     setState(() {
       _effectText = result.message;
     });
 
-    await Future<void>.delayed(const Duration(seconds: 1));
-
+    await Future<void>.delayed(const Duration(milliseconds: 700));
     await _slideController.forward(from: 0);
 
     if (!mounted) return;
@@ -122,11 +123,9 @@ class _GameScreenState extends State<GameScreen>
         AudioService.instance.playSfx(SoundEffect.trash);
       case CardType.raccoon:
         HapticService.trigger(HapticType.medium);
-        if (result.trashDestroyed) {
-          AudioService.instance.playSfx(SoundEffect.trash);
-        } else {
-          AudioService.instance.playSfx(SoundEffect.steal);
-        }
+        AudioService.instance.playSfx(
+          result.trashDestroyed ? SoundEffect.trash : SoundEffect.steal,
+        );
       case CardType.bandit:
         HapticService.trigger(HapticType.medium);
         AudioService.instance.playSfx(SoundEffect.steal);
@@ -140,118 +139,108 @@ class _GameScreenState extends State<GameScreen>
     final player = _gameState.players[index];
     final active = index == _gameState.currentPlayerIndex;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: active
             ? player.profileColor.withValues(alpha: 0.18)
-            : Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
+            : Colors.black.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: active ? player.profileColor : Colors.white24,
           width: active ? 2 : 1,
         ),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Avatar profil (emoji + couleur)
           PlayerAvatar(
             emoji: player.emoji,
             color: player.profileColor,
-            size: 44,
+            size: 40,
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Nom — ellipsis si trop long
-                Text(
-                  player.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: active ? Colors.white : Colors.white70,
-                    fontWeight:
-                        active ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                // Nourriture + poubelles
-                Wrap(
-                  spacing: 2,
-                  runSpacing: 2,
-                  children: [
-                    ...List.generate(
-                      player.foodCount,
-                      (_) => const Text('🍎', style: TextStyle(fontSize: 15)),
-                    ),
-                    ...List.generate(
-                      player.trashCount,
-                      (_) => const Text('🗑️', style: TextStyle(fontSize: 15)),
-                    ),
-                  ],
-                ),
-              ],
+          const SizedBox(height: 6),
+          Text(
+            player.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
             ),
           ),
-          // Score numérique compact
-          if (player.foodCount > 0)
-            Container(
-              margin: const EdgeInsets.only(left: 6),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: player.profileColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '${player.foodCount}',
-                style: TextStyle(
-                  color: player.profileColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ),
+          const SizedBox(height: 4),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 2,
+            children: [
+              ...List.generate(player.foodCount, (_) => const Text('🍎')),
+              ...List.generate(player.trashCount, (_) => const Text('🧊')),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  // Dimensions de la carte — une seule source de vérité
-  static const double _cardWidth = 240;
-  static const double _cardHeight = 340;
-  static const double _cardRadius = 24;
+  List<Widget> _buildPlayerPositions() {
+    const positions = {
+      2: [
+        {'top': 12.0, 'left': 12.0},
+        {'top': 12.0, 'right': 12.0},
+      ],
+      3: [
+        {'top': 12.0, 'left': 12.0},
+        {'top': 12.0, 'right': 12.0},
+        {'bottom': 12.0, 'right': 12.0},
+      ],
+      4: [
+        {'top': 12.0, 'left': 12.0},
+        {'top': 12.0, 'right': 12.0},
+        {'bottom': 12.0, 'left': 12.0},
+        {'bottom': 12.0, 'right': 12.0},
+      ],
+    };
 
-  Widget _buildDeck() {
+    final layout = positions[_gameState.players.length]!;
+
+    return List.generate(_gameState.players.length, (index) {
+      final pos = layout[index];
+      return Positioned(
+        top: pos['top'],
+        left: pos['left'],
+        right: pos['right'],
+        bottom: pos['bottom'],
+        child: _buildPlayerCard(index),
+      );
+    });
+  }
+
+  Widget _buildDeckCard({required bool backgroundCard}) {
     final empty = _gameState.remainingCards == 0;
 
     return GestureDetector(
-      onTap: empty ? null : _drawCard,
+      onTap: backgroundCard || empty ? null : _drawCard,
       child: AnimatedBuilder(
-        animation: Listenable.merge([
-          _flipController,
-          _slideController,
-        ]),
+        animation: Listenable.merge([_flipController, _slideController]),
         builder: (context, child) {
           final flip = _flipController.value;
           final slide = _slideController.value;
-
           final angle = flip * math.pi;
           final showFront = angle > math.pi / 2;
           final isBack = !empty && !(showFront && _revealedCard != null);
 
           return Transform.translate(
-            offset: Offset(0, slide * 300),
+            offset: backgroundCard
+                ? const Offset(0, 0)
+                : Offset(0, slide * 600),
             child: Transform(
               alignment: Alignment.center,
               transform: Matrix4.identity()
                 ..setEntry(3, 2, 0.001)
-                ..rotateY(angle),
+                ..rotateY(backgroundCard ? 0 : angle),
               child: SizedBox(
                 width: _cardWidth,
                 height: _cardHeight,
@@ -260,36 +249,32 @@ class _GameScreenState extends State<GameScreen>
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // Fond commun : même taille garantie pour dos ET face
                       Positioned.fill(
-                        child: isBack
+                        child: isBack || backgroundCard
                             ? Image.asset(
                                 AppAssets.cardBackPurple,
                                 fit: BoxFit.fill,
                               )
                             : ColoredBox(
-                                color: empty
-                                    ? Colors.grey.shade800
-                                    : _revealedCard?.color ?? Colors.deepPurple,
+                                color: _revealedCard?.color ?? Colors.deepPurple,
                               ),
                       ),
-                      // Contenu centré (emoji ou X) — contre-rotation pour rester lisible
-                      Center(
-                        child: Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.identity()
-                            ..rotateY(showFront ? math.pi : 0),
-                          child: Text(
-                            empty
-                                ? '✕'
-                                : showFront && _revealedCard != null
-                                    ? _revealedCard!.emoji
-                                    : '',
-                            style: const TextStyle(fontSize: 72),
+                      if (!backgroundCard)
+                        Center(
+                          child: Transform(
+                            alignment: Alignment.center,
+                            transform: Matrix4.identity()
+                              ..rotateY(showFront ? math.pi : 0),
+                            child: Text(
+                              empty
+                                  ? ''
+                                  : showFront && _revealedCard != null
+                                      ? _revealedCard!.emoji
+                                      : '',
+                              style: const TextStyle(fontSize: 68),
+                            ),
                           ),
                         ),
-                      ),
-
                     ],
                   ),
                 ),
@@ -298,6 +283,60 @@ class _GameScreenState extends State<GameScreen>
           );
         },
       ),
+    );
+  }
+
+  Widget _buildCenterArea() {
+    final showNextCard = _gameState.remainingCards > 1;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Tour de ${_gameState.currentPlayer.name}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: _cardWidth + 16,
+          height: _cardHeight + 16,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (showNextCard)
+                Transform.translate(
+                  offset: const Offset(0, 8),
+                  child: Opacity(
+                    opacity: 0.45,
+                    child: _buildDeckCard(backgroundCard: true),
+                  ),
+                ),
+              _buildDeckCard(backgroundCard: false),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '${_gameState.remainingCards} cartes',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 40,
+          child: Text(
+            _effectText,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -310,62 +349,31 @@ class _GameScreenState extends State<GameScreen>
     return Scaffold(
       backgroundColor: const Color(0xFF1B1525),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.home,
-                      (route) => false,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0,
+                      child: TextButton(
+                        onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.home,
+                          (route) => false,
+                        ),
+                        child: const Text('Accueil'),
+                      ),
                     ),
-                    child: const Text('Accueil'),
-                  ),
-                  Text(
-                    '${_gameState.remainingCards} cartes',
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Tour de ${_gameState.currentPlayer.name}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                    ..._buildPlayerPositions(),
+                    Center(child: _buildCenterArea()),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _gameState.players.length,
-                  itemBuilder: (context, index) => _buildPlayerCard(index),
-                ),
-              ),
-              SizedBox(
-                height: 40,
-                child: Center(
-                  child: Text(
-                    _effectText,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildDeck(),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

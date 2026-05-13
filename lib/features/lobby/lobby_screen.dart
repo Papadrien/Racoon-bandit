@@ -126,9 +126,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   // ── Start game ────────────────────────────────────────────────────────────
 
-  bool get _canStart => _selectedProfiles.every((p) => p != null);
+  bool get _canStart =>
+      _playerCount >= 2 && _selectedProfiles.every((p) => p != null);
 
   Future<void> _startGame() async {
+    if (_playerCount < 2) return;
     final players = List.generate(_playerCount, (i) {
       final profile = _selectedProfiles[i];
       return PlayerState(
