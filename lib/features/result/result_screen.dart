@@ -4,6 +4,7 @@ import '../../core/game/game_state.dart';
 import '../../core/models/player_state.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
 
 class ResultScreen extends StatelessWidget {
@@ -24,9 +25,18 @@ class ResultScreen extends StatelessWidget {
             children: [
               const Icon(Icons.emoji_events, size: 64, color: AppTheme.accent),
               const SizedBox(height: 12),
+              // Avatar + nom du gagnant
+              PlayerAvatar(
+                emoji: winner.emoji,
+                color: winner.profileColor,
+                size: 72,
+              ),
+              const SizedBox(height: 10),
               Text(
                 '${winner.name} gagne !',
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
               Text(
@@ -79,30 +89,44 @@ class _RankRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rankLabel = switch (rank) {
+      1 => '🥇',
+      2 => '🥈',
+      3 => '🥉',
+      _ => '#$rank',
+    };
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
+          // Médaille / rang
           SizedBox(
-            width: 32,
+            width: 36,
             child: Text(
-              '#$rank',
+              rankLabel,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: isWinner ? AppTheme.accent : AppTheme.textMuted,
-                fontSize: 16,
+                fontSize: rank <= 3 ? 22 : 16,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
-          Icon(
-            isWinner ? Icons.emoji_events : player.avatarIcon,
-            color: isWinner ? AppTheme.accent : player.avatarColor,
-            size: 20,
+          const SizedBox(width: 8),
+          // Avatar profil
+          PlayerAvatar(
+            emoji: player.emoji,
+            color: player.profileColor,
+            size: 40,
           ),
           const SizedBox(width: 12),
+          // Nom profil (ellipsis si long)
           Expanded(
             child: Text(
               player.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
@@ -110,6 +134,7 @@ class _RankRow extends StatelessWidget {
               ),
             ),
           ),
+          // Score
           Text(
             '🍎 ${player.foodCount}',
             style: TextStyle(

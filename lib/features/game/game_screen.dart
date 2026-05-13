@@ -10,6 +10,7 @@ import '../../core/models/game_card.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
+import '../../widgets/player_avatar.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -145,50 +146,77 @@ class _GameScreenState extends State<GameScreen>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: active
-            ? Colors.deepPurple.withValues(alpha: 0.35)
-            : Colors.white.withValues(alpha: 0.08),
+            ? player.profileColor.withValues(alpha: 0.18)
+            : Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: active ? Colors.deepPurpleAccent : Colors.white24,
+          color: active ? player.profileColor : Colors.white24,
           width: active ? 2 : 1,
         ),
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: player.avatarColor,
-            child: Icon(player.avatarIcon, color: Colors.white),
+          // Avatar profil (emoji + couleur)
+          PlayerAvatar(
+            emoji: player.emoji,
+            color: player.profileColor,
+            size: 44,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Nom — ellipsis si trop long
                 Text(
                   player.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: active ? Colors.white : Colors.white70,
+                    fontWeight:
+                        active ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 4),
+                // Nourriture + poubelles
                 Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
+                  spacing: 2,
+                  runSpacing: 2,
                   children: [
                     ...List.generate(
                       player.foodCount,
-                      (_) => const Text('🍎'),
+                      (_) => const Text('🍎', style: TextStyle(fontSize: 15)),
                     ),
                     ...List.generate(
                       player.trashCount,
-                      (_) => const Text('🗑️'),
+                      (_) => const Text('🗑️', style: TextStyle(fontSize: 15)),
                     ),
                   ],
                 ),
               ],
             ),
           ),
+          // Score numérique compact
+          if (player.foodCount > 0)
+            Container(
+              margin: const EdgeInsets.only(left: 6),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: player.profileColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${player.foodCount}',
+                style: TextStyle(
+                  color: player.profileColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
         ],
       ),
     );

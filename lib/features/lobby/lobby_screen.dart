@@ -135,6 +135,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
         id: i + 1,
         name: profile?.name ?? 'Joueur ${i + 1}',
         profileId: profile?.id,
+        emoji: profile?.emoji,
+        colorValue: profile?.colorValue,
       );
     });
 
