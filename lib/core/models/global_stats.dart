@@ -60,5 +60,6 @@ class GlobalStats {
 
 
   String toJsonString()=>jsonEncode(toJson());
-  factory GlobalStats.fromJsonString(String raw)=>GlobalStats.fromJson(jsonDecode(raw));
+  factory GlobalStats.fromJsonString(String raw) =>
+      GlobalStats.fromJson(jsonDecode(raw) as Map<String, dynamic>);
 }
