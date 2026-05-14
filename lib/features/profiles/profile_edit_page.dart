@@ -65,7 +65,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     final updated = widget.profile.copyWith(
       name: name,
       emoji: _emoji,
-      colorValue: _color.value,
+      colorValue: _color.toARGB32(),
     );
     if (widget.isNew) {
       await PlayerProfilesService.createProfile(updated);
@@ -113,7 +113,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             const SizedBox(height: 28),
 
             // Sélecteur emoji
-            _SectionLabel(label: 'Avatar'),
+            const _SectionLabel(label: 'Avatar'),
             const SizedBox(height: 12),
             GridView.count(
               crossAxisCount: 5,
@@ -129,12 +129,12 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     duration: const Duration(milliseconds: 150),
                     decoration: BoxDecoration(
                       color: selected
-                          ? AppTheme.primary.withOpacity(0.18)
+                          ? AppTheme.primary.withValues(alpha: 0.18)
                           : Colors.transparent,
                       border: Border.all(
                         color: selected
                             ? AppTheme.primary
-                            : AppTheme.textMuted.withOpacity(0.3),
+                            : AppTheme.textMuted.withValues(alpha: 0.3),
                         width: selected ? 2 : 1,
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -149,7 +149,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             const SizedBox(height: 28),
 
             // Sélecteur couleur
-            _SectionLabel(label: 'Couleur'),
+            const _SectionLabel(label: 'Couleur'),
             const SizedBox(height: 12),
             GridView.count(
               crossAxisCount: 4,
@@ -159,7 +159,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               crossAxisSpacing: 8,
               childAspectRatio: 1.6,
               children: _presetColors.map((c) {
-                final selected = c.value == _color.value;
+                final selected = c.toARGB32() == _color.toARGB32();
                 return GestureDetector(
                   onTap: () => setState(() => _color = c),
                   child: AnimatedContainer(
@@ -171,7 +171,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                           ? Border.all(color: Colors.white, width: 3)
                           : null,
                       boxShadow: selected
-                          ? [BoxShadow(color: c.withOpacity(0.6), blurRadius: 8)]
+                          ? [BoxShadow(color: c.withValues(alpha: 0.6), blurRadius: 8)]
                           : null,
                     ),
                   ),

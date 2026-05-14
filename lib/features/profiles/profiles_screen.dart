@@ -91,7 +91,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 itemCount: _profiles.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const Divider(color: AppTheme.textMuted, height: 1),
                 itemBuilder: (_, i) {
                   final p = _profiles[i];

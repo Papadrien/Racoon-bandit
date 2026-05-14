@@ -48,28 +48,28 @@ class PlayerProfilesService {
         id: _genId(now, 0),
         name: 'Raton',
         emoji: '🦝',
-        colorValue: const Color(0xFF7C4DFF).value,
+        colorValue: const Color(0xFF7C4DFF).toARGB32(),
         createdAt: now,
       ),
       PlayerProfile(
         id: _genId(now, 1),
         name: 'Panda',
         emoji: '🐼',
-        colorValue: const Color(0xFF00BCD4).value,
+        colorValue: const Color(0xFF00BCD4).toARGB32(),
         createdAt: now.add(const Duration(milliseconds: 1)),
       ),
       PlayerProfile(
         id: _genId(now, 2),
         name: 'Foxy',
         emoji: '🦊',
-        colorValue: const Color(0xFFFF6D00).value,
+        colorValue: const Color(0xFFFF6D00).toARGB32(),
         createdAt: now.add(const Duration(milliseconds: 2)),
       ),
       PlayerProfile(
         id: _genId(now, 3),
         name: 'Froggy',
         emoji: '🐸',
-        colorValue: const Color(0xFF4CAF50).value,
+        colorValue: const Color(0xFF4CAF50).toARGB32(),
         createdAt: now.add(const Duration(milliseconds: 3)),
       ),
     ];
@@ -102,7 +102,7 @@ class PlayerProfilesService {
         id: _genId(DateTime.now(), 0),
         name: '',
         emoji: '🦝',
-        colorValue: const Color(0xFF7C4DFF).value,
+        colorValue: const Color(0xFF7C4DFF).toARGB32(),
         createdAt: DateTime.now(),
       );
 

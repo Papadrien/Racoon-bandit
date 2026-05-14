@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import '../models/card_type.dart';
 import '../models/game_card.dart';
 import '../models/player_state.dart';
@@ -30,7 +28,7 @@ class GameState {
   List<GameCard> remainingDeck;
   GameCard? revealedCard;
   bool isGameOver;
-  final Random _random = Random();
+
 
   /// Index du joueur actif au moment où la carte a été tirée.
   /// Conservé pour que la résolution différée (Bandit) utilise

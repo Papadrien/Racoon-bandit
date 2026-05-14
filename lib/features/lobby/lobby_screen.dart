@@ -270,7 +270,7 @@ class _PlayerSlotCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Material(
-        color: color.withOpacity(0.07),
+        color: color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
@@ -281,7 +281,7 @@ class _PlayerSlotCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: color.withOpacity(0.35),
+                color: color.withValues(alpha: 0.35),
                 width: 1.5,
               ),
             ),
@@ -299,10 +299,10 @@ class _PlayerSlotCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppTheme.textMuted.withOpacity(0.1),
+                      color: AppTheme.textMuted.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppTheme.textMuted.withOpacity(0.4),
+                        color: AppTheme.textMuted.withValues(alpha: 0.4),
                         width: 1.5,
                       ),
                     ),
@@ -341,7 +341,7 @@ class _PlayerSlotCard extends StatelessWidget {
                 // Chevron
                 Icon(
                   Icons.chevron_right,
-                  color: color.withOpacity(0.7),
+                  color: color.withValues(alpha: 0.7),
                 ),
               ],
             ),
@@ -433,8 +433,8 @@ class _ProfilePickerSheet extends StatelessWidget {
                               opacity: isDisabled ? 0.35 : 1.0,
                               child: Material(
                                 color: isCurrent
-                                    ? color.withOpacity(0.18)
-                                    : color.withOpacity(0.07),
+                                    ? color.withValues(alpha: 0.18)
+                                    : color.withValues(alpha: 0.07),
                                 borderRadius: BorderRadius.circular(12),
                                 child: InkWell(
                                   onTap: isDisabled
@@ -448,8 +448,8 @@ class _ProfilePickerSheet extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isCurrent
-                                            ? color.withOpacity(0.8)
-                                            : color.withOpacity(0.25),
+                                            ? color.withValues(alpha: 0.8)
+                                            : color.withValues(alpha: 0.25),
                                         width: isCurrent ? 2 : 1,
                                       ),
                                     ),
