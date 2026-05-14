@@ -7,10 +7,12 @@ import '../../core/constants/app_assets.dart';
 import '../../core/game/game_state.dart';
 import '../../core/models/card_type.dart';
 import '../../core/models/game_card.dart';
+import '../../core/models/player_state.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../widgets/player_avatar.dart';
+import 'widgets/bandit_target_overlay.dart';
 import 'widgets/gameplay_overlay_animation_manager.dart';
 
 class GameScreen extends StatefulWidget {
@@ -32,6 +34,12 @@ class _GameScreenState extends State<GameScreen>
   final GlobalKey _deckKey = GlobalKey();
   final Map<int, GlobalKey> _playerKeys = {};
   int? _lastResolvedPlayerId;
+
+  /// Vrai quand le popup Bandit est affiché : bloque les interactions.
+  bool _showingBanditOverlay = false;
+
+  /// Cibles valides pour le Bandit, remplies avant d'afficher le popup.
+  List<PlayerState> _banditTargets = [];
 
 
   late final AnimationController _flipController;
@@ -72,7 +80,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Future<void> _drawCard() async {
-    if (_isAnimating || _gameState.isGameOver) return;
+    if (_isAnimating || _showingBanditOverlay || _gameState.isGameOver) return;
 
     HapticService.trigger(HapticType.light);
     AudioService.instance.playSfx(SoundEffect.draw);
@@ -92,12 +100,87 @@ class _GameScreenState extends State<GameScreen>
 
     await _flipController.forward(from: 0);
     _playCardFeedback(card, result);
-    _playOverlayAnimations(card);
+
+    // ── Cas Bandit : sélection de cible nécessaire ────────────────────────
+    if (result.needsTargetSelection) {
+      await _handleBanditTargetSelection(card);
+      return;
+    }
+
+    // ── Cas normal ────────────────────────────────────────────────────────
+    _playOverlayAnimations(card, result);
 
     setState(() {
       _effectText = result.message;
     });
 
+    await _finishCardAnimation();
+  }
+
+  /// Affiche le popup de sélection de cible Bandit,
+  /// puis résout le vol et enchaîne l'animation.
+  Future<void> _handleBanditTargetSelection(GameCard? card) async {
+    final targets = _gameState.banditValidTargets();
+
+    setState(() {
+      _banditTargets = targets;
+      _showingBanditOverlay = true;
+    });
+
+    // Completer pour attendre le choix de l'utilisateur
+    final completer = Completer<PlayerState>();
+
+    // Garde une référence locale pour usage dans le callback
+    // (setState peut reconstruire le widget entre-temps)
+    void onChosen(PlayerState target) {
+      if (!completer.isCompleted) completer.complete(target);
+    }
+
+    // On déclenche rebuild avec le callback
+    setState(() {
+      _pendingBanditCallback = onChosen;
+    });
+
+    final target = await completer.future;
+
+    // Résolution logique
+    final resolution = _gameState.resolveBandit(target);
+
+    setState(() {
+      _showingBanditOverlay = false;
+      _banditTargets = [];
+      _pendingBanditCallback = null;
+      _effectText = resolution.message;
+    });
+
+    // Animation vol : cible → joueur actif
+    _playBanditStealAnimation(
+      thiefId: _lastResolvedPlayerId,
+      targetId: target.id,
+    );
+
+    await _finishCardAnimation();
+  }
+
+  /// Animation de vol nourriture : de la cible vers le voleur.
+  void _playBanditStealAnimation({
+    required int? thiefId,
+    required int targetId,
+  }) {
+    final targetKey = _playerKeys[targetId];
+    final thiefKey = _playerKeys[thiefId];
+    if (targetKey == null || thiefKey == null) return;
+
+    final fromTarget = _widgetCenter(targetKey);
+    final toThief = _widgetCenter(thiefKey);
+    _overlayCoordinator.playFoodSteal(
+      fromTarget: fromTarget,
+      toThief: toThief,
+    );
+  }
+
+  /// Slide-out + reset commun à tous les cas de fin de carte.
+  Future<void> _finishCardAnimation() async {
     await Future<void>.delayed(const Duration(milliseconds: 700));
     await _slideController.forward(from: 0);
 
@@ -123,6 +206,9 @@ class _GameScreenState extends State<GameScreen>
       );
     }
   }
+
+  /// Callback vers lequel pointe [BanditTargetOverlay] via setState.
+  void Function(PlayerState)? _pendingBanditCallback;
 
 
 
@@ -155,7 +241,7 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  void _playOverlayAnimations(GameCard? card) {
+  void _playOverlayAnimations(GameCard? card, CardResolution result) {
     if (card == null) return;
 
     final start = _widgetCenter(_deckKey);
@@ -447,6 +533,15 @@ class _GameScreenState extends State<GameScreen>
               ),
             ),
             GameplayOverlayAnimationManager(animations: _overlayAnimations),
+
+            // ── Popup Bandit : sélection de cible ─────────────────────────
+            if (_showingBanditOverlay && _pendingBanditCallback != null)
+              Positioned.fill(
+                child: BanditTargetOverlay(
+                  targets: _banditTargets,
+                  onTargetSelected: _pendingBanditCallback!,
+                ),
+              ),
           ],
         ),
       ),

@@ -159,10 +159,28 @@ class GameplayOverlayCoordinator {
     );
   }
 
+  /// Animation Bandit : une pomme vole de la cible vers le joueur actif.
+  void playFoodSteal({
+    required Offset fromTarget,
+    required Offset toThief,
+  }) {
+    _add(
+      emoji: '🍎',
+      start: fromTarget,
+      end: toThief,
+      duration: const Duration(milliseconds: 750),
+      beginScale: 1.6,
+      endScale: 1.0,
+    );
+  }
+
   void _add({
     required String emoji,
     required Offset start,
     required Offset end,
+    Duration duration = const Duration(milliseconds: 650),
+    double beginScale = 2.2,
+    double endScale = 0.7,
   }) {
     onAnimationAdded(
       GameplayOverlayAnimation(
@@ -170,7 +188,9 @@ class GameplayOverlayCoordinator {
         emoji: emoji,
         start: start,
         end: end,
-        duration: const Duration(milliseconds: 650),
+        duration: duration,
+        beginScale: beginScale,
+        endScale: endScale,
       ),
     );
   }
