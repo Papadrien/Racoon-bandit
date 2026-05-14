@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/services/game_save_service.dart';
 import '../../core/services/life_system_service.dart';
+import '../../core/services/rewarded_ad_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/primary_button.dart';
@@ -16,18 +17,29 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final LifeSystemService _lifeSystemService = LifeSystemService();
 
   Timer? _timer;
   bool _isLoading = true;
+  bool _isRewardLoading = false;
 
-  // La sauvegarde est lue depuis GameSaveService (déjà chargé dans main).
+  late final AnimationController _rewardAnimationController;
+
   bool get _hasSavedGame => GameSaveService.hasSavedGame;
 
   @override
   void initState() {
     super.initState();
+
+    _rewardAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+      lowerBound: 1,
+      upperBound: 1.1,
+    );
+
     _initializeLives();
   }
 
@@ -49,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _rewardAnimationController.dispose();
     super.dispose();
   }
 
@@ -59,8 +72,48 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.pushNamed(context, AppRoutes.lobby);
   }
 
-  /// Reprend la partie sauvegardée sans repasser par le lobby.
-  /// Aucun argument passé : GameScreen détecte GameSaveService.current.
+  Future<void> _watchAdForLife() async {
+    if (_isRewardLoading || RewardedAdService.instance.isBusy) {
+      return;
+    }
+
+    setState(() {
+      _isRewardLoading = true;
+    });
+
+    await RewardedAdService.instance.showRewardedLifeAd(
+      onRewardEarned: () async {
+        await _lifeSystemService.restoreLife();
+
+        if (!mounted) return;
+
+        await _rewardAnimationController.forward();
+        await _rewardAnimationController.reverse();
+
+        setState(() {});
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('1 vie gagnée !'),
+          ),
+        );
+      },
+      onError: (message) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      },
+    );
+
+    if (mounted) {
+      setState(() {
+        _isRewardLoading = false;
+      });
+    }
+  }
+
   void _resumeGame() {
     Navigator.pushNamed(context, AppRoutes.game);
   }
@@ -69,6 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final remainingDuration =
         _lifeSystemService.getRemainingRechargeDuration();
+
+    final noLives = _lifeSystemService.currentLives <= 0;
 
     return Scaffold(
       body: SafeArea(
@@ -80,9 +135,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   if (!_isLoading)
-                    LivesIndicator(
-                      lives: _lifeSystemService.currentLives,
-                      remainingDuration: remainingDuration,
+                    ScaleTransition(
+                      scale: _rewardAnimationController,
+                      child: LivesIndicator(
+                        lives: _lifeSystemService.currentLives,
+                        remainingDuration: remainingDuration,
+                      ),
                     ),
                   Row(
                     children: [
@@ -107,21 +165,30 @@ class _HomeScreenState extends State<HomeScreen> {
               const Spacer(),
               const _Logo(),
               const Spacer(),
-
-              // ── Bouton Reprendre (visible uniquement si sauvegarde présente) ──
               if (_hasSavedGame) ...[
                 _ResumeButton(onPressed: _resumeGame),
                 const SizedBox(height: 12),
               ],
-
-              PrimaryButton(
-                label: _lifeSystemService.currentLives > 0
-                    ? 'JOUER'
-                    : 'PLUS DE VIES',
-                onPressed: _isLoading || _lifeSystemService.currentLives <= 0
-                    ? null
-                    : _startGame,
-              ),
+              if (noLives)
+                _RewardAdButton(
+                  isLoading: _isRewardLoading,
+                  onPressed: _watchAdForLife,
+                )
+              else
+                PrimaryButton(
+                  label: 'JOUER',
+                  onPressed: _isLoading ? null : _startGame,
+                ),
+              const SizedBox(height: 16),
+              if (noLives)
+                const Text(
+                  'Regardez une publicité complète pour récupérer 1 vie.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 13,
+                  ),
+                ),
               const SizedBox(height: 48),
             ],
           ),
@@ -131,7 +198,45 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ── Bouton Reprendre ────────────────────────────────────────────────────────
+class _RewardAdButton extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  const _RewardAdButton({
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: isLoading ? null : onPressed,
+        icon: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.ondemand_video_rounded),
+        label: Text(
+          isLoading
+              ? 'Chargement de la publicité...'
+              : 'Regarder une publicité',
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.accent,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _ResumeButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -158,8 +263,6 @@ class _ResumeButton extends StatelessWidget {
     );
   }
 }
-
-// ── Logo ────────────────────────────────────────────────────────────────────
 
 class _Logo extends StatelessWidget {
   const _Logo();

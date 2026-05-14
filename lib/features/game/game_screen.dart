@@ -12,6 +12,8 @@ import '../../core/navigation/app_router.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/game_save_service.dart';
 import '../../core/services/haptic_service.dart';
+import '../../core/services/progression_service.dart';
+import '../../core/services/wakelock_service.dart';
 import '../../widgets/player_avatar.dart';
 import 'widgets/bandit_target_overlay.dart';
 import 'widgets/gameplay_overlay_animation_manager.dart';
@@ -68,6 +70,7 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    unawaited(WakelockService.disable());
     _flipController.dispose();
     _slideController.dispose();
     super.dispose();
@@ -97,6 +100,8 @@ class _GameScreenState extends State<GameScreen>
         }
       }
       _initialized = true;
+      // Empêche la mise en veille pendant la partie.
+      unawaited(WakelockService.enable());
     }
   }
 
@@ -301,6 +306,8 @@ class _GameScreenState extends State<GameScreen>
     _slideController.reset();
 
     if (_gameState.isGameOver && mounted) {
+      await ProgressionService.registerCompletedGame();
+
       // Fin de partie normale → supprime la sauvegarde
       await GameSaveService.clear();
       HapticService.trigger(HapticType.heavy);
