@@ -81,18 +81,20 @@ class _HomeScreenState extends State<HomeScreen>
       _isRewardLoading = true;
     });
 
+    final messenger = ScaffoldMessenger.of(context);
+
     await RewardedAdService.instance.showRewardedLifeAd(
-          onRewardEarned: () async {
+      onRewardEarned: () async {
         await _lifeSystemService.restoreLife();
-        
+
         if (!mounted) return;
 
         await _rewardAnimationController.forward();
-                await _rewardAnimationController.reverse();
-        
+        await _rewardAnimationController.reverse();
+
         setState(() {});
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('1 vie gagnée !'),
           ),
@@ -101,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen>
       onError: (message) {
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(content: Text(message)),
         );
       },

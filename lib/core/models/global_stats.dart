@@ -51,8 +51,8 @@ class GlobalStats {
         totalRaccoonCardsPlayed: (json['totalRaccoonCardsPlayed'] as num?)?.toInt() ?? 0,
         achievements: (json['achievements'] as List<dynamic>?)
                 ?.map((e) => AchievementProgress(
-                      id: e['id'] as String,
-                      progress: (e['progress'] as num?)?.toInt() ?? 0,
+                      id: (e as Map<String, dynamic>)['id'] as String,
+                      progress: ((e)['progress'] as num?)?.toInt() ?? 0,
                     ))
                 .toList() ??
             [],

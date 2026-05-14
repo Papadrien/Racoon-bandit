@@ -10,7 +10,7 @@ class GlobalProgression {
   factory GlobalProgression.initial() {
     return const GlobalProgression(
       totalGamesPlayed: 0,
-      unlockedCardBackIds: const {'classic'},
+      unlockedCardBackIds: {'classic'},
       selectedCardBackId: 'classic',
     );
   }

@@ -309,16 +309,20 @@ class _GameScreenState extends State<GameScreen>
 
     if (_gameState.isGameOver && mounted && !_resultScreenOpened) {
       _resultScreenOpened = true;
+      final navigator = Navigator.of(context);
+
       await ProgressionService.registerCompletedGame();
-            await StatsService.registerGame(_gameState);
-      
+      await StatsService.registerGame(_gameState);
+
       // Fin de partie normale → supprime la sauvegarde
       await GameSaveService.clear();
-            HapticService.trigger(HapticType.heavy);
+      HapticService.trigger(HapticType.heavy);
       AudioService.instance.playSfx(SoundEffect.gameOver);
+
+      if (!mounted) return;
+
       unawaited(
-        Navigator.pushReplacementNamed(
-          context,
+        navigator.pushReplacementNamed(
           AppRoutes.result,
           arguments: _gameState,
         ),
