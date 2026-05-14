@@ -40,15 +40,24 @@ class GlobalStats {
     'achievements':achievements.map((e)=>e.toJson()).toList(),
   };
 
-  factory GlobalStats.fromJson(Map<String,dynamic> json)=>GlobalStats(
-    gamesPlayed: json['gamesPlayed'] ?? 0,
-    gamesWon: json['gamesWon'] ?? 0,
-    totalFoodGained: json['totalFoodGained'] ?? 0,
-    totalFoodStolen: json['totalFoodStolen'] ?? 0,
-    totalCardsPlayed: json['totalCardsPlayed'] ?? 0,
-    totalBanditCardsPlayed: json['totalBanditCardsPlayed'] ?? 0,
-    totalRaccoonCardsPlayed: json['totalRaccoonCardsPlayed'] ?? 0,
-  );
+  
+  factory GlobalStats.fromJson(Map<String, dynamic> json) => GlobalStats(
+        gamesPlayed: (json['gamesPlayed'] as num?)?.toInt() ?? 0,
+        gamesWon: (json['gamesWon'] as num?)?.toInt() ?? 0,
+        totalFoodGained: (json['totalFoodGained'] as num?)?.toInt() ?? 0,
+        totalFoodStolen: (json['totalFoodStolen'] as num?)?.toInt() ?? 0,
+        totalCardsPlayed: (json['totalCardsPlayed'] as num?)?.toInt() ?? 0,
+        totalBanditCardsPlayed: (json['totalBanditCardsPlayed'] as num?)?.toInt() ?? 0,
+        totalRaccoonCardsPlayed: (json['totalRaccoonCardsPlayed'] as num?)?.toInt() ?? 0,
+        achievements: (json['achievements'] as List<dynamic>?)
+                ?.map((e) => AchievementProgress(
+                      id: e['id'] as String,
+                      progress: (e['progress'] as num?)?.toInt() ?? 0,
+                    ))
+                .toList() ??
+            [],
+      );
+
 
   String toJsonString()=>jsonEncode(toJson());
   factory GlobalStats.fromJsonString(String raw)=>GlobalStats.fromJson(jsonDecode(raw));

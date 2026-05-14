@@ -124,6 +124,7 @@ class _GameScreenState extends State<GameScreen>
     setState(() => _quitDialogOpen = true);
 
     final confirmed = await showDialog<bool>(
+    if (!context.mounted) return;
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
@@ -174,6 +175,7 @@ class _GameScreenState extends State<GameScreen>
   Future<void> _quitToHome() async {
     // Quit volontaire → la partie ne doit PAS être reprise
     await GameSaveService.clear();
+    if (!context.mounted) return;
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(
       context,
@@ -208,11 +210,13 @@ class _GameScreenState extends State<GameScreen>
     });
 
     await _flipController.forward(from: 0);
+    if (!context.mounted) return;
     _playCardFeedback(card, result);
 
     // ── Cas Bandit : sélection de cible nécessaire ────────────────────────
     if (result.needsTargetSelection) {
       await _handleBanditTargetSelection(card);
+      if (!context.mounted) return;
       return;
     }
 
@@ -230,6 +234,7 @@ class _GameScreenState extends State<GameScreen>
     final bool isRaccoonEffect =
         card?.type == CardType.raccoon && !result.trashDestroyed && foodCountBeforeDraw > 0;
     await _finishCardAnimation(extraDelay: isRaccoonEffect ? 600 : 0);
+    if (!context.mounted) return;
   }
 
   /// Affiche le popup de sélection de cible Bandit,
@@ -253,6 +258,7 @@ class _GameScreenState extends State<GameScreen>
     });
 
     final target = await completer.future;
+    if (!context.mounted) return;
 
     final resolution = _gameState.resolveBandit(target);
 
@@ -272,6 +278,7 @@ class _GameScreenState extends State<GameScreen>
     _autoSave();
 
     await _finishCardAnimation();
+    if (!context.mounted) return;
   }
 
   /// Animation de vol nourriture : de la cible vers le voleur.
@@ -295,7 +302,9 @@ class _GameScreenState extends State<GameScreen>
   Future<void> _finishCardAnimation({int extraDelay = 0}) async {
     final waitMs = 700 + extraDelay;
     await Future<void>.delayed(Duration(milliseconds: waitMs));
+    if (!context.mounted) return;
     await _slideController.forward(from: 0);
+    if (!context.mounted) return;
 
     if (!mounted) return;
 
@@ -310,10 +319,13 @@ class _GameScreenState extends State<GameScreen>
     if (_gameState.isGameOver && mounted && !_resultScreenOpened) {
       _resultScreenOpened = true;
       await ProgressionService.registerCompletedGame();
+      if (!context.mounted) return;
       await StatsService.registerGame(_gameState);
+      if (!context.mounted) return;
 
       // Fin de partie normale → supprime la sauvegarde
       await GameSaveService.clear();
+      if (!context.mounted) return;
       HapticService.trigger(HapticType.heavy);
       AudioService.instance.playSfx(SoundEffect.gameOver);
       unawaited(
@@ -653,7 +665,9 @@ class _GameScreenState extends State<GameScreen>
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         final confirmed = await _showQuitDialog();
+        if (!context.mounted) return;
         if (confirmed && mounted) await _quitToHome();
+        if (!context.mounted) return;
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF1B1525),
@@ -670,7 +684,9 @@ class _GameScreenState extends State<GameScreen>
                         child: TextButton(
                           onPressed: () async {
                             final confirmed = await _showQuitDialog();
+                            if (!context.mounted) return;
                             if (confirmed && mounted) await _quitToHome();
+                            if (!context.mounted) return;
                           },
                           child: const Text('Quitter'),
                         ),

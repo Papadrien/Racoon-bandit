@@ -45,9 +45,11 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _initializeLives() async {
     await _lifeSystemService.load();
+    if (!context.mounted) return;
 
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
       await _lifeSystemService.updateLivesFromTime();
+      if (!context.mounted) return;
       if (mounted) setState(() {});
     });
 
@@ -67,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _startGame() async {
     await _lifeSystemService.consumeLife();
+    if (!context.mounted) return;
     if (!mounted) return;
     setState(() {});
     Navigator.pushNamed(context, AppRoutes.lobby);
@@ -82,13 +85,17 @@ class _HomeScreenState extends State<HomeScreen>
     });
 
     await RewardedAdService.instance.showRewardedLifeAd(
+    if (!context.mounted) return;
       onRewardEarned: () async {
         await _lifeSystemService.restoreLife();
+        if (!context.mounted) return;
 
         if (!mounted) return;
 
         await _rewardAnimationController.forward();
+        if (!context.mounted) return;
         await _rewardAnimationController.reverse();
+        if (!context.mounted) return;
 
         setState(() {});
 
