@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/game/game_state.dart';
+import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/reward_unlock_dialog.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -24,6 +26,9 @@ class _ResultScreenState extends State<ResultScreen>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     )..forward();
+
+    // Afficher les popups de récompense après le rendu initial
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showRewardPopups());
   }
 
   @override
@@ -32,9 +37,29 @@ class _ResultScreenState extends State<ResultScreen>
     super.dispose();
   }
 
+  Future<void> _showRewardPopups() async {
+    if (!mounted) return;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is! ResultScreenArgs) return;
+    if (args.newUnlocks.isEmpty) return;
+
+    // Légère pause pour laisser l'écran de résultat s'afficher d'abord
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+
+    await RewardUnlockDialog.showAll(context, args.newUnlocks);
+  }
+
+  GameState _getGameState(BuildContext context) {
+    final args = ModalRoute.of(context)!.settings.arguments;
+    if (args is ResultScreenArgs) return args.gameState;
+    // Compatibilité ascendante : arguments directs (ancien chemin)
+    return args as GameState;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final gameState = ModalRoute.of(context)!.settings.arguments as GameState;
+    final gameState = _getGameState(context);
     final ranking = gameState.ranking;
     final winner = ranking.first;
 

@@ -8,6 +8,7 @@ import '../../core/game/game_state.dart';
 import '../../core/models/card_type.dart';
 import '../../core/models/game_card.dart';
 import '../../core/models/player_state.dart';
+import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/game_save_service.dart';
@@ -311,7 +312,7 @@ class _GameScreenState extends State<GameScreen>
       _resultScreenOpened = true;
       final navigator = Navigator.of(context);
 
-      await ProgressionService.registerCompletedGame();
+      final newUnlocks = await ProgressionService.registerCompletedGame();
       await StatsService.registerGame(_gameState);
 
       // Fin de partie normale → supprime la sauvegarde
@@ -324,7 +325,10 @@ class _GameScreenState extends State<GameScreen>
       unawaited(
         navigator.pushReplacementNamed(
           AppRoutes.result,
-          arguments: _gameState,
+          arguments: ResultScreenArgs(
+            gameState: _gameState,
+            newUnlocks: newUnlocks,
+          ),
         ),
       );
     }
@@ -517,6 +521,18 @@ class _GameScreenState extends State<GameScreen>
     });
   }
 
+  /// Construit le widget de dos de carte selon le dos actuellement équipé.
+  Widget _buildCardBackWidget() {
+    final id = ProgressionService.progression.selectedCardBackId;
+    final assetPath = AppAssets.cardBackAsset(id);
+
+    if (assetPath != null) {
+      return Image.asset(assetPath, fit: BoxFit.fill);
+    }
+    // Fallback couleur pour les dos sans image (classic, blue, green, gold…)
+    return ColoredBox(color: AppAssets.cardBackFallbackColor(id));
+  }
+
   Widget _buildDeckCard({required bool backgroundCard}) {
     final empty = _gameState.remainingCards == 0;
 
@@ -550,10 +566,7 @@ class _GameScreenState extends State<GameScreen>
                     children: [
                       Positioned.fill(
                         child: isBack || backgroundCard
-                            ? Image.asset(
-                                AppAssets.cardBackPurple,
-                                fit: BoxFit.fill,
-                              )
+                            ? _buildCardBackWidget()
                             : ColoredBox(
                                 color: _revealedCard?.color ?? Colors.deepPurple,
                               ),

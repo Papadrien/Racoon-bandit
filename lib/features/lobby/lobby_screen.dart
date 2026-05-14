@@ -1,15 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/game/game_state.dart';
 import '../../core/models/lobby_composition.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/models/player_state.dart';
+import '../../core/models/reward_unlock.dart';
 import '../../core/navigation/app_router.dart';
+import '../card_backs/card_back_selection_dialog.dart';
 import '../../core/services/lobby_service.dart';
 import '../../core/services/player_profiles_service.dart';
+import '../../core/services/progression_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/reward_unlock_dialog.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LobbyScreen
@@ -124,6 +129,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
     }
   }
 
+  // ── Card back selection ───────────────────────────────────────────────────
+
+  Future<void> _openCardBackSelection() async {
+    final changed = await CardBackSelectionDialog.show(context);
+    if (changed && mounted) setState(() {});
+  }
+
   // ── Start game ────────────────────────────────────────────────────────────
 
   bool get _canStart =>
@@ -155,6 +167,20 @@ class _LobbyScreenState extends State<LobbyScreen> {
       AppRoutes.game,
       arguments: GameState(players: players),
     );
+  }
+
+  // ── Debug ─────────────────────────────────────────────────────────────────
+
+  Future<void> _debugTriggerReward() async {
+    const fakeReward = RewardUnlock(
+      id: 'purple',
+      name: 'Purple',
+      type: RewardType.cardBack,
+      assetPath: 'assets/images/cards/card_back_purple.png',
+    );
+
+    if (!mounted) return;
+    await RewardUnlockDialog.showAll(context, [fakeReward]);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -234,7 +260,24 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 label: 'COMMENCER',
                 onPressed: _canStart ? _startGame : null,
               ),
+              const SizedBox(height: 12),
+              // ── Bouton dos de cartes ───────────────────────────────────
+              _CardBackButton(
+                selectedId: ProgressionService.progression.selectedCardBackId,
+                onTap: _openCardBackSelection,
+              ),
               const SizedBox(height: 16),
+              // ── Debug : test popup de récompense ──────────────────────
+              if (kDebugMode)
+                TextButton.icon(
+                  onPressed: _debugTriggerReward,
+                  icon: const Icon(Icons.bug_report, size: 16),
+                  label: const Text('Débloquer récompense test'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.textMuted,
+                    textStyle: const TextStyle(fontSize: 12),
+                  ),
+                ),
             ],
           ),
         ),
@@ -345,6 +388,45 @@ class _PlayerSlotCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _CardBackButton
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CardBackButton extends StatelessWidget {
+  final String selectedId;
+  final VoidCallback onTap;
+
+  const _CardBackButton({
+    required this.selectedId,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: const Icon(Icons.style_outlined, size: 18),
+        label: Text('Dos de cartes · $selectedId'.toUpperCase()),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.textMuted,
+          side: const BorderSide(color: Colors.white12, width: 1.5),
+          minimumSize: const Size(double.infinity, 48),
+          textStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),

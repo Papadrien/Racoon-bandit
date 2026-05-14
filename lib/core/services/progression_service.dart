@@ -1,7 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/app_assets.dart';
 import '../models/card_back_config.dart';
 import '../models/global_progression.dart';
+import '../models/reward_unlock.dart';
 
 class ProgressionService {
   ProgressionService._();
@@ -68,7 +70,7 @@ class ProgressionService {
     await prefs.setString(_storageKey, _progression.toJsonString());
   }
 
-  static Future<List<CardBackConfig>> registerCompletedGame() async {
+  static Future<List<RewardUnlock>> registerCompletedGame() async {
     final updatedGames = _progression.totalGamesPlayed + 1;
 
     _progression = _progression.copyWith(
@@ -80,6 +82,10 @@ class ProgressionService {
 
     return unlocked;
   }
+
+  /// Équipe immédiatement un dos de carte débloqué.
+  static Future<void> equipCardBack(String cardBackId) =>
+      selectCardBack(cardBackId);
 
   static Future<void> selectCardBack(String cardBackId) async {
     if (!_progression.unlockedCardBackIds.contains(cardBackId)) {
@@ -93,8 +99,8 @@ class ProgressionService {
     await save();
   }
 
-  static List<CardBackConfig> _checkUnlocks() {
-    final newUnlocks = <CardBackConfig>[];
+  static List<RewardUnlock> _checkUnlocks() {
+    final newUnlocks = <RewardUnlock>[];
     final unlockedIds = {..._progression.unlockedCardBackIds};
 
     for (final cardBack in cardBacks) {
@@ -103,7 +109,12 @@ class ProgressionService {
 
       if (shouldUnlock && !unlockedIds.contains(cardBack.id)) {
         unlockedIds.add(cardBack.id);
-        newUnlocks.add(cardBack);
+        newUnlocks.add(RewardUnlock(
+          id: cardBack.id,
+          name: cardBack.name,
+          type: RewardType.cardBack,
+          assetPath: AppAssets.cardBackAsset(cardBack.id),
+        ));
       }
     }
 
