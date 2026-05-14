@@ -1,5 +1,5 @@
-import '../core/game/game_state.dart';
-import '../core/models/reward_unlock.dart';
+import '../game/game_state.dart';
+import 'reward_unlock.dart';
 
 /// Arguments passés à [ResultScreen] via Navigator.
 class ResultScreenArgs {

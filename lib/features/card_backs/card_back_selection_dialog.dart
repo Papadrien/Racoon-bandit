@@ -157,8 +157,8 @@ class _CardBackTile extends StatelessWidget {
             width: isEquipped ? 2.5 : 1.5,
           ),
           color: isEquipped
-              ? AppTheme.primary.withOpacity(0.08)
-              : Colors.white.withOpacity(0.03),
+              ? AppTheme.primary.withValues(alpha: 0.08)
+              : Colors.white.withValues(alpha: 0.03),
         ),
         child: Column(
           children: [

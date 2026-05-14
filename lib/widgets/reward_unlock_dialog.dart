@@ -33,7 +33,7 @@ class RewardUnlockDialog extends StatefulWidget {
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.75),
+      barrierColor: Colors.black.withValues(alpha: 0.75),
       builder: (ctx) => RewardUnlockDialog(
         reward: reward,
         onTryNow: () => Navigator.of(ctx).pop(true),
@@ -104,12 +104,12 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                   color: const Color(0xFF1E1E2E),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: AppTheme.primary.withOpacity(0.4),
+                    color: AppTheme.primary.withValues(alpha: 0.4),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.25),
+                      color: AppTheme.primary.withValues(alpha: 0.25),
                       blurRadius: 40,
                       spreadRadius: 4,
                     ),
@@ -125,10 +125,10 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppTheme.accent.withOpacity(0.15),
+                          color: AppTheme.accent.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: AppTheme.accent.withOpacity(0.5),
+                            color: AppTheme.accent.withValues(alpha: 0.5),
                           ),
                         ),
                         child: const Text(
@@ -238,12 +238,12 @@ class _CardPreview extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppTheme.primary.withOpacity(0.6),
+          color: AppTheme.primary.withValues(alpha: 0.6),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.35),
+            color: AppTheme.primary.withValues(alpha: 0.35),
             blurRadius: 20,
             spreadRadius: 2,
           ),
@@ -254,7 +254,7 @@ class _CardPreview extends StatelessWidget {
           ? Image.asset(
               assetPath,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _Placeholder(reward: reward),
+              errorBuilder: (context, error, stackTrace) => _Placeholder(reward: reward),
             )
           : _Placeholder(reward: reward),
     );
@@ -270,7 +270,7 @@ class _Placeholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppTheme.primary.withOpacity(0.2),
+      color: AppTheme.primary.withValues(alpha: 0.2),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
