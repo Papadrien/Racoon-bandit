@@ -41,7 +41,6 @@ class _GameScreenState extends State<GameScreen>
   /// Cibles valides pour le Bandit, remplies avant d'afficher le popup.
   List<PlayerState> _banditTargets = [];
 
-
   late final AnimationController _flipController;
   late final AnimationController _slideController;
 
@@ -91,6 +90,10 @@ class _GameScreenState extends State<GameScreen>
     });
 
     _lastResolvedPlayerId = _gameState.currentPlayer.id;
+
+    // Snapshot nourriture AVANT résolution (pour l'animation raton)
+    final foodCountBeforeDraw = _gameState.currentPlayer.foodCount;
+
     final result = _gameState.drawCard();
     final card = _gameState.revealedCard;
 
@@ -107,14 +110,17 @@ class _GameScreenState extends State<GameScreen>
       return;
     }
 
-    // ── Cas normal ────────────────────────────────────────────────────────
-    _playOverlayAnimations(card, result);
+    // ── Animations overlay ────────────────────────────────────────────────
+    _playOverlayAnimations(card, result, foodCountBeforeDraw: foodCountBeforeDraw);
 
     setState(() {
       _effectText = result.message;
     });
 
-    await _finishCardAnimation();
+    // Délai adapté : raton nécessite plus de temps pour les particules
+    final bool isRaccoonEffect =
+        card?.type == CardType.raccoon && !result.trashDestroyed && foodCountBeforeDraw > 0;
+    await _finishCardAnimation(extraDelay: isRaccoonEffect ? 600 : 0);
   }
 
   /// Affiche le popup de sélection de cible Bandit,
@@ -127,23 +133,18 @@ class _GameScreenState extends State<GameScreen>
       _showingBanditOverlay = true;
     });
 
-    // Completer pour attendre le choix de l'utilisateur
     final completer = Completer<PlayerState>();
 
-    // Garde une référence locale pour usage dans le callback
-    // (setState peut reconstruire le widget entre-temps)
     void onChosen(PlayerState target) {
       if (!completer.isCompleted) completer.complete(target);
     }
 
-    // On déclenche rebuild avec le callback
     setState(() {
       _pendingBanditCallback = onChosen;
     });
 
     final target = await completer.future;
 
-    // Résolution logique
     final resolution = _gameState.resolveBandit(target);
 
     setState(() {
@@ -153,7 +154,6 @@ class _GameScreenState extends State<GameScreen>
       _effectText = resolution.message;
     });
 
-    // Animation vol : cible → joueur actif
     _playBanditStealAnimation(
       thiefId: _lastResolvedPlayerId,
       targetId: target.id,
@@ -180,8 +180,9 @@ class _GameScreenState extends State<GameScreen>
   }
 
   /// Slide-out + reset commun à tous les cas de fin de carte.
-  Future<void> _finishCardAnimation() async {
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+  Future<void> _finishCardAnimation({int extraDelay = 0}) async {
+    final waitMs = 700 + extraDelay;
+    await Future<void>.delayed(Duration(milliseconds: waitMs));
     await _slideController.forward(from: 0);
 
     if (!mounted) return;
@@ -210,16 +211,13 @@ class _GameScreenState extends State<GameScreen>
   /// Callback vers lequel pointe [BanditTargetOverlay] via setState.
   void Function(PlayerState)? _pendingBanditCallback;
 
-
-
   void _addOverlayAnimation(GameplayOverlayAnimation animation) {
     setState(() {
       _overlayAnimations.add(animation);
     });
 
-    Future<void>.delayed(animation.duration, () {
+    Future<void>.delayed(animation.duration + animation.delay, () {
       if (!mounted) return;
-
       setState(() {
         _overlayAnimations.removeWhere((item) => item.id == animation.id);
       });
@@ -241,7 +239,11 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  void _playOverlayAnimations(GameCard? card, CardResolution result) {
+  void _playOverlayAnimations(
+    GameCard? card,
+    CardResolution result, {
+    int foodCountBeforeDraw = 0,
+  }) {
     if (card == null) return;
 
     final start = _widgetCenter(_deckKey);
@@ -250,17 +252,34 @@ class _GameScreenState extends State<GameScreen>
 
     if (targetKey == null) return;
 
-    final end = _widgetCenter(targetKey);
+    final playerCenter = _widgetCenter(targetKey);
 
     switch (card.type) {
       case CardType.food:
-        _overlayCoordinator.playFoodGain(start: start, end: end);
+        _overlayCoordinator.playFoodGain(start: start, end: playerCenter);
         break;
+
       case CardType.trash:
-        _overlayCoordinator.playFridgeDeposit(start: start, end: end);
+        _overlayCoordinator.playFridgeDeposit(start: start, end: playerCenter);
         break;
+
       case CardType.raccoon:
+        // Raton bloqué par frigo → pas d'animation nourriture
+        if (result.trashDestroyed) break;
+
+        // Raton mange → aspirer la nourriture vers la carte
+        if (foodCountBeforeDraw > 0) {
+          _overlayCoordinator.playRaccoonDevour(
+            playerCenter: playerCenter,
+            cardCenter: start, // la carte est au centre du deck
+            foodCount: foodCountBeforeDraw,
+          );
+        }
+        break;
+
       case CardType.bandit:
+        // Bandit à cible unique : géré dans _handleBanditTargetSelection
+        // Bandit sans cible valide : rien
         break;
     }
   }
@@ -445,7 +464,9 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _buildCenterArea() {
-    final showNextCard = _gameState.remainingCards > 1;
+    // Carte du dessous visible uniquement si ≥ 2 cartes restantes
+    // ET qu'on n'est pas en train d'animer la dernière carte.
+    final showBackgroundCard = _gameState.remainingCards > 1;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -466,11 +487,13 @@ class _GameScreenState extends State<GameScreen>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              if (showNextCard)
+              // Carte fantôme dessous : visible dès 2 cartes, disparaît proprement
+              if (showBackgroundCard)
                 Transform.translate(
-                  offset: const Offset(0, 8),
+                  offset: const Offset(0, 6),
                   child: Opacity(
-                    opacity: 0.45,
+                    // Opacité plus forte pour mieux simuler une vraie pile
+                    opacity: 0.65,
                     child: _buildDeckCard(backgroundCard: true),
                   ),
                 ),
@@ -479,9 +502,15 @@ class _GameScreenState extends State<GameScreen>
           ),
         ),
         const SizedBox(height: 16),
-        Text(
-          '${_gameState.remainingCards} cartes',
-          style: const TextStyle(color: Colors.white70),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          child: Text(
+            _gameState.remainingCards == 0
+                ? ''
+                : '${_gameState.remainingCards} carte${_gameState.remainingCards > 1 ? 's' : ''}',
+            key: ValueKey(_gameState.remainingCards),
+            style: const TextStyle(color: Colors.white70),
+          ),
         ),
         const SizedBox(height: 12),
         SizedBox(
