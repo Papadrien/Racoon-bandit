@@ -1,5 +1,6 @@
 import '../models/card_type.dart';
 import '../models/game_card.dart';
+import '../models/game_session_stats.dart';
 import '../models/player_state.dart';
 import '../models/saved_game.dart';
 import 'deck.dart';
@@ -29,6 +30,8 @@ class GameState {
   List<GameCard> remainingDeck;
   GameCard? revealedCard;
   bool isGameOver;
+  bool _gameOverHandled = false;
+  final GameSessionStats sessionStats = GameSessionStats();
 
   /// Index du joueur actif au moment où la carte a été tirée.
   /// Conservé pour que la résolution différée (Bandit) utilise
@@ -159,7 +162,7 @@ class GameState {
   /// encore appliquée. Appeler [resolveBandit] une fois la cible connue.
   CardResolution drawCard() {
     if (remainingDeck.isEmpty) {
-      isGameOver = true;
+      _markGameOver();
       return const CardResolution(message: 'Fin de partie');
     }
 
@@ -191,9 +194,10 @@ class GameState {
 
     player.foodCount++;
     target.foodCount--;
+    sessionStats.foodStolen++;
 
     if (remainingDeck.isEmpty) {
-      isGameOver = true;
+      _markGameOver();
     } else {
       _advance();
     }
@@ -208,11 +212,13 @@ class GameState {
   // ─── Application effets ───────────────────────────────────────────────────
 
   CardResolution _applyEffect(GameCard card) {
+    sessionStats.cardsPlayed++;
     final player = players[currentPlayerIndex];
 
     switch (card.type) {
       case CardType.food:
         player.foodCount++;
+        sessionStats.foodGained++;
         return CardResolution(message: '${player.name} gagne 1 nourriture');
 
       case CardType.trash:
@@ -229,6 +235,8 @@ class GameState {
           );
         }
 
+        sessionStats.raccoonCardsPlayed++;
+        sessionStats.foodStolen += player.foodCount;
         player.foodCount = 0;
         return CardResolution(
           message: 'Le raton mange toute la nourriture de ${player.name}',
@@ -237,6 +245,7 @@ class GameState {
         );
 
       case CardType.bandit:
+        sessionStats.banditCardsPlayed++;
         final validTargets = banditValidTargets();
 
         if (validTargets.isEmpty) {
@@ -250,6 +259,7 @@ class GameState {
           final target = validTargets.first;
           player.foodCount++;
           target.foodCount--;
+          sessionStats.foodStolen++;
           return CardResolution(
             message: '${player.name} vole 1 nourriture à ${target.name}',
             targetPlayerId: target.id,
@@ -267,6 +277,12 @@ class GameState {
 
   void _advance() {
     currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+  }
+
+  void _markGameOver() {
+    if (_gameOverHandled) return;
+    _gameOverHandled = true;
+    isGameOver = true;
   }
 
   List<PlayerState> get ranking {

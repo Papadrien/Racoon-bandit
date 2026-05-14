@@ -14,6 +14,7 @@ import '../../core/services/game_save_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/services/wakelock_service.dart';
+import '../../core/services/stats_service.dart';
 import '../../widgets/player_avatar.dart';
 import 'widgets/bandit_target_overlay.dart';
 import 'widgets/gameplay_overlay_animation_manager.dart';
@@ -49,6 +50,7 @@ class _GameScreenState extends State<GameScreen>
 
   late final AnimationController _flipController;
   late final AnimationController _slideController;
+  bool _resultScreenOpened = false;
 
   static const double _cardWidth = 180;
   static const double _cardHeight = 260;
@@ -305,8 +307,10 @@ class _GameScreenState extends State<GameScreen>
     _flipController.reset();
     _slideController.reset();
 
-    if (_gameState.isGameOver && mounted) {
+    if (_gameState.isGameOver && mounted && !_resultScreenOpened) {
+      _resultScreenOpened = true;
       await ProgressionService.registerCompletedGame();
+      await StatsService.registerGame(_gameState);
 
       // Fin de partie normale → supprime la sauvegarde
       await GameSaveService.clear();
