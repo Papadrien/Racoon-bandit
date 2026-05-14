@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/navigation/app_router.dart';
+import '../../core/services/game_save_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/lives_indicator.dart';
@@ -21,6 +22,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _timer;
   bool _isLoading = true;
 
+  // La sauvegarde est lue depuis GameSaveService (déjà chargé dans main).
+  bool get _hasSavedGame => GameSaveService.hasSavedGame;
+
   @override
   void initState() {
     super.initState();
@@ -32,10 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
       await _lifeSystemService.updateLivesFromTime();
-
-      if (mounted) {
-        setState(() {});
-      }
+      if (mounted) setState(() {});
     });
 
     if (mounted) {
@@ -53,14 +54,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _startGame() async {
     await _lifeSystemService.consumeLife();
-
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     setState(() {});
-
     Navigator.pushNamed(context, AppRoutes.lobby);
+  }
+
+  /// Reprend la partie sauvegardée sans repasser par le lobby.
+  /// Aucun argument passé : GameScreen détecte GameSaveService.current.
+  void _resumeGame() {
+    Navigator.pushNamed(context, AppRoutes.game);
   }
 
   @override
@@ -88,19 +90,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         icon: const Icon(Icons.workspace_premium),
                         color: AppTheme.accent,
                         tooltip: 'Premium',
-                        onPressed: () => Navigator.pushNamed(
-                          context,
-                          AppRoutes.premium,
-                        ),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.premium),
                       ),
                       IconButton(
                         icon: const Icon(Icons.settings),
                         color: AppTheme.textMuted,
                         tooltip: 'Paramètres',
-                        onPressed: () => Navigator.pushNamed(
-                          context,
-                          AppRoutes.settings,
-                        ),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.settings),
                       ),
                     ],
                   ),
@@ -109,6 +107,13 @@ class _HomeScreenState extends State<HomeScreen> {
               const Spacer(),
               const _Logo(),
               const Spacer(),
+
+              // ── Bouton Reprendre (visible uniquement si sauvegarde présente) ──
+              if (_hasSavedGame) ...[
+                _ResumeButton(onPressed: _resumeGame),
+                const SizedBox(height: 12),
+              ],
+
               PrimaryButton(
                 label: _lifeSystemService.currentLives > 0
                     ? 'JOUER'
@@ -125,6 +130,36 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+// ── Bouton Reprendre ────────────────────────────────────────────────────────
+
+class _ResumeButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _ResumeButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.play_arrow_rounded),
+        label: const Text('Reprendre la partie'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.accent,
+          side: const BorderSide(color: AppTheme.accent),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Logo ────────────────────────────────────────────────────────────────────
 
 class _Logo extends StatelessWidget {
   const _Logo();

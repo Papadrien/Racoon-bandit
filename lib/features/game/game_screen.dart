@@ -10,6 +10,7 @@ import '../../core/models/game_card.dart';
 import '../../core/models/player_state.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/services/audio_service.dart';
+import '../../core/services/game_save_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../widgets/player_avatar.dart';
 import 'widgets/bandit_target_overlay.dart';
@@ -40,6 +41,9 @@ class _GameScreenState extends State<GameScreen>
 
   /// Cibles valides pour le Bandit, remplies avant d'afficher le popup.
   List<PlayerState> _banditTargets = [];
+
+  /// Garde contre double ouverture du popup de quitter.
+  bool _quitDialogOpen = false;
 
   late final AnimationController _flipController;
   late final AnimationController _slideController;
@@ -73,10 +77,105 @@ class _GameScreenState extends State<GameScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      _gameState = ModalRoute.of(context)!.settings.arguments as GameState;
+      final args = ModalRoute.of(context)!.settings.arguments;
+      if (args is GameState) {
+        // Nouvelle partie passée depuis le lobby
+        _gameState = args;
+      } else {
+        // Reprise depuis sauvegarde (navigation sans argument)
+        final save = GameSaveService.current;
+        if (save != null) {
+          _gameState = GameState.fromSave(save);
+        } else {
+          // Fallback de sécurité : ne devrait pas arriver
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.home,
+            (route) => false,
+          );
+          return;
+        }
+      }
       _initialized = true;
     }
   }
+
+  // ── Sauvegarde automatique ───────────────────────────────────────────────
+
+  /// Persiste l'état courant après chaque action importante.
+  /// Fire-and-forget : ne bloque pas l'UI.
+  void _autoSave() {
+    if (_gameState.isGameOver) return;
+    unawaited(GameSaveService.save(_gameState.toSave()));
+  }
+
+  // ── Quit confirmation ───────────────────────────────────────────────────
+
+  Future<bool> _showQuitDialog() async {
+    if (_quitDialogOpen) return false;
+
+    setState(() => _quitDialogOpen = true);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF2A1F3D),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(
+          'Quitter la partie ?',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'La partie en cours sera perdue.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: Colors.white54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.redAccent,
+            ),
+            child: const Text(
+              'Quitter',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return false;
+    setState(() => _quitDialogOpen = false);
+
+    return confirmed ?? false;
+  }
+
+  /// Quit volontaire : supprime la sauvegarde, retourne à l'accueil.
+  Future<void> _quitToHome() async {
+    // Quit volontaire → la partie ne doit PAS être reprise
+    await GameSaveService.clear();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.home,
+      (route) => false,
+    );
+  }
+
+  // ── Game logic ──────────────────────────────────────────────────────────
 
   Future<void> _drawCard() async {
     if (_isAnimating || _showingBanditOverlay || _gameState.isGameOver) return;
@@ -116,6 +215,9 @@ class _GameScreenState extends State<GameScreen>
     setState(() {
       _effectText = result.message;
     });
+
+    // Sauvegarde après résolution carte (hors Bandit multi-cibles)
+    _autoSave();
 
     // Délai adapté : raton nécessite plus de temps pour les particules
     final bool isRaccoonEffect =
@@ -159,6 +261,9 @@ class _GameScreenState extends State<GameScreen>
       targetId: target.id,
     );
 
+    // Sauvegarde après résolution Bandit
+    _autoSave();
+
     await _finishCardAnimation();
   }
 
@@ -196,6 +301,8 @@ class _GameScreenState extends State<GameScreen>
     _slideController.reset();
 
     if (_gameState.isGameOver && mounted) {
+      // Fin de partie normale → supprime la sauvegarde
+      await GameSaveService.clear();
       HapticService.trigger(HapticType.heavy);
       AudioService.instance.playSfx(SoundEffect.gameOver);
       unawaited(
@@ -271,15 +378,13 @@ class _GameScreenState extends State<GameScreen>
         if (foodCountBeforeDraw > 0) {
           _overlayCoordinator.playRaccoonDevour(
             playerCenter: playerCenter,
-            cardCenter: start, // la carte est au centre du deck
+            cardCenter: start,
             foodCount: foodCountBeforeDraw,
           );
         }
         break;
 
       case CardType.bandit:
-        // Bandit à cible unique : géré dans _handleBanditTargetSelection
-        // Bandit sans cible valide : rien
         break;
     }
   }
@@ -308,6 +413,8 @@ class _GameScreenState extends State<GameScreen>
         break;
     }
   }
+
+  // ── UI builders ─────────────────────────────────────────────────────────
 
   Widget _buildPlayerCard(int index) {
     final player = _gameState.players[index];
@@ -464,8 +571,6 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _buildCenterArea() {
-    // Carte du dessous visible uniquement si ≥ 2 cartes restantes
-    // ET qu'on n'est pas en train d'animer la dernière carte.
     final showBackgroundCard = _gameState.remainingCards > 1;
 
     return Column(
@@ -487,12 +592,10 @@ class _GameScreenState extends State<GameScreen>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Carte fantôme dessous : visible dès 2 cartes, disparaît proprement
               if (showBackgroundCard)
                 Transform.translate(
                   offset: const Offset(0, 6),
                   child: Opacity(
-                    // Opacité plus forte pour mieux simuler une vraie pile
                     opacity: 0.65,
                     child: _buildDeckCard(backgroundCard: true),
                   ),
@@ -534,44 +637,50 @@ class _GameScreenState extends State<GameScreen>
       return const Scaffold(body: SizedBox.shrink());
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF1B1525),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: 0,
-                      child: TextButton(
-                        onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          AppRoutes.home,
-                          (route) => false,
-                        ),
-                        child: const Text('Accueil'),
-                      ),
-                    ),
-                    ..._buildPlayerPositions(),
-                    Center(child: _buildCenterArea()),
-                  ],
-                ),
-              ),
-            ),
-            GameplayOverlayAnimationManager(animations: _overlayAnimations),
-
-            // ── Popup Bandit : sélection de cible ─────────────────────────
-            if (_showingBanditOverlay && _pendingBanditCallback != null)
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final confirmed = await _showQuitDialog();
+        if (confirmed && mounted) await _quitToHome();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF1B1525),
+        body: SafeArea(
+          child: Stack(
+            children: [
               Positioned.fill(
-                child: BanditTargetOverlay(
-                  targets: _banditTargets,
-                  onTargetSelected: _pendingBanditCallback!,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 0,
+                        child: TextButton(
+                          onPressed: () async {
+                            final confirmed = await _showQuitDialog();
+                            if (confirmed && mounted) await _quitToHome();
+                          },
+                          child: const Text('Quitter'),
+                        ),
+                      ),
+                      ..._buildPlayerPositions(),
+                      Center(child: _buildCenterArea()),
+                    ],
+                  ),
                 ),
               ),
-          ],
+              GameplayOverlayAnimationManager(animations: _overlayAnimations),
+
+              if (_showingBanditOverlay && _pendingBanditCallback != null)
+                Positioned.fill(
+                  child: BanditTargetOverlay(
+                    targets: _banditTargets,
+                    onTargetSelected: _pendingBanditCallback!,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

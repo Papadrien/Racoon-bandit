@@ -1,6 +1,7 @@
 import '../models/card_type.dart';
 import '../models/game_card.dart';
 import '../models/player_state.dart';
+import '../models/saved_game.dart';
 import 'deck.dart';
 
 class CardResolution {
@@ -29,17 +30,110 @@ class GameState {
   GameCard? revealedCard;
   bool isGameOver;
 
-
   /// Index du joueur actif au moment où la carte a été tirée.
   /// Conservé pour que la résolution différée (Bandit) utilise
   /// le bon joueur même si currentPlayerIndex a avancé.
   int? _resolvedPlayerIndex;
+
+  // ── Constructeurs ─────────────────────────────────────────────────────────
 
   GameState({required this.players})
       : currentPlayerIndex = 0,
         remainingDeck = buildShuffledDeck(),
         revealedCard = null,
         isGameOver = false;
+
+  /// Constructeur de restauration depuis une [SavedGame].
+  ///
+  /// Reconstruit le deck depuis les types sérialisés.
+  /// Les cartes restaurées ont des IDs reconstitués (séquentiels par type) :
+  /// IDs stables entre sessions n'est pas nécessaire pour le gameplay.
+  GameState.fromSave(SavedGame save)
+      : currentPlayerIndex = save.currentPlayerIndex,
+        revealedCard = null,
+        isGameOver = false,
+        players = save.players
+            .map(
+              (s) => PlayerState(
+                id: s.id,
+                name: s.name,
+                profileId: s.profileId,
+                emoji: s.emoji,
+                colorValue: s.colorValue,
+                foodCount: s.foodCount,
+                trashCount: s.trashCount,
+              ),
+            )
+            .toList(),
+        remainingDeck = _rebuildDeck(save.remainingDeckTypes);
+
+  /// Reconstruit une liste de [GameCard] depuis les noms de types sérialisés.
+  static List<GameCard> _rebuildDeck(List<String> typeNames) {
+    int id = 0;
+    return typeNames.map((name) {
+      final type = CardType.values.firstWhere(
+        (t) => t.name == name,
+        orElse: () => CardType.food, // fallback robuste
+      );
+      return GameCard(
+        id: id++,
+        type: type,
+        name: _cardName(type),
+        description: _cardDescription(type),
+      );
+    }).toList();
+  }
+
+  static String _cardName(CardType type) {
+    switch (type) {
+      case CardType.food:
+        return 'Nourriture';
+      case CardType.raccoon:
+        return 'Raton';
+      case CardType.trash:
+        return 'Poubelle';
+      case CardType.bandit:
+        return 'Bandit';
+    }
+  }
+
+  static String _cardDescription(CardType type) {
+    switch (type) {
+      case CardType.food:
+        return '+1 nourriture';
+      case CardType.raccoon:
+        return 'Mange toute la nourriture';
+      case CardType.trash:
+        return 'Protège votre nourriture';
+      case CardType.bandit:
+        return 'Vole un autre joueur';
+    }
+  }
+
+  // ── Sérialisation ─────────────────────────────────────────────────────────
+
+  /// Crée un [SavedGame] snapshot de l'état courant.
+  SavedGame toSave() => SavedGame(
+        version: SavedGame.schemaVersion,
+        savedAt: DateTime.now(),
+        players: players
+            .map(
+              (p) => SavedPlayerState(
+                id: p.id,
+                name: p.name,
+                profileId: p.profileId,
+                emoji: p.emoji,
+                colorValue: p.colorValue,
+                foodCount: p.foodCount,
+                trashCount: p.trashCount,
+              ),
+            )
+            .toList(),
+        currentPlayerIndex: currentPlayerIndex,
+        remainingDeckTypes: remainingDeck.map((c) => c.type.name).toList(),
+      );
+
+  // ── Accesseurs ────────────────────────────────────────────────────────────
 
   PlayerState get currentPlayer => players[currentPlayerIndex];
 
