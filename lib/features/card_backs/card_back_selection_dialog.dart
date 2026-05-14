@@ -7,7 +7,8 @@ import '../../core/theme/app_theme.dart';
 
 /// Bottom sheet de sélection du dos de carte équipé.
 ///
-/// Affiche uniquement les dos débloqués.
+/// Affiche tous les dos : débloqués (sélectionnables) et verrouillés
+/// (indicateur de progression).
 /// Appeler via [CardBackSelectionDialog.show].
 class CardBackSelectionDialog extends StatefulWidget {
   const CardBackSelectionDialog({super.key});
@@ -37,13 +38,6 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
     _selectedId = ProgressionService.progression.selectedCardBackId;
   }
 
-  List<CardBackConfig> get _unlockedBacks {
-    final unlockedIds = ProgressionService.progression.unlockedCardBackIds;
-    return ProgressionService.cardBacks
-        .where((cb) => unlockedIds.contains(cb.id))
-        .toList();
-  }
-
   Future<void> _equip(String cardBackId) async {
     if (_selectedId == cardBackId) return;
     await ProgressionService.equipCardBack(cardBackId);
@@ -54,12 +48,13 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final backs = _unlockedBacks;
+    final unlockedIds = ProgressionService.progression.unlockedCardBackIds;
+    final allBacks = ProgressionService.cardBacks;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.55,
+      initialChildSize: 0.60,
       minChildSize: 0.35,
-      maxChildSize: 0.85,
+      maxChildSize: 0.90,
       builder: (_, scrollController) {
         return Container(
           decoration: const BoxDecoration(
@@ -91,31 +86,28 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
               const SizedBox(height: 8),
               const Divider(color: Colors.white12),
               Expanded(
-                child: backs.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Aucun dos débloqué.',
-                          style: TextStyle(color: AppTheme.textMuted),
-                        ),
-                      )
-                    : GridView.builder(
-                        controller: scrollController,
-                        padding: const EdgeInsets.all(16),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.72,
-                        ),
-                        itemCount: backs.length,
-                        itemBuilder: (_, i) =>
-                            _CardBackTile(
-                          config: backs[i],
-                          isEquipped: backs[i].id == _selectedId,
-                          onTap: () => _equip(backs[i].id),
-                        ),
-                      ),
+                child: GridView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.72,
+                  ),
+                  itemCount: allBacks.length,
+                  itemBuilder: (_, i) {
+                    final cb = allBacks[i];
+                    final isUnlocked = unlockedIds.contains(cb.id);
+                    return _CardBackTile(
+                      config: cb,
+                      isUnlocked: isUnlocked,
+                      isEquipped: cb.id == _selectedId,
+                      onTap: isUnlocked ? () => _equip(cb.id) : null,
+                    );
+                  },
+                ),
               ),
               const SizedBox(height: 16),
             ],
@@ -127,16 +119,16 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _CardBackTile
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _CardBackTile extends StatelessWidget {
   final CardBackConfig config;
+  final bool isUnlocked;
   final bool isEquipped;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _CardBackTile({
     required this.config,
+    required this.isUnlocked,
     required this.isEquipped,
     required this.onTap,
   });
@@ -153,7 +145,11 @@ class _CardBackTile extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isEquipped ? AppTheme.primary : Colors.white12,
+            color: isEquipped
+                ? AppTheme.primary
+                : isUnlocked
+                    ? Colors.white24
+                    : Colors.white10,
             width: isEquipped ? 2.5 : 1.5,
           ),
           color: isEquipped
@@ -166,18 +162,60 @@ class _CardBackTile extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: assetPath != null
-                      ? Image.asset(
-                          assetPath,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        )
-                      : Container(
-                          width: double.infinity,
-                          color: fallbackColor,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: ColorFiltered(
+                        colorFilter: isUnlocked
+                            ? const ColorFilter.mode(
+                                Colors.transparent, BlendMode.multiply)
+                            : const ColorFilter.matrix([
+                                0.2126, 0.7152, 0.0722, 0, 0, //
+                                0.2126, 0.7152, 0.0722, 0, 0, //
+                                0.2126, 0.7152, 0.0722, 0, 0, //
+                                0, 0, 0, 0.4, 0, //
+                              ]),
+                        child: assetPath != null
+                            ? Image.asset(
+                                assetPath,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                              )
+                            : Container(
+                                width: double.infinity,
+                                color: fallbackColor
+                                    .withValues(alpha: isUnlocked ? 1.0 : 0.4),
+                              ),
+                      ),
+                    ),
+                    if (!isUnlocked)
+                      Positioned.fill(
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.lock_rounded,
+                                color: Colors.white70,
+                                size: 28,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _unlockHint(config),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -191,7 +229,11 @@ class _CardBackTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isEquipped ? Colors.white : AppTheme.textMuted,
+                      color: isEquipped
+                          ? Colors.white
+                          : isUnlocked
+                              ? AppTheme.textMuted
+                              : Colors.white38,
                     ),
                   ),
                   if (isEquipped) ...[
@@ -221,5 +263,10 @@ class _CardBackTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _unlockHint(CardBackConfig config) {
+    if (config.unlockedByDefault || config.requiredGames == 0) return '';
+    return '${config.requiredGames} partie${config.requiredGames > 1 ? 's' : ''}';
   }
 }

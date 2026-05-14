@@ -24,7 +24,6 @@ class StatsService {
 
   static Future<void> registerGame(GameState state) async {
     current.gamesPlayed++;
-    current.gamesWon++;
     current.totalCardsPlayed += state.sessionStats.cardsPlayed;
     current.totalFoodGained += state.sessionStats.foodGained;
     current.totalFoodStolen += state.sessionStats.foodStolen;

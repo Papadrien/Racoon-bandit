@@ -43,7 +43,8 @@ class GlobalProgression {
   String toJsonString() => jsonEncode(toMap());
 
   factory GlobalProgression.fromJsonString(String source) {
-    return GlobalProgression.fromMap(jsonDecode(source) as Map<String, dynamic>);
+    return GlobalProgression.fromMap(
+        jsonDecode(source) as Map<String, dynamic>);
   }
 
   GlobalProgression copyWith({

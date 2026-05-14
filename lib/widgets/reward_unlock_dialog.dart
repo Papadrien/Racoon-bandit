@@ -217,7 +217,11 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
   String _descriptionFor(RewardUnlock reward) {
     switch (reward.type) {
       case RewardType.cardBack:
-        return 'Un nouveau dos de carte débloqué.\nPersonnalisez votre deck dès maintenant !';
+        final hint = reward.unlockHint;
+        if (hint != null && hint.isNotEmpty) {
+          return '$hint\nPersonnalisez votre deck dès maintenant !';
+        }
+        return 'Nouveau dos de carte débloqué !\nPersonnalisez votre deck dès maintenant !';
     }
   }
 }
