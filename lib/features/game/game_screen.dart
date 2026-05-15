@@ -34,8 +34,12 @@ class _GameScreenState extends State<GameScreen>
   bool _isAnimating = false;
   String _effectText = '';
   GameCard? _revealedCard;
-  final List<GameplayOverlayAnimation> _overlayAnimations = [];
+
+  /// ValueNotifier isolé : les animations overlay ne déclenchent JAMAIS
+  /// un rebuild de GameScreen.
+  late final ValueNotifier<List<GameplayOverlayAnimation>> _animationsNotifier;
   late final GameplayOverlayCoordinator _overlayCoordinator;
+
   final GlobalKey _deckKey = GlobalKey();
   final Map<int, GlobalKey> _playerKeys = {};
   int? _lastResolvedPlayerId;
@@ -64,7 +68,8 @@ class _GameScreenState extends State<GameScreen>
       vsync: this,
       duration: const Duration(milliseconds: 350),
     );
-    _overlayCoordinator = GameplayOverlayCoordinator(_addOverlayAnimation);
+    _animationsNotifier = ValueNotifier<List<GameplayOverlayAnimation>>([]);
+    _overlayCoordinator = GameplayOverlayCoordinator(_animationsNotifier);
     _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 550),
@@ -76,6 +81,7 @@ class _GameScreenState extends State<GameScreen>
     unawaited(WakelockService.disable());
     _flipController.dispose();
     _slideController.dispose();
+    _animationsNotifier.dispose();
     super.dispose();
   }
 
@@ -218,6 +224,7 @@ class _GameScreenState extends State<GameScreen>
     }
 
     // ── Animations overlay ────────────────────────────────────────────────
+    // NOTE: _playOverlayAnimations ne déclenche plus aucun setState de GameScreen.
     _playOverlayAnimations(card, result, foodCountBeforeDraw: foodCountBeforeDraw);
 
     setState(() {
@@ -336,19 +343,6 @@ class _GameScreenState extends State<GameScreen>
 
   /// Callback vers lequel pointe [BanditTargetOverlay] via setState.
   void Function(PlayerState)? _pendingBanditCallback;
-
-  void _addOverlayAnimation(GameplayOverlayAnimation animation) {
-    setState(() {
-      _overlayAnimations.add(animation);
-    });
-
-    Future<void>.delayed(animation.duration + animation.delay, () {
-      if (!mounted) return;
-      setState(() {
-        _overlayAnimations.removeWhere((item) => item.id == animation.id);
-      });
-    });
-  }
 
   Offset _widgetCenter(GlobalKey key) {
     final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
@@ -489,19 +483,20 @@ class _GameScreenState extends State<GameScreen>
   }
 
   List<Widget> _buildPlayerPositions() {
+    // top: 52 laisse de la place à la barre de contrôles gameplay (≈48 px)
     const positions = {
       2: [
-        {'top': 12.0, 'left': 12.0},
-        {'top': 12.0, 'right': 12.0},
+        {'top': 52.0, 'left': 12.0},
+        {'top': 52.0, 'right': 12.0},
       ],
       3: [
-        {'top': 12.0, 'left': 12.0},
-        {'top': 12.0, 'right': 12.0},
+        {'top': 52.0, 'left': 12.0},
+        {'top': 52.0, 'right': 12.0},
         {'bottom': 12.0, 'right': 12.0},
       ],
       4: [
-        {'top': 12.0, 'left': 12.0},
-        {'top': 12.0, 'right': 12.0},
+        {'top': 52.0, 'left': 12.0},
+        {'top': 52.0, 'right': 12.0},
         {'bottom': 12.0, 'left': 12.0},
         {'bottom': 12.0, 'right': 12.0},
       ],
@@ -659,6 +654,39 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
+  /// Barre d'actions gameplay stable : coin supérieur, hors zones joueurs.
+  /// Prête à accueillir de futurs boutons (pause, aide, etc.).
+  Widget _buildGameplayControlsBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton.icon(
+            onPressed: _isAnimating || _showingBanditOverlay
+                ? null
+                : () async {
+                    final confirmed = await _showQuitDialog();
+                    if (confirmed && mounted) await _quitToHome();
+                  },
+            icon: const Icon(Icons.exit_to_app, size: 18),
+            label: const Text('Quitter'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white70,
+              disabledForegroundColor: Colors.white24,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: const BorderSide(color: Colors.white24),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_initialized) {
@@ -677,28 +705,32 @@ class _GameScreenState extends State<GameScreen>
         body: SafeArea(
           child: Stack(
             children: [
+              // ── Fond + gameplay — ne rebuild QUE sur setState explicite ──
               Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Stack(
                     children: [
-                      Positioned(
-                        top: 0,
-                        child: TextButton(
-                          onPressed: () async {
-                            final confirmed = await _showQuitDialog();
-                                                        if (confirmed && mounted) await _quitToHome();
-                                                      },
-                          child: const Text('Quitter'),
-                        ),
-                      ),
                       ..._buildPlayerPositions(),
                       Center(child: _buildCenterArea()),
                     ],
                   ),
                 ),
               ),
-              GameplayOverlayAnimationManager(animations: _overlayAnimations),
+
+              // ── Barre de contrôles gameplay — overlay stable hors zones joueurs ──
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: _buildGameplayControlsBar(),
+              ),
+
+              // ── Overlay particules — isolé via ValueNotifier ──────────────
+              // Aucun rebuild de GameScreen déclenché par les animations.
+              GameplayOverlayAnimationManager(
+                animationsNotifier: _animationsNotifier,
+              ),
 
               if (_showingBanditOverlay && _pendingBanditCallback != null)
                 Positioned.fill(

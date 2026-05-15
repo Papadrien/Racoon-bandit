@@ -42,36 +42,34 @@ class GameplayOverlayAnimation {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Manager (stateful widget wrappeur)
+// Manager — écoute un ValueNotifier<List> pour éviter tout setState externe
 // ─────────────────────────────────────────────────────────────────────────────
 
-class GameplayOverlayAnimationManager extends StatefulWidget {
+class GameplayOverlayAnimationManager extends StatelessWidget {
   const GameplayOverlayAnimationManager({
     super.key,
-    required this.animations,
+    required this.animationsNotifier,
   });
 
-  final List<GameplayOverlayAnimation> animations;
+  final ValueNotifier<List<GameplayOverlayAnimation>> animationsNotifier;
 
-  @override
-  State<GameplayOverlayAnimationManager> createState() =>
-      _GameplayOverlayAnimationManagerState();
-}
-
-class _GameplayOverlayAnimationManagerState
-    extends State<GameplayOverlayAnimationManager> {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: Stack(
-        children: widget.animations
-            .map(
-              (animation) => _AnimatedOverlayItem(
-                key: ValueKey(animation.id),
-                animation: animation,
-              ),
-            )
-            .toList(),
+      child: ValueListenableBuilder<List<GameplayOverlayAnimation>>(
+        valueListenable: animationsNotifier,
+        builder: (context, animations, _) {
+          return Stack(
+            children: animations
+                .map(
+                  (animation) => _AnimatedOverlayItem(
+                    key: ValueKey(animation.id),
+                    animation: animation,
+                  ),
+                )
+                .toList(),
+          );
+        },
       ),
     );
   }
@@ -112,6 +110,7 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
     } else {
       Future<void>.delayed(widget.animation.delay, () {
         if (!mounted) return;
+        // setState local à _AnimatedOverlayItem uniquement — pas de rebuild GameScreen
         setState(() => _started = true);
         _controller.forward();
       });
@@ -220,9 +219,11 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
 const List<String> _foodEmojis = ['🍎', '🥕', '🍗', '🧀', '🍞'];
 
 class GameplayOverlayCoordinator {
-  GameplayOverlayCoordinator(this.onAnimationAdded);
+  GameplayOverlayCoordinator(this.animationsNotifier);
 
-  final void Function(GameplayOverlayAnimation animation) onAnimationAdded;
+  /// Le notifier partagé avec [GameplayOverlayAnimationManager].
+  /// Les modifications ici ne déclenchent pas de rebuild du GameScreen.
+  final ValueNotifier<List<GameplayOverlayAnimation>> animationsNotifier;
 
   int _counter = 0;
   final _rng = math.Random();
@@ -291,19 +292,17 @@ class GameplayOverlayCoordinator {
       final emoji = _foodEmojis[i % _foodEmojis.length];
       final delay = Duration(milliseconds: i * 65);
 
-      onAnimationAdded(
-        GameplayOverlayAnimation(
-          id: _counter++,
-          emoji: emoji,
-          start: particleStart,
-          end: cardCenter,
-          duration: const Duration(milliseconds: 950),
-          beginScale: 1.8,
-          endScale: 0.2,
-          type: OverlayAnimationType.raccoonDevour,
-          delay: delay,
-        ),
-      );
+      _addRaw(GameplayOverlayAnimation(
+        id: _counter++,
+        emoji: emoji,
+        start: particleStart,
+        end: cardCenter,
+        duration: const Duration(milliseconds: 950),
+        beginScale: 1.8,
+        endScale: 0.2,
+        type: OverlayAnimationType.raccoonDevour,
+        delay: delay,
+      ));
     }
   }
 
@@ -340,18 +339,30 @@ class GameplayOverlayCoordinator {
     OverlayAnimationType type = OverlayAnimationType.travelTo,
     Duration delay = Duration.zero,
   }) {
-    onAnimationAdded(
-      GameplayOverlayAnimation(
-        id: _counter++,
-        emoji: emoji,
-        start: start,
-        end: end,
-        duration: duration,
-        beginScale: beginScale,
-        endScale: endScale,
-        type: type,
-        delay: delay,
-      ),
-    );
+    _addRaw(GameplayOverlayAnimation(
+      id: _counter++,
+      emoji: emoji,
+      start: start,
+      end: end,
+      duration: duration,
+      beginScale: beginScale,
+      endScale: endScale,
+      type: type,
+      delay: delay,
+    ));
+  }
+
+  /// Ajoute une animation dans le notifier et planifie sa suppression.
+  /// Aucun setState du GameScreen n'est déclenché.
+  void _addRaw(GameplayOverlayAnimation animation) {
+    final current = List<GameplayOverlayAnimation>.from(animationsNotifier.value);
+    current.add(animation);
+    animationsNotifier.value = current;
+
+    Future<void>.delayed(animation.duration + animation.delay, () {
+      final updated = List<GameplayOverlayAnimation>.from(animationsNotifier.value);
+      updated.removeWhere((item) => item.id == animation.id);
+      animationsNotifier.value = updated;
+    });
   }
 }
