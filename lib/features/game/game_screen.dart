@@ -294,12 +294,8 @@ class _GameScreenState extends State<GameScreen>
     required int? thiefId,
     required int targetId,
   }) {
-    final targetKey = _playerKeys[targetId];
-    final thiefKey = _playerKeys[thiefId];
-    if (targetKey == null || thiefKey == null) return;
-
-    final fromTarget = _widgetCenter(_foodZoneKeys[targetId] ?? targetKey);
-    final toThief = _widgetCenter(_foodZoneKeys[thiefId] ?? thiefKey);
+    final fromTarget = _playerFoodCenter(targetId);
+    final toThief = _playerFoodCenter(thiefId ?? -1);
 
     if (fromTarget == Offset.zero || toThief == Offset.zero) return;
     _overlayCoordinator.playFoodSteal(
@@ -353,37 +349,84 @@ class _GameScreenState extends State<GameScreen>
   /// Callback vers lequel pointe [BanditTargetOverlay] via setState.
   void Function(PlayerState)? _pendingBanditCallback;
 
-  /// Retourne le centre du widget [key] en coordonnées locales au Stack racine.
-  ///
-  /// Le Stack racine (keyed _rootStackKey) est l'ancêtre commun des widgets
-  /// joueurs, de la pioche ET de l'overlay particules. Il est toujours monté.
-  /// En faisant globalToLocal depuis lui, on absorbe automatiquement tout
-  /// offset SafeArea, barre de statut, encoche — quelle que soit la densité.
-  ///
-  /// Le décalage (-36, -36) centre la particule (72×72 px) sur le widget cible.
-  Offset _widgetCenter(GlobalKey key) {
-    final context = key.currentContext;
-    if (context == null) return Offset.zero;
+  /// Retourne le centre du widget [key] en coordonnées overlay,
+  /// avec un [verticalBias] optionnel (px, négatif = vers le haut).
+  /// Clampé pour ne jamais sortir de l'écran (marge = rayon particule 36px).
+  Offset _widgetCenter(GlobalKey key, {double? verticalBias}) {
+    final ctx = key.currentContext;
+    if (ctx == null) return Offset.zero;
 
-    final renderObject = context.findRenderObject();
-    if (renderObject is! RenderBox || !renderObject.attached || !renderObject.hasSize) {
+    final renderObject = ctx.findRenderObject();
+    if (renderObject is! RenderBox ||
+        !renderObject.attached ||
+        !renderObject.hasSize) {
       return Offset.zero;
     }
 
     final renderBox = renderObject;
-    final overlay = Overlay.of(context).context.findRenderObject();
-
+    final overlay = Overlay.of(ctx).context.findRenderObject();
     if (overlay is! RenderBox || !overlay.hasSize) {
       return Offset.zero;
     }
 
-    return renderBox.localToGlobal(
-      Offset(
-        renderBox.size.width / 2,
-        renderBox.size.height / 2,
-      ),
+    var center = renderBox.localToGlobal(
+      Offset(renderBox.size.width / 2, renderBox.size.height / 2),
       ancestor: overlay,
     );
+
+    if (verticalBias != null) {
+      center = Offset(center.dx, center.dy + verticalBias);
+    }
+
+    // Clamp pour que la particule (72×72) ne sorte jamais de l'overlay
+    final overlaySize = overlay.size;
+    return Offset(
+      center.dx.clamp(36.0, overlaySize.width - 36.0),
+      center.dy.clamp(36.0, overlaySize.height - 36.0),
+    );
+  }
+
+  /// Biais vertical adaptatif selon la ligne du joueur dans la grille.
+  ///
+  /// - Joueurs du HAUT (index 0-1) : légère remontée.
+  /// - Joueurs du BAS  (index 2-3) : remontée plus importante (leur carte
+  ///   touche le bas de l'écran, la zone food est au centre de la carte).
+  double _playerVerticalBias(int playerIndex) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final unit = screenHeight * 0.04; // ~28-36 px selon densité
+    final totalPlayers = _gameState.players.length;
+
+    switch (totalPlayers) {
+      case 2:
+        // Les deux joueurs sont en haut → légère remontée identique
+        return -unit * 0.5;
+      case 3:
+        if (playerIndex <= 1) return -unit * 0.5; // haut
+        return -unit * 1.5;                        // bas
+      case 4:
+        if (playerIndex <= 1) return -unit * 0.5; // haut
+        return -unit * 1.5;                        // bas
+      default:
+        return 0;
+    }
+  }
+
+  /// Centre de la zone nourriture du joueur, avec biais adaptatif.
+  Offset _playerFoodCenter(int playerId) {
+    final idx = _gameState.players.indexWhere((p) => p.id == playerId);
+    if (idx < 0) return Offset.zero;
+    final key = _foodZoneKeys[playerId] ?? _playerKeys[playerId];
+    if (key == null) return Offset.zero;
+    return _widgetCenter(key, verticalBias: _playerVerticalBias(idx));
+  }
+
+  /// Centre de la zone frigo du joueur, avec biais adaptatif.
+  Offset _playerFridgeCenter(int playerId) {
+    final idx = _gameState.players.indexWhere((p) => p.id == playerId);
+    if (idx < 0) return Offset.zero;
+    final key = _fridgeZoneKeys[playerId] ?? _playerKeys[playerId];
+    if (key == null) return Offset.zero;
+    return _widgetCenter(key, verticalBias: _playerVerticalBias(idx));
   }
 
   void _playOverlayAnimations(
@@ -393,18 +436,16 @@ class _GameScreenState extends State<GameScreen>
   }) {
     if (card == null) return;
 
+    // Pioche : pas de biais (widget centré à l'écran)
     final start = _widgetCenter(_deckKey);
     if (start == Offset.zero) return;
+
     final currentPlayerId = _lastResolvedPlayerId;
-    final targetKey = _playerKeys[currentPlayerId];
+    if (currentPlayerId == null) return;
 
-    if (targetKey == null) return;
-
-    final foodTargetKey = _foodZoneKeys[currentPlayerId] ?? targetKey;
-    final fridgeTargetKey = _fridgeZoneKeys[currentPlayerId] ?? targetKey;
-
-    final playerCenter = _widgetCenter(foodTargetKey);
-    final fridgeCenter = _widgetCenter(fridgeTargetKey);
+    // Ancres joueur avec correction verticale adaptative
+    final playerCenter = _playerFoodCenter(currentPlayerId);
+    final fridgeCenter = _playerFridgeCenter(currentPlayerId);
 
     switch (card.type) {
       case CardType.food:
