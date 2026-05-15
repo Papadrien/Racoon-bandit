@@ -49,15 +49,9 @@ class GameplayOverlayAnimationManager extends StatelessWidget {
   const GameplayOverlayAnimationManager({
     super.key,
     required this.animationsNotifier,
-    required this.stackKey,
   });
 
   final ValueNotifier<List<GameplayOverlayAnimation>> animationsNotifier;
-
-  /// Clé sur le Stack racine — permet à _widgetCenter de GameScreen de
-  /// convertir les coordonnées globales en coordonnées locales au Stack,
-  /// éliminant ainsi le décalage SafeArea.
-  final GlobalKey stackKey;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +63,6 @@ class GameplayOverlayAnimationManager extends StatelessWidget {
           valueListenable: animationsNotifier,
           builder: (context, animations, _) {
             return Stack(
-              key: stackKey,
               children: animations
                   .map(
                     (animation) => _AnimatedOverlayItem(
