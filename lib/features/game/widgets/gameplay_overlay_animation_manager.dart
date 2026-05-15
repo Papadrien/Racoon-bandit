@@ -62,15 +62,18 @@ class GameplayOverlayAnimationManager extends StatelessWidget {
         child: ValueListenableBuilder<List<GameplayOverlayAnimation>>(
           valueListenable: animationsNotifier,
           builder: (context, animations, _) {
-            return Stack(
-              children: animations
-                  .map(
-                    (animation) => _AnimatedOverlayItem(
-                      key: ValueKey(animation.id),
-                      animation: animation,
-                    ),
-                  )
-                  .toList(),
+            return SizedBox.expand(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: animations
+                    .map(
+                      (animation) => _AnimatedOverlayItem(
+                        key: ValueKey(animation.id),
+                        animation: animation,
+                      ),
+                    )
+                    .toList(),
+              ),
             );
           },
         ),
