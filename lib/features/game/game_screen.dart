@@ -42,6 +42,8 @@ class _GameScreenState extends State<GameScreen>
 
   final GlobalKey _deckKey = GlobalKey();
   final Map<int, GlobalKey> _playerKeys = {};
+  final Map<int, GlobalKey> _foodZoneKeys = {};
+  final Map<int, GlobalKey> _fridgeZoneKeys = {};
 
   /// Clé sur le Stack racine (dans SafeArea) — référentiel stable pour la
   /// conversion des coordonnées globales → locales au Stack.
@@ -296,8 +298,10 @@ class _GameScreenState extends State<GameScreen>
     final thiefKey = _playerKeys[thiefId];
     if (targetKey == null || thiefKey == null) return;
 
-    final fromTarget = _widgetCenter(targetKey);
-    final toThief = _widgetCenter(thiefKey);
+    final fromTarget = _widgetCenter(_foodZoneKeys[targetId] ?? targetKey);
+    final toThief = _widgetCenter(_foodZoneKeys[thiefId] ?? thiefKey);
+
+    if (fromTarget == Offset.zero || toThief == Offset.zero) return;
     _overlayCoordinator.playFoodSteal(
       fromTarget: fromTarget,
       toThief: toThief,
@@ -358,8 +362,15 @@ class _GameScreenState extends State<GameScreen>
   ///
   /// Le décalage (-36, -36) centre la particule (72×72 px) sur le widget cible.
   Offset _widgetCenter(GlobalKey key) {
-    final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox == null) return const Offset(200, 300);
+    final context = key.currentContext;
+    if (context == null) return Offset.zero;
+
+    final renderObject = context.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) {
+      return Offset.zero;
+    }
+
+    final renderBox = renderObject;
 
     // Centre global du widget cible
     final globalOrigin = renderBox.localToGlobal(Offset.zero);
@@ -369,12 +380,14 @@ class _GameScreenState extends State<GameScreen>
     );
 
     // Conversion en coordonnées locales au Stack racine (toujours monté)
-    final rootBox =
-        _rootStackKey.currentContext?.findRenderObject() as RenderBox?;
-    if (rootBox == null) {
-      // Ne devrait jamais arriver — fallback coordonnées globales brutes
-      return Offset(globalCenter.dx - 36, globalCenter.dy - 36);
+    final rootRenderObject =
+        _rootStackKey.currentContext?.findRenderObject();
+
+    if (rootRenderObject is! RenderBox || !rootRenderObject.hasSize) {
+      return Offset.zero;
     }
+
+    final rootBox = rootRenderObject;
 
     final localCenter = rootBox.globalToLocal(globalCenter);
     return Offset(localCenter.dx - 36, localCenter.dy - 36);
@@ -388,12 +401,17 @@ class _GameScreenState extends State<GameScreen>
     if (card == null) return;
 
     final start = _widgetCenter(_deckKey);
+    if (start == Offset.zero) return;
     final currentPlayerId = _lastResolvedPlayerId;
     final targetKey = _playerKeys[currentPlayerId];
 
     if (targetKey == null) return;
 
-    final playerCenter = _widgetCenter(targetKey);
+    final foodTargetKey = _foodZoneKeys[currentPlayerId] ?? targetKey;
+    final fridgeTargetKey = _fridgeZoneKeys[currentPlayerId] ?? targetKey;
+
+    final playerCenter = _widgetCenter(foodTargetKey);
+    final fridgeCenter = _widgetCenter(fridgeTargetKey);
 
     switch (card.type) {
       case CardType.food:
@@ -401,7 +419,7 @@ class _GameScreenState extends State<GameScreen>
         break;
 
       case CardType.trash:
-        _overlayCoordinator.playFridgeDeposit(start: start, end: playerCenter);
+        _overlayCoordinator.playFridgeDeposit(start: start, end: fridgeCenter);
         break;
 
       case CardType.raccoon:
@@ -455,6 +473,8 @@ class _GameScreenState extends State<GameScreen>
     final active = index == _gameState.currentPlayerIndex;
 
     _playerKeys.putIfAbsent(player.id, GlobalKey.new);
+    _foodZoneKeys.putIfAbsent(player.id, GlobalKey.new);
+    _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
 
     return Container(
       key: _playerKeys[player.id],
@@ -490,11 +510,21 @@ class _GameScreenState extends State<GameScreen>
             ),
           ),
           const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Wrap(
+            key: _foodZoneKeys[player.id],
             alignment: WrapAlignment.center,
             spacing: 2,
             children: [
               ...List.generate(player.foodCount, (_) => const Text('🍎')),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Wrap(
+            key: _fridgeZoneKeys[player.id],
+            alignment: WrapAlignment.center,
+            spacing: 2,
+            children: [
               ...List.generate(player.trashCount, (_) => const Text('🧊')),
             ],
           ),
