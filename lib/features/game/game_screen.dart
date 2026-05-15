@@ -42,6 +42,11 @@ class _GameScreenState extends State<GameScreen>
 
   final GlobalKey _deckKey = GlobalKey();
   final Map<int, GlobalKey> _playerKeys = {};
+
+  /// Clé sur le Stack de l'overlay animation.
+  /// Indispensable pour convertir les coordonnées globales (localToGlobal)
+  /// en coordonnées locales au Stack — évite le décalage SafeArea.
+  final GlobalKey _overlayStackKey = GlobalKey();
   int? _lastResolvedPlayerId;
 
   /// Vrai quand le popup Bandit est affiché : bloque les interactions.
@@ -72,7 +77,7 @@ class _GameScreenState extends State<GameScreen>
     _overlayCoordinator = GameplayOverlayCoordinator(_animationsNotifier);
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 550),
+      duration: const Duration(milliseconds: 275), // 2× plus rapide (était 550 ms)
     );
   }
 
@@ -344,19 +349,40 @@ class _GameScreenState extends State<GameScreen>
   /// Callback vers lequel pointe [BanditTargetOverlay] via setState.
   void Function(PlayerState)? _pendingBanditCallback;
 
+  /// Retourne le centre du widget [key] en coordonnées locales au Stack overlay.
+  ///
+  /// Principe : on convertit la position globale du widget (via localToGlobal)
+  /// en position locale par rapport au Stack overlay (via globalToLocal sur
+  /// _overlayStackKey). Cela absorbe automatiquement tout offset de SafeArea,
+  /// padding de barre de statut, encoche, etc. — quelle que soit la densité
+  /// ou la taille d'écran.
+  ///
+  /// Le décalage (-36, -36) centre la particule (72×72 px) sur le widget cible.
   Offset _widgetCenter(GlobalKey key) {
     final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return const Offset(200, 300);
 
-    if (renderBox == null) {
-      return const Offset(200, 300);
+    // Coordonnée globale du coin haut-gauche du widget cible
+    final globalOrigin = renderBox.localToGlobal(Offset.zero);
+
+    // Centre global du widget cible
+    final globalCenter = Offset(
+      globalOrigin.dx + renderBox.size.width / 2,
+      globalOrigin.dy + renderBox.size.height / 2,
+    );
+
+    // Conversion en coordonnées locales au Stack overlay
+    final overlayBox =
+        _overlayStackKey.currentContext?.findRenderObject() as RenderBox?;
+    if (overlayBox == null) {
+      // Fallback : coordonnées globales brutes (comportement précédent)
+      return Offset(globalCenter.dx - 36, globalCenter.dy - 36);
     }
 
-    final origin = renderBox.localToGlobal(Offset.zero);
+    final localCenter = overlayBox.globalToLocal(globalCenter);
 
-    return Offset(
-      origin.dx + (renderBox.size.width / 2) - 36,
-      origin.dy + (renderBox.size.height / 2) - 36,
-    );
+    // Décalage -36 pour centrer la particule (container 72×72) sur le point cible
+    return Offset(localCenter.dx - 36, localCenter.dy - 36);
   }
 
   void _playOverlayAnimations(
@@ -739,12 +765,14 @@ class _GameScreenState extends State<GameScreen>
               // ── Overlay particules — isolé via ValueNotifier + RepaintBoundary
               // Aucun rebuild de GameScreen déclenché par les animations.
               // IMPORTANT : Positioned.fill indispensable pour que le Stack interne
-              // du manager couvre toute la SafeArea. Sans cela, son origine (0,0)
-              // ne correspond pas aux coordonnées globales renvoyées par
-              // localToGlobal, et les particules apparaissent en haut à gauche.
+              // du manager couvre toute la SafeArea. La clé _overlayStackKey sur le
+              // Stack interne permet de convertir les coordonnées globales en
+              // coordonnées locales au Stack via globalToLocal — corrige le décalage
+              // SafeArea qui faisait apparaître les particules en haut à gauche.
               Positioned.fill(
                 child: GameplayOverlayAnimationManager(
                   animationsNotifier: _animationsNotifier,
+                  stackKey: _overlayStackKey,
                 ),
               ),
 
