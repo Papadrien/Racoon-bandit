@@ -366,31 +366,24 @@ class _GameScreenState extends State<GameScreen>
     if (context == null) return Offset.zero;
 
     final renderObject = context.findRenderObject();
-    if (renderObject is! RenderBox || !renderObject.hasSize) {
+    if (renderObject is! RenderBox || !renderObject.attached || !renderObject.hasSize) {
       return Offset.zero;
     }
 
     final renderBox = renderObject;
+    final overlay = Overlay.of(context).context.findRenderObject();
 
-    // Centre global du widget cible
-    final globalOrigin = renderBox.localToGlobal(Offset.zero);
-    final globalCenter = Offset(
-      globalOrigin.dx + renderBox.size.width / 2,
-      globalOrigin.dy + renderBox.size.height / 2,
-    );
-
-    // Conversion en coordonnées locales au Stack racine (toujours monté)
-    final rootRenderObject =
-        _rootStackKey.currentContext?.findRenderObject();
-
-    if (rootRenderObject is! RenderBox || !rootRenderObject.hasSize) {
+    if (overlay is! RenderBox || !overlay.hasSize) {
       return Offset.zero;
     }
 
-    final rootBox = rootRenderObject;
-
-    final localCenter = rootBox.globalToLocal(globalCenter);
-    return Offset(localCenter.dx - 36, localCenter.dy - 36);
+    return renderBox.localToGlobal(
+      Offset(
+        renderBox.size.width / 2,
+        renderBox.size.height / 2,
+      ),
+      ancestor: overlay,
+    );
   }
 
   void _playOverlayAnimations(

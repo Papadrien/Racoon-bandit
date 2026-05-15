@@ -204,14 +204,20 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
               }
           }
 
-          return Positioned(
-            left: dx,
-            top: dy,
-            child: Opacity(
-              opacity: opacity.clamp(0.0, 1.0),
-              child: Transform.scale(
-                scale: scale,
-                child: child,
+          return Positioned.fill(
+            child: IgnorePointer(
+              child: Transform.translate(
+                offset: Offset(dx - 36, dy - 36),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Opacity(
+                    opacity: opacity.clamp(0.0, 1.0),
+                    child: Transform.scale(
+                      scale: scale,
+                      child: child,
+                    ),
+                  ),
+                ),
               ),
             ),
           );
