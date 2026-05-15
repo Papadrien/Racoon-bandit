@@ -738,8 +738,14 @@ class _GameScreenState extends State<GameScreen>
 
               // ── Overlay particules — isolé via ValueNotifier + RepaintBoundary
               // Aucun rebuild de GameScreen déclenché par les animations.
-              GameplayOverlayAnimationManager(
-                animationsNotifier: _animationsNotifier,
+              // IMPORTANT : Positioned.fill indispensable pour que le Stack interne
+              // du manager couvre toute la SafeArea. Sans cela, son origine (0,0)
+              // ne correspond pas aux coordonnées globales renvoyées par
+              // localToGlobal, et les particules apparaissent en haut à gauche.
+              Positioned.fill(
+                child: GameplayOverlayAnimationManager(
+                  animationsNotifier: _animationsNotifier,
+                ),
               ),
 
               if (_showingBanditOverlay && _pendingBanditCallback != null)
