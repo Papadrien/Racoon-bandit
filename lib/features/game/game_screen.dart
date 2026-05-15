@@ -529,10 +529,15 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _buildDeckCard({required bool backgroundCard}) {
-    final empty = _gameState.remainingCards == 0;
+    // Une carte est "vraiment vide" (pioche épuisée sans carte en cours d'animation)
+    // seulement quand il ne reste plus de cartes ET qu'aucune carte n'est en cours
+    // de révélation. Sans ce garde, la dernière carte disparaît visuellement dès
+    // que drawCard() retire l'unique élément du deck (remainingCards → 0), alors
+    // que l'animation de retournement/slide-out n'est pas encore terminée.
+    final deckExhausted = _gameState.remainingCards == 0 && _revealedCard == null;
 
     return GestureDetector(
-      onTap: backgroundCard || empty ? null : _drawCard,
+      onTap: backgroundCard || deckExhausted ? null : _drawCard,
       child: AnimatedBuilder(
         animation: Listenable.merge([_flipController, _slideController]),
         builder: (context, child) {
@@ -540,7 +545,7 @@ class _GameScreenState extends State<GameScreen>
           final slide = _slideController.value;
           final angle = flip * math.pi;
           final showFront = angle > math.pi / 2;
-          final isBack = !empty && !(showFront && _revealedCard != null);
+          final isBack = !deckExhausted && !(showFront && _revealedCard != null);
 
           return Transform.translate(
             offset: backgroundCard
@@ -573,7 +578,7 @@ class _GameScreenState extends State<GameScreen>
                             transform: Matrix4.identity()
                               ..rotateY(showFront ? math.pi : 0),
                             child: Text(
-                              empty
+                              deckExhausted
                                   ? ''
                                   : showFront && _revealedCard != null
                                       ? _revealedCard!.emoji
@@ -660,7 +665,7 @@ class _GameScreenState extends State<GameScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           TextButton.icon(
             onPressed: _isAnimating || _showingBanditOverlay
@@ -682,6 +687,8 @@ class _GameScreenState extends State<GameScreen>
               ),
             ),
           ),
+          // Espace réservé à droite pour de futurs boutons (pause, aide…)
+          const SizedBox(width: 48),
         ],
       ),
     );
@@ -705,20 +712,23 @@ class _GameScreenState extends State<GameScreen>
         body: SafeArea(
           child: Stack(
             children: [
-              // ── Fond + gameplay — ne rebuild QUE sur setState explicite ──
+              // ── Fond + gameplay — isolé dans un RepaintBoundary ──────────
+              // Les animations overlay n'entraînent aucun repaint du fond.
               Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Stack(
-                    children: [
-                      ..._buildPlayerPositions(),
-                      Center(child: _buildCenterArea()),
-                    ],
+                child: RepaintBoundary(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Stack(
+                      children: [
+                        ..._buildPlayerPositions(),
+                        Center(child: _buildCenterArea()),
+                      ],
+                    ),
                   ),
                 ),
               ),
 
-              // ── Barre de contrôles gameplay — overlay stable hors zones joueurs ──
+              // ── Barre de contrôles gameplay — overlay stable ──────────────
               Positioned(
                 top: 0,
                 left: 0,
@@ -726,7 +736,7 @@ class _GameScreenState extends State<GameScreen>
                 child: _buildGameplayControlsBar(),
               ),
 
-              // ── Overlay particules — isolé via ValueNotifier ──────────────
+              // ── Overlay particules — isolé via ValueNotifier + RepaintBoundary
               // Aucun rebuild de GameScreen déclenché par les animations.
               GameplayOverlayAnimationManager(
                 animationsNotifier: _animationsNotifier,

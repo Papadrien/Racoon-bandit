@@ -55,28 +55,34 @@ class GameplayOverlayAnimationManager extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: ValueListenableBuilder<List<GameplayOverlayAnimation>>(
-        valueListenable: animationsNotifier,
-        builder: (context, animations, _) {
-          return Stack(
-            children: animations
-                .map(
-                  (animation) => _AnimatedOverlayItem(
-                    key: ValueKey(animation.id),
-                    animation: animation,
-                  ),
-                )
-                .toList(),
-          );
-        },
+    // RepaintBoundary global : les particules ne déclenchent JAMAIS
+    // un repaint du reste du jeu (fond, joueurs, pioche).
+    return RepaintBoundary(
+      child: IgnorePointer(
+        child: ValueListenableBuilder<List<GameplayOverlayAnimation>>(
+          valueListenable: animationsNotifier,
+          builder: (context, animations, _) {
+            return Stack(
+              children: animations
+                  .map(
+                    (animation) => _AnimatedOverlayItem(
+                      key: ValueKey(animation.id),
+                      animation: animation,
+                    ),
+                  )
+                  .toList(),
+            );
+          },
+        ),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Item animé — gère les deux types de trajectoire
+// Item animé — isolé dans son propre RepaintBoundary
+// IMPORTANT : aucun setState utilisé — le délai est géré via CurvedAnimation
+// avec un Interval, ce qui évite tout rebuild de l'arbre parent.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AnimatedOverlayItem extends StatefulWidget {
@@ -94,27 +100,33 @@ class _AnimatedOverlayItem extends StatefulWidget {
 class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  bool _started = false;
+
+  /// Durée totale incluant le délai initial.
+  late final Duration _totalDuration;
+
+  /// Fraction [0..1] représentant la fin du délai dans la durée totale.
+  late final double _delayFraction;
 
   @override
   void initState() {
     super.initState();
+
+    final delay = widget.animation.delay;
+    final anim = widget.animation.duration;
+    _totalDuration = delay + anim;
+
+    _delayFraction = _totalDuration.inMicroseconds == 0
+        ? 0.0
+        : delay.inMicroseconds / _totalDuration.inMicroseconds;
+
     _controller = AnimationController(
       vsync: this,
-      duration: widget.animation.duration,
+      duration: _totalDuration,
     );
 
-    if (widget.animation.delay == Duration.zero) {
-      _controller.forward();
-      _started = true;
-    } else {
-      Future<void>.delayed(widget.animation.delay, () {
-        if (!mounted) return;
-        // setState local à _AnimatedOverlayItem uniquement — pas de rebuild GameScreen
-        setState(() => _started = true);
-        _controller.forward();
-      });
-    }
+    // Démarrage immédiat — pas de setState, pas de Future.delayed.
+    // Le délai est absorbé dans l'Interval ci-dessous.
+    _controller.forward();
   }
 
   @override
@@ -125,86 +137,94 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
 
   @override
   Widget build(BuildContext context) {
-    if (!_started) return const SizedBox.shrink();
+    // Intervalle actif : [_delayFraction .. 1.0]
+    // Pendant la phase délai, t=0 → opacity=0, widget invisible mais MONTÉ.
+    // Aucun setState, aucun rebuild externe.
+    final activeInterval = CurvedAnimation(
+      parent: _controller,
+      curve: Interval(_delayFraction, 1.0, curve: Curves.linear),
+    );
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final t = _controller.value;
+    // RepaintBoundary par particule : chaque particule repeint indépendamment.
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: activeInterval,
+        builder: (context, child) {
+          final t = activeInterval.value; // [0..1] pendant la phase active
 
-        double dx;
-        double dy;
-        double scale;
-        double opacity;
+          double dx;
+          double dy;
+          double scale;
+          double opacity;
 
-        switch (widget.animation.type) {
-          case OverlayAnimationType.travelTo:
-            final curved = Curves.easeOutCubic.transform(t);
-            dx = widget.animation.start.dx +
-                ((widget.animation.end.dx - widget.animation.start.dx) *
-                    curved);
-            dy = widget.animation.start.dy +
-                ((widget.animation.end.dy - widget.animation.start.dy) *
-                    curved);
-            scale = widget.animation.beginScale +
-                ((widget.animation.endScale - widget.animation.beginScale) *
-                    curved);
-            opacity = 1.0 - (t * 0.15);
-
-          case OverlayAnimationType.raccoonDevour:
-            // Phase 1 (0→0.55) : légère dérive/flottement
-            // Phase 2 (0.55→1.0) : aspiration magnétique rapide vers la carte
-            const double phase1End = 0.55;
-            if (t < phase1End) {
-              final p = t / phase1End;
-              final curved = Curves.easeOut.transform(p);
-              dx = widget.animation.start.dx +
-                  (widget.animation.end.dx - widget.animation.start.dx) *
-                      curved *
-                      0.12;
-              dy = widget.animation.start.dy -
-                  math.sin(curved * math.pi) * 18;
-              scale = widget.animation.beginScale -
-                  (widget.animation.beginScale - 1.3) * curved;
-              opacity = 1.0;
-            } else {
-              final p = (t - phase1End) / (1.0 - phase1End);
-              final curved = Curves.easeInExpo.transform(p);
+          switch (widget.animation.type) {
+            case OverlayAnimationType.travelTo:
+              final curved = Curves.easeOutCubic.transform(t);
               dx = widget.animation.start.dx +
                   ((widget.animation.end.dx - widget.animation.start.dx) *
-                      (0.12 + 0.88 * curved));
-              dy = widget.animation.start.dy -
-                  math.sin((1.0 - p) * math.pi) * 18 +
+                      curved);
+              dy = widget.animation.start.dy +
                   ((widget.animation.end.dy - widget.animation.start.dy) *
                       curved);
-              scale = 1.3 - (1.3 - 0.2) * curved;
-              opacity = 1.0 - curved * 0.95;
-            }
-        }
+              scale = widget.animation.beginScale +
+                  ((widget.animation.endScale - widget.animation.beginScale) *
+                      curved);
+              // Invisible pendant la phase délai (t == 0 avant interval actif)
+              opacity = t == 0.0 ? 0.0 : (1.0 - (t * 0.15));
 
-        return Positioned(
-          left: dx,
-          top: dy,
-          child: Opacity(
-            opacity: opacity.clamp(0.0, 1.0),
-            child: Transform.scale(
-              scale: scale,
-              child: child,
+            case OverlayAnimationType.raccoonDevour:
+              const double phase1End = 0.55;
+              if (t < phase1End) {
+                final p = t / phase1End;
+                final curved = Curves.easeOut.transform(p);
+                dx = widget.animation.start.dx +
+                    (widget.animation.end.dx - widget.animation.start.dx) *
+                        curved *
+                        0.12;
+                dy = widget.animation.start.dy -
+                    math.sin(curved * math.pi) * 18;
+                scale = widget.animation.beginScale -
+                    (widget.animation.beginScale - 1.3) * curved;
+                opacity = t == 0.0 ? 0.0 : 1.0;
+              } else {
+                final p = (t - phase1End) / (1.0 - phase1End);
+                final curved = Curves.easeInExpo.transform(p);
+                dx = widget.animation.start.dx +
+                    ((widget.animation.end.dx - widget.animation.start.dx) *
+                        (0.12 + 0.88 * curved));
+                dy = widget.animation.start.dy -
+                    math.sin((1.0 - p) * math.pi) * 18 +
+                    ((widget.animation.end.dy - widget.animation.start.dy) *
+                        curved);
+                scale = 1.3 - (1.3 - 0.2) * curved;
+                opacity = 1.0 - curved * 0.95;
+              }
+          }
+
+          return Positioned(
+            left: dx,
+            top: dy,
+            child: Opacity(
+              opacity: opacity.clamp(0.0, 1.0),
+              child: Transform.scale(
+                scale: scale,
+                child: child,
+              ),
             ),
+          );
+        },
+        child: Container(
+          width: 72,
+          height: 72,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.25),
+            shape: BoxShape.circle,
           ),
-        );
-      },
-      child: Container(
-        width: 72,
-        height: 72,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.25),
-          shape: BoxShape.circle,
-        ),
-        child: Text(
-          widget.animation.emoji,
-          style: const TextStyle(fontSize: 42),
+          child: Text(
+            widget.animation.emoji,
+            style: const TextStyle(fontSize: 42),
+          ),
         ),
       ),
     );
@@ -359,7 +379,9 @@ class GameplayOverlayCoordinator {
     current.add(animation);
     animationsNotifier.value = current;
 
-    Future<void>.delayed(animation.duration + animation.delay, () {
+    // Suppression après durée totale (délai déjà intégré dans _totalDuration)
+    final totalDuration = animation.duration + animation.delay;
+    Future<void>.delayed(totalDuration, () {
       final updated = List<GameplayOverlayAnimation>.from(animationsNotifier.value);
       updated.removeWhere((item) => item.id == animation.id);
       animationsNotifier.value = updated;
