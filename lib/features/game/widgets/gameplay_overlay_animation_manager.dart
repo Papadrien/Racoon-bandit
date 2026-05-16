@@ -433,17 +433,30 @@ class GameplayOverlayCoordinator {
 
   /// Ajoute une animation dans le notifier et planifie sa suppression.
   /// Aucun setState du GameScreen n'est déclenché.
+  ///
+  /// Les deux opérations (ajout + suppression différée) sont protégées par
+  /// un try/catch : si le notifier est disposé avant la fin du délai
+  /// (widget détruit pendant une animation), l'erreur est silencieusement ignorée.
   void _addRaw(GameplayOverlayAnimation animation) {
-    final current = List<GameplayOverlayAnimation>.from(animationsNotifier.value);
-    current.add(animation);
-    animationsNotifier.value = current;
+    try {
+      final current = List<GameplayOverlayAnimation>.from(animationsNotifier.value);
+      current.add(animation);
+      animationsNotifier.value = current;
+    } catch (_) {
+      // notifier déjà disposé — abandon silencieux
+      return;
+    }
 
     // Suppression après durée totale (délai déjà intégré dans _totalDuration)
     final totalDuration = animation.duration + animation.delay;
     Future<void>.delayed(totalDuration, () {
-      final updated = List<GameplayOverlayAnimation>.from(animationsNotifier.value);
-      updated.removeWhere((item) => item.id == animation.id);
-      animationsNotifier.value = updated;
+      try {
+        final updated = List<GameplayOverlayAnimation>.from(animationsNotifier.value);
+        updated.removeWhere((item) => item.id == animation.id);
+        animationsNotifier.value = updated;
+      } catch (_) {
+        // notifier disposé entre temps — ignoré
+      }
     });
   }
 }

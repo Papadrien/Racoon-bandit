@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/saved_game.dart';
@@ -28,17 +29,21 @@ class GameSaveService {
   // ── Init ─────────────────────────────────────────────────────────────────
 
   /// À appeler dans main(), avant runApp.
+  /// Idempotent : un second appel recharge depuis le disque (safe).
   static Future<void> load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_keySave);
       if (raw == null) {
         _current = null;
+        _debugLog('restore skipped — no save found');
         return;
       }
       _current = SavedGame.fromJsonString(raw);
-    } catch (_) {
+      _debugLog('restore success — savedAt: \${_current!.savedAt.toIso8601String()}');
+    } catch (e) {
       // Sauvegarde corrompue → suppression silencieuse
+      _debugLog('restore failed — corrupted save, clearing (\$e)');
       _current = null;
       await _erase();
     }
@@ -53,13 +58,20 @@ class GameSaveService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keySave, snapshot.toJsonString());
-    } catch (_) {}
+      _debugLog(
+        'save triggered — players: \${snapshot.players.length}, '
+        'deck: \${snapshot.remainingDeckTypes.length} cards',
+      );
+    } catch (e) {
+      _debugLog('save failed (\$e)');
+    }
   }
 
   // ── Suppression ──────────────────────────────────────────────────────────
 
   /// Supprime la sauvegarde (quit volontaire ou fin de partie normale).
   static Future<void> clear() async {
+    _debugLog('save cleared');
     _current = null;
     await _erase();
   }
@@ -69,5 +81,14 @@ class GameSaveService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_keySave);
     } catch (_) {}
+  }
+
+  // ── Debug ─────────────────────────────────────────────────────────────────
+
+  static void _debugLog(String message) {
+    if (kDebugMode) {
+      // ignore: avoid_print
+      print('[GameSaveService] \$message');
+    }
   }
 }

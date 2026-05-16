@@ -141,8 +141,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
   bool get _canStart =>
       _playerCount >= 2 && _selectedProfiles.every((p) => p != null);
 
+  /// Guard contre double-tap sur "Jouer" qui créerait deux navigations simultanées.
+  bool _navigationInProgress = false;
+
   Future<void> _startGame() async {
     if (_playerCount < 2) return;
+    if (_navigationInProgress) return;
+
+    _navigationInProgress = true;
+
     final players = List.generate(_playerCount, (i) {
       final profile = _selectedProfiles[i];
       return PlayerState(
@@ -161,12 +168,19 @@ class _LobbyScreenState extends State<LobbyScreen> {
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      _navigationInProgress = false;
+      return;
+    }
+
     Navigator.pushNamed(
       context,
       AppRoutes.game,
       arguments: GameState(players: players),
-    );
+    ).then((_) {
+      // Réinitialise le guard si l'utilisateur revient au lobby (ex : abandon).
+      if (mounted) _navigationInProgress = false;
+    });
   }
 
   // ── Debug ─────────────────────────────────────────────────────────────────
@@ -187,7 +201,18 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    // Le lobby autorise le retour standard (vers home).
+    // PopScope avec canPop: true laisse Flutter gérer le pop normalement
+    // tout en nous permettant de logger l'événement en debug.
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (kDebugMode && didPop) {
+          // ignore: avoid_print
+          print('[LobbyScreen] back pressed — retour home');
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('LOBBY'),
         leading: const BackButton(),
@@ -281,8 +306,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
             ],
           ),
         ),
-      ),
-    );
+      ), // Scaffold
+    ); // PopScope
   }
 }
 

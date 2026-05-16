@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/game/game_state.dart';
 import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
+import '../../core/navigation/navigation_guard.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
@@ -18,6 +20,11 @@ class ResultScreen extends StatefulWidget {
 class _ResultScreenState extends State<ResultScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+
+  /// Empêche double-tap et navigation simultanée depuis cet écran.
+  bool _navigationInProgress = false;
+
+  static const String _tag = 'ResultScreen';
 
   @override
   void initState() {
@@ -63,7 +70,15 @@ class _ResultScreenState extends State<ResultScreen>
     final ranking = gameState.ranking;
     final winner = ranking.first;
 
-    return Scaffold(
+    // L'écran résultat autorise le retour Android (→ home).
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        NavigationGuard.log(_tag, 'back pressed — retour home');
+        _goHome();
+      },
+      child: Scaffold(
       body: SafeArea(
         child: FadeTransition(
           opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
@@ -150,25 +165,40 @@ class _ResultScreenState extends State<ResultScreen>
                 const SizedBox(height: 12),
                 PrimaryButton(
                   label: 'REJOUER',
-                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.lobby,
-                    (r) => r.settings.name == AppRoutes.home,
-                  ),
+                  onPressed: _goLobby,
                 ),
                 TextButton(
-                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.home,
-                    (r) => false,
-                  ),
-                  child: const Text('Retour lobby'),
+                  onPressed: _goHome,
+                  child: const Text('Retour accueil'),
                 ),
               ],
             ),
           ),
         ),
       ),
+    ), // PopScope
+    );
+  }
+
+  void _goLobby() {
+    if (_navigationInProgress || !mounted) return;
+    _navigationInProgress = true;
+    NavigationGuard.log(_tag, 'navigation → lobby');
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.lobby,
+      (r) => r.settings.name == AppRoutes.home,
+    );
+  }
+
+  void _goHome() {
+    if (_navigationInProgress || !mounted) return;
+    _navigationInProgress = true;
+    NavigationGuard.log(_tag, 'navigation → home');
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.home,
+      (r) => false,
     );
   }
 }

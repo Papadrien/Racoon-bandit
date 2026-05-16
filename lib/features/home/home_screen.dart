@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/navigation/app_router.dart';
+import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/game_save_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
@@ -18,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final LifeSystemService _lifeSystemService = LifeSystemService();
 
   Timer? _timer;
@@ -33,6 +35,8 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
+
     _rewardAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -43,9 +47,22 @@ class _HomeScreenState extends State<HomeScreen>
     _initializeLives();
   }
 
+  /// Appelé quand l'app revient au premier plan (résumé depuis background).
+  /// Recharge la sauvegarde pour refléter l'état réel (ex : sauvegarde créée
+  /// puis app killée et relancée dans la même session Flutter).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      // Recharge la sauvegarde depuis le disque au cas où elle aurait changé.
+      GameSaveService.load().then((_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
   Future<void> _initializeLives() async {
     await _lifeSystemService.load();
-    
+
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
       await _lifeSystemService.updateLivesFromTime();
             if (mounted) setState(() {});
@@ -60,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _rewardAnimationController.dispose();
     super.dispose();
@@ -116,7 +134,20 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _resumeGame() {
+  /// Reprend la partie sauvegardée.
+  ///
+  /// Recharge la sauvegarde avant de naviguer pour s'assurer qu'elle est
+  /// valide (protection contre un état mémoire périmé).
+  Future<void> _resumeGame() async {
+    await GameSaveService.load();
+    if (!mounted) return;
+
+    if (!GameSaveService.hasSavedGame) {
+      // La sauvegarde a disparu entre temps (rare, mais possible).
+      setState(() {});
+      return;
+    }
+
     Navigator.pushNamed(context, AppRoutes.game);
   }
 
@@ -127,7 +158,16 @@ class _HomeScreenState extends State<HomeScreen>
 
     final noLives = _lifeSystemService.currentLives <= 0;
 
-    return Scaffold(
+    return PopScope(
+      // L'accueil est la racine de la pile : canPop: true laisse Android
+      // quitter l'app normalement. On logue uniquement en debug.
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (kDebugMode && didPop) {
+          NavigationGuard.log('HomeScreen', 'back pressed — quitte l\'app');
+        }
+      },
+      child: Scaffold(
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -196,7 +236,8 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ),
       ),
-    );
+    ), // Scaffold
+    ); // PopScope
   }
 }
 

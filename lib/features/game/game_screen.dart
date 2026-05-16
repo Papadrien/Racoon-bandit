@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
@@ -10,6 +11,7 @@ import '../../core/models/game_card.dart';
 import '../../core/models/player_state.dart';
 import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
+import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/game_save_service.dart';
 import '../../core/services/haptic_service.dart';
@@ -31,12 +33,14 @@ class _GameScreenState extends State<GameScreen>
     with TickerProviderStateMixin {
   late GameState _gameState;
   bool _initialized = false;
+
+  /// Guard contre les appels asynchrones post-dispose.
+  bool _disposed = false;
+
   bool _isAnimating = false;
   String _effectText = '';
   GameCard? _revealedCard;
 
-  /// ValueNotifier isolé : les animations overlay ne déclenchent JAMAIS
-  /// un rebuild de GameScreen.
   late final ValueNotifier<List<GameplayOverlayAnimation>> _animationsNotifier;
   late final GameplayOverlayCoordinator _overlayCoordinator;
 
@@ -44,29 +48,33 @@ class _GameScreenState extends State<GameScreen>
   final Map<int, GlobalKey> _playerKeys = {};
   final Map<int, GlobalKey> _foodZoneKeys = {};
   final Map<int, GlobalKey> _fridgeZoneKeys = {};
-
-  /// Clé sur le Stack racine (dans SafeArea) — référentiel stable pour la
-  /// conversion des coordonnées globales → locales au Stack.
-  /// Ce Stack est toujours monté dès que le widget est initialisé.
   final GlobalKey _rootStackKey = GlobalKey();
   int? _lastResolvedPlayerId;
 
-  /// Vrai quand le popup Bandit est affiché : bloque les interactions.
   bool _showingBanditOverlay = false;
-
-  /// Cibles valides pour le Bandit, remplies avant d'afficher le popup.
   List<PlayerState> _banditTargets = [];
-
-  /// Garde contre double ouverture du popup de quitter.
   bool _quitDialogOpen = false;
 
   late final AnimationController _flipController;
   late final AnimationController _slideController;
+
   bool _resultScreenOpened = false;
+
+  // ── Navigation guards ──────────────────────────────────────────────────────
+
+  /// Vrai pendant une animation critique où le retour Android doit être bloqué.
+  bool get _isCriticalAnimationRunning =>
+      _flipController.isAnimating ||
+      _slideController.isAnimating ||
+      _showingBanditOverlay;
+
+  /// Empêche les double-pop et navigations simultanées.
+  bool _navigationInProgress = false;
 
   static const double _cardWidth = 180;
   static const double _cardHeight = 260;
   static const double _cardRadius = 24;
+  static const String _tag = 'GameScreen';
 
   @override
   void initState() {
@@ -79,15 +87,17 @@ class _GameScreenState extends State<GameScreen>
     _overlayCoordinator = GameplayOverlayCoordinator(_animationsNotifier);
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 275), // 2× plus rapide (était 550 ms)
+      duration: const Duration(milliseconds: 275),
     );
   }
 
   @override
   void dispose() {
+    _disposed = true;
     unawaited(WakelockService.disable());
     _flipController.dispose();
     _slideController.dispose();
+    _animationsNotifier.value = [];
     _animationsNotifier.dispose();
     super.dispose();
   }
@@ -96,49 +106,94 @@ class _GameScreenState extends State<GameScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      final args = ModalRoute.of(context)!.settings.arguments;
-      if (args is GameState) {
-        // Nouvelle partie passée depuis le lobby
-        _gameState = args;
-      } else {
-        // Reprise depuis sauvegarde (navigation sans argument)
-        final save = GameSaveService.current;
-        if (save != null) {
-          _gameState = GameState.fromSave(save);
-        } else {
-          // Fallback de sécurité : ne devrait pas arriver
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoutes.home,
-            (route) => false,
-          );
-          return;
-        }
-      }
-      _initialized = true;
-      // Empêche la mise en veille pendant la partie.
-      unawaited(WakelockService.enable());
+      _restoreOrInitGame();
     }
   }
 
-  // ── Sauvegarde automatique ───────────────────────────────────────────────
+  // ── Init ───────────────────────────────────────────────────────────────────
 
-  /// Persiste l'état courant après chaque action importante.
-  /// Fire-and-forget : ne bloque pas l'UI.
+  void _restoreOrInitGame() {
+    final args = ModalRoute.of(context)!.settings.arguments;
+    if (args is GameState) {
+      _gameState = args;
+      NavigationGuard.log(_tag, 'init — nouvelle partie, ${_gameState.players.length} joueurs');
+    } else {
+      final save = GameSaveService.current;
+      if (save != null) {
+        _gameState = GameState.fromSave(save);
+        NavigationGuard.log(
+          _tag,
+          'init — reprise depuis sauvegarde, '
+          'joueur: ${_gameState.currentPlayerIndex}, '
+          'deck: ${_gameState.remainingCards} cartes',
+        );
+      } else {
+        NavigationGuard.log(_tag, 'init — pas de sauvegarde, redirection home');
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.home,
+          (route) => false,
+        );
+        return;
+      }
+    }
+
+    _isAnimating = false;
+    _showingBanditOverlay = false;
+    _banditTargets = [];
+    _pendingBanditCallback = null;
+    _revealedCard = null;
+    _effectText = '';
+    _resultScreenOpened = false;
+    _quitDialogOpen = false;
+    _lastResolvedPlayerId = null;
+    _navigationInProgress = false;
+
+    _initialized = true;
+    unawaited(WakelockService.enable());
+  }
+
+  // ── Sauvegarde automatique ─────────────────────────────────────────────────
+
   void _autoSave() {
     if (_gameState.isGameOver) return;
+    if (_showingBanditOverlay) return;
+    if (_disposed) return;
     unawaited(GameSaveService.save(_gameState.toSave()));
   }
 
-  // ── Quit confirmation ───────────────────────────────────────────────────
+  // ── Nettoyage overlays avant navigation ────────────────────────────────────
+
+  void _cleanupBeforeNavigation() {
+    NavigationGuard.log(_tag, 'cleanupBeforeNavigation');
+    if (!_disposed) {
+      _animationsNotifier.value = [];
+    }
+    _flipController.stop();
+    _slideController.stop();
+    _showingBanditOverlay = false;
+    _banditTargets = [];
+    _pendingBanditCallback = null;
+    _quitDialogOpen = false;
+  }
+
+  // ── Quit confirmation ──────────────────────────────────────────────────────
 
   Future<bool> _showQuitDialog() async {
-    if (_quitDialogOpen) return false;
+    if (_isCriticalAnimationRunning) {
+      NavigationGuard.log(_tag, 'navigation blocked — animation critique en cours');
+      return false;
+    }
+    if (_quitDialogOpen) {
+      NavigationGuard.log(_tag, 'dialog opened — déjà ouvert, bloqué');
+      return false;
+    }
 
+    NavigationGuard.log(_tag, 'dialog opened — quit confirmation');
     setState(() => _quitDialogOpen = true);
 
     final confirmed = await showDialog<bool>(
-          context: context,
+      context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF2A1F3D),
@@ -178,17 +233,37 @@ class _GameScreenState extends State<GameScreen>
       ),
     );
 
-    if (!mounted) return false;
-    setState(() => _quitDialogOpen = false);
+    if (!mounted) {
+      NavigationGuard.log(_tag, 'dialog closed — widget démonté');
+      return false;
+    }
 
+    NavigationGuard.log(
+      _tag,
+      'dialog closed — résultat: ${confirmed == true ? "quitter" : "annuler"}',
+    );
+    setState(() => _quitDialogOpen = false);
     return confirmed ?? false;
   }
 
-  /// Quit volontaire : supprime la sauvegarde, retourne à l'accueil.
   Future<void> _quitToHome() async {
-    // Quit volontaire → la partie ne doit PAS être reprise
+    if (_navigationInProgress) {
+      NavigationGuard.log(_tag, 'quitToHome — bloqué: navigation déjà en cours');
+      return;
+    }
+    if (!mounted) return;
+
+    _navigationInProgress = true;
+    NavigationGuard.log(_tag, 'gameplay exited — quit to home');
+
+    _cleanupBeforeNavigation();
+
     await GameSaveService.clear();
-        if (!mounted) return;
+    if (!mounted) {
+      _navigationInProgress = false;
+      return;
+    }
+
     Navigator.pushNamedAndRemoveUntil(
       context,
       AppRoutes.home,
@@ -196,7 +271,36 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  // ── Game logic ──────────────────────────────────────────────────────────
+  // ── Back button Android ────────────────────────────────────────────────────
+
+  /// Gestionnaire unique du retour Android.
+  ///
+  /// Ordre de vérification :
+  /// 1. Animation critique → bloqué
+  /// 2. Dialog déjà ouvert → bloqué (anti double-dialog)
+  /// 3. Navigation en cours → bloqué (anti double-pop)
+  /// 4. Sinon → confirmation quitter
+  Future<void> _onBackPressed() async {
+    NavigationGuard.log(_tag, 'back pressed');
+
+    if (_isCriticalAnimationRunning) {
+      NavigationGuard.log(_tag, 'navigation blocked — animation critique');
+      return;
+    }
+    if (_quitDialogOpen) {
+      NavigationGuard.log(_tag, 'navigation blocked — dialog déjà ouvert');
+      return;
+    }
+    if (_navigationInProgress) {
+      NavigationGuard.log(_tag, 'navigation blocked — navigation en cours');
+      return;
+    }
+
+    final confirmed = await _showQuitDialog();
+    if (confirmed && mounted) await _quitToHome();
+  }
+
+  // ── Game logic ─────────────────────────────────────────────────────────────
 
   Future<void> _drawCard() async {
     if (_isAnimating || _showingBanditOverlay || _gameState.isGameOver) return;
@@ -210,8 +314,6 @@ class _GameScreenState extends State<GameScreen>
     });
 
     _lastResolvedPlayerId = _gameState.currentPlayer.id;
-
-    // Snapshot nourriture AVANT résolution (pour l'animation raton)
     final foodCountBeforeDraw = _gameState.currentPlayer.foodCount;
 
     final result = _gameState.drawCard();
@@ -222,33 +324,26 @@ class _GameScreenState extends State<GameScreen>
     });
 
     await _flipController.forward(from: 0);
-        _playCardFeedback(card, result);
+    _playCardFeedback(card, result);
 
-    // ── Cas Bandit : sélection de cible nécessaire ────────────────────────
     if (result.needsTargetSelection) {
       await _handleBanditTargetSelection(card);
-            return;
+      return;
     }
 
-    // ── Animations overlay ────────────────────────────────────────────────
-    // NOTE: _playOverlayAnimations ne déclenche plus aucun setState de GameScreen.
     _playOverlayAnimations(card, result, foodCountBeforeDraw: foodCountBeforeDraw);
 
     setState(() {
       _effectText = result.message;
     });
 
-    // Sauvegarde après résolution carte (hors Bandit multi-cibles)
     _autoSave();
 
-    // Délai adapté : raton nécessite plus de temps pour les particules
     final bool isRaccoonEffect =
         card?.type == CardType.raccoon && !result.trashDestroyed && foodCountBeforeDraw > 0;
     await _finishCardAnimation(extraDelay: isRaccoonEffect ? 600 : 0);
-      }
+  }
 
-  /// Affiche le popup de sélection de cible Bandit,
-  /// puis résout le vol et enchaîne l'animation.
   Future<void> _handleBanditTargetSelection(GameCard? card) async {
     final targets = _gameState.banditValidTargets();
 
@@ -268,7 +363,9 @@ class _GameScreenState extends State<GameScreen>
     });
 
     final target = await completer.future;
-    
+
+    if (!mounted || _disposed) return;
+
     final resolution = _gameState.resolveBandit(target);
 
     setState(() {
@@ -283,13 +380,10 @@ class _GameScreenState extends State<GameScreen>
       targetId: target.id,
     );
 
-    // Sauvegarde après résolution Bandit
     _autoSave();
-
     await _finishCardAnimation();
-      }
+  }
 
-  /// Animation de vol nourriture : de la cible vers le voleur.
   void _playBanditStealAnimation({
     required int? thiefId,
     required int targetId,
@@ -304,13 +398,15 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  /// Slide-out + reset commun à tous les cas de fin de carte.
   Future<void> _finishCardAnimation({int extraDelay = 0}) async {
     final waitMs = 700 + extraDelay;
     await Future<void>.delayed(Duration(milliseconds: waitMs));
-        await _slideController.forward(from: 0);
-    
-    if (!mounted) return;
+
+    if (!mounted || _disposed) return;
+
+    await _slideController.forward(from: 0);
+
+    if (!mounted || _disposed) return;
 
     setState(() {
       _revealedCard = null;
@@ -322,17 +418,21 @@ class _GameScreenState extends State<GameScreen>
 
     if (_gameState.isGameOver && mounted && !_resultScreenOpened) {
       _resultScreenOpened = true;
+      _navigationInProgress = true;
+      NavigationGuard.log(_tag, 'gameplay exited — game over, vers result screen');
+
+      _cleanupBeforeNavigation();
+
       final navigator = Navigator.of(context);
 
       final newUnlocks = await ProgressionService.registerCompletedGame();
       await StatsService.registerGame(_gameState);
 
-      // Fin de partie normale → supprime la sauvegarde
       await GameSaveService.clear();
       HapticService.trigger(HapticType.heavy);
       AudioService.instance.playSfx(SoundEffect.gameOver);
 
-      if (!mounted) return;
+      if (!mounted || _disposed) return;
 
       unawaited(
         navigator.pushReplacementNamed(
@@ -346,12 +446,8 @@ class _GameScreenState extends State<GameScreen>
     }
   }
 
-  /// Callback vers lequel pointe [BanditTargetOverlay] via setState.
   void Function(PlayerState)? _pendingBanditCallback;
 
-  /// Retourne le centre du widget [key] en coordonnées overlay,
-  /// avec un [verticalBias] optionnel (px, négatif = vers le haut).
-  /// Clampé pour ne jamais sortir de l'écran (marge = rayon particule 36px).
   Offset _widgetCenter(GlobalKey key, {double? verticalBias}) {
     final ctx = key.currentContext;
     if (ctx == null) return Offset.zero;
@@ -378,7 +474,6 @@ class _GameScreenState extends State<GameScreen>
       center = Offset(center.dx, center.dy + verticalBias);
     }
 
-    // Clamp pour que la particule (72×72) ne sorte jamais de l'overlay
     final overlaySize = overlay.size;
     return Offset(
       center.dx.clamp(36.0, overlaySize.width - 36.0),
@@ -386,32 +481,25 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  /// Biais vertical adaptatif selon la ligne du joueur dans la grille.
-  ///
-  /// - Joueurs du HAUT (index 0-1) : légère remontée.
-  /// - Joueurs du BAS  (index 2-3) : remontée plus importante (leur carte
-  ///   touche le bas de l'écran, la zone food est au centre de la carte).
   double _playerVerticalBias(int playerIndex) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final unit = screenHeight * 0.04; // ~28-36 px selon densité
+    final unit = screenHeight * 0.04;
     final totalPlayers = _gameState.players.length;
 
     switch (totalPlayers) {
       case 2:
-        // Les deux joueurs sont en haut → légère remontée identique
         return -unit * 0.5;
       case 3:
-        if (playerIndex <= 1) return -unit * 0.5; // haut
-        return -unit * 1.5;                        // bas
+        if (playerIndex <= 1) return -unit * 0.5;
+        return -unit * 1.5;
       case 4:
-        if (playerIndex <= 1) return -unit * 0.5; // haut
-        return -unit * 1.5;                        // bas
+        if (playerIndex <= 1) return -unit * 0.5;
+        return -unit * 1.5;
       default:
         return 0;
     }
   }
 
-  /// Centre de la zone nourriture du joueur, avec biais adaptatif.
   Offset _playerFoodCenter(int playerId) {
     final idx = _gameState.players.indexWhere((p) => p.id == playerId);
     if (idx < 0) return Offset.zero;
@@ -420,7 +508,6 @@ class _GameScreenState extends State<GameScreen>
     return _widgetCenter(key, verticalBias: _playerVerticalBias(idx));
   }
 
-  /// Centre de la zone frigo du joueur, avec biais adaptatif.
   Offset _playerFridgeCenter(int playerId) {
     final idx = _gameState.players.indexWhere((p) => p.id == playerId);
     if (idx < 0) return Offset.zero;
@@ -436,14 +523,12 @@ class _GameScreenState extends State<GameScreen>
   }) {
     if (card == null) return;
 
-    // Pioche : pas de biais (widget centré à l'écran)
     final start = _widgetCenter(_deckKey);
     if (start == Offset.zero) return;
 
     final currentPlayerId = _lastResolvedPlayerId;
     if (currentPlayerId == null) return;
 
-    // Ancres joueur avec correction verticale adaptative
     final playerCenter = _playerFoodCenter(currentPlayerId);
     final fridgeCenter = _playerFridgeCenter(currentPlayerId);
 
@@ -457,13 +542,10 @@ class _GameScreenState extends State<GameScreen>
         break;
 
       case CardType.raccoon:
-        // Raton bloqué par frigo → effet impact sur la zone frigo
         if (result.trashDestroyed) {
           _overlayCoordinator.playFridgeImpact(center: fridgeCenter);
           break;
         }
-
-        // Raton mange → aspirer la nourriture vers la carte
         if (foodCountBeforeDraw > 0) {
           _overlayCoordinator.playRaccoonDevour(
             playerCenter: playerCenter,
@@ -474,8 +556,6 @@ class _GameScreenState extends State<GameScreen>
         break;
 
       case CardType.bandit:
-        // Bandit auto-cible (cible unique, résolue sans popup) :
-        // targetPlayerId est renseigné → jouer l'animation de vol.
         if (result.targetPlayerId != null) {
           _playBanditStealAnimation(
             thiefId: currentPlayerId,
@@ -511,7 +591,7 @@ class _GameScreenState extends State<GameScreen>
     }
   }
 
-  // ── UI builders ─────────────────────────────────────────────────────────
+  // ── UI builders ────────────────────────────────────────────────────────────
 
   Widget _buildPlayerCard(int index) {
     final player = _gameState.players[index];
@@ -579,7 +659,6 @@ class _GameScreenState extends State<GameScreen>
   }
 
   List<Widget> _buildPlayerPositions() {
-    // top: 52 laisse de la place à la barre de contrôles gameplay (≈48 px)
     const positions = {
       2: [
         {'top': 52.0, 'left': 12.0},
@@ -612,7 +691,6 @@ class _GameScreenState extends State<GameScreen>
     });
   }
 
-  /// Construit le widget de dos de carte selon le dos actuellement équipé.
   Widget _buildCardBackWidget() {
     final id = ProgressionService.progression.selectedCardBackId;
     final assetPath = AppAssets.cardBackAsset(id);
@@ -620,16 +698,10 @@ class _GameScreenState extends State<GameScreen>
     if (assetPath != null) {
       return Image.asset(assetPath, fit: BoxFit.fill);
     }
-    // Fallback couleur pour les dos sans image (classic, blue, green, gold…)
     return ColoredBox(color: AppAssets.cardBackFallbackColor(id));
   }
 
   Widget _buildDeckCard({required bool backgroundCard}) {
-    // Une carte est "vraiment vide" (pioche épuisée sans carte en cours d'animation)
-    // seulement quand il ne reste plus de cartes ET qu'aucune carte n'est en cours
-    // de révélation. Sans ce garde, la dernière carte disparaît visuellement dès
-    // que drawCard() retire l'unique élément du deck (remainingCards → 0), alors
-    // que l'animation de retournement/slide-out n'est pas encore terminée.
     final deckExhausted = _gameState.remainingCards == 0 && _revealedCard == null;
 
     return GestureDetector(
@@ -755,21 +827,22 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  /// Barre d'actions gameplay stable : coin supérieur, hors zones joueurs.
-  /// Prête à accueillir de futurs boutons (pause, aide, etc.).
   Widget _buildGameplayControlsBar() {
+    // Désactivé pendant toute animation ET overlay Bandit.
+    final bool quitEnabled = !_isAnimating && !_showingBanditOverlay;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           TextButton.icon(
-            onPressed: _isAnimating || _showingBanditOverlay
-                ? null
-                : () async {
+            onPressed: quitEnabled
+                ? () async {
                     final confirmed = await _showQuitDialog();
                     if (confirmed && mounted) await _quitToHome();
-                  },
+                  }
+                : null,
             icon: const Icon(Icons.exit_to_app, size: 18),
             label: const Text('Quitter'),
             style: TextButton.styleFrom(
@@ -783,7 +856,6 @@ class _GameScreenState extends State<GameScreen>
               ),
             ),
           ),
-          // Espace réservé à droite pour de futurs boutons (pause, aide…)
           const SizedBox(width: 48),
         ],
       ),
@@ -797,20 +869,19 @@ class _GameScreenState extends State<GameScreen>
     }
 
     return PopScope(
+      // canPop: false → on intercepte TOUJOURS le retour Android.
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        final confirmed = await _showQuitDialog();
-                if (confirmed && mounted) await _quitToHome();
-              },
+        NavigationGuard.log(_tag, 'back pressed (PopScope)');
+        await _onBackPressed();
+      },
       child: Scaffold(
         backgroundColor: const Color(0xFF1B1525),
         body: SafeArea(
           child: Stack(
             key: _rootStackKey,
             children: [
-              // ── Fond + gameplay — isolé dans un RepaintBoundary ──────────
-              // Les animations overlay n'entraînent aucun repaint du fond.
               Positioned.fill(
                 child: RepaintBoundary(
                   child: Padding(
@@ -825,7 +896,6 @@ class _GameScreenState extends State<GameScreen>
                 ),
               ),
 
-              // ── Barre de contrôles gameplay — overlay stable ──────────────
               Positioned(
                 top: 0,
                 left: 0,
@@ -833,13 +903,6 @@ class _GameScreenState extends State<GameScreen>
                 child: _buildGameplayControlsBar(),
               ),
 
-              // ── Overlay particules — isolé via ValueNotifier + RepaintBoundary
-              // Aucun rebuild de GameScreen déclenché par les animations.
-              // IMPORTANT : Positioned.fill indispensable pour que le Stack interne
-              // du manager couvre toute la SafeArea. Les coordonnées sont converties
-              // Stack interne permet de convertir les coordonnées globales en
-              // coordonnées locales au Stack via globalToLocal — corrige le décalage
-              // SafeArea qui faisait apparaître les particules en haut à gauche.
               Positioned.fill(
                 child: GameplayOverlayAnimationManager(
                   animationsNotifier: _animationsNotifier,
