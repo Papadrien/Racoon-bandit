@@ -702,7 +702,7 @@ class _GameScreenState extends State<GameScreen>
     return Image.asset(
       assetPath,
       fit: BoxFit.fill,
-      errorBuilder: (_, __, ___) =>
+      errorBuilder: (_, _a, _b) =>
           ColoredBox(color: AppAssets.cardBackFallbackColor(id)),
     );
   }

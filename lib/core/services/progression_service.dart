@@ -26,12 +26,12 @@ class ProgressionService {
 
   // ── Catalogue des dos de cartes ──────────────────────────────────────────
 
-  static final List<CardBackConfig> cardBacks = [
+  static const List<CardBackConfig> cardBacks = [
     CardBackConfig(
       id: 'purple',
       name: 'Violet',
       assetPath: AppAssets.cardBackPurple,
-      themeColor: const Color(0xFFFF6D00),
+      themeColor: Color(0xFFFF6D00),
       requiredGames: 0,
       unlockedByDefault: true,
     ),
@@ -39,28 +39,28 @@ class ProgressionService {
       id: 'blue',
       name: 'Bleu',
       assetPath: AppAssets.cardBackBlue,
-      themeColor: const Color(0xFF2196F3),
+      themeColor: Color(0xFF2196F3),
       requiredGames: 5,
     ),
     CardBackConfig(
       id: 'green',
       name: 'Vert',
       assetPath: AppAssets.cardBackGreen,
-      themeColor: const Color(0xFF4CAF50),
+      themeColor: Color(0xFF4CAF50),
       requiredGames: 10,
     ),
     CardBackConfig(
       id: 'pink',
       name: 'Rose',
       assetPath: AppAssets.cardBackPink,
-      themeColor: const Color(0xFFE91E8C),
+      themeColor: Color(0xFFE91E8C),
       requiredGames: 20,
     ),
     CardBackConfig(
       id: 'yellow',
       name: 'Jaune',
       assetPath: AppAssets.cardBackYellow,
-      themeColor: const Color(0xFFFFC107),
+      themeColor: Color(0xFFFFC107),
       requiredGames: 30,
     ),
   ];

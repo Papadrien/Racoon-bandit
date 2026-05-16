@@ -101,8 +101,8 @@ class _AdButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton.icon(
       onPressed: onPressed,
-      icon: const Icon(Icons.smart_display, size: 16, color: AppTheme.accent),
-      label: const Text(
+      icon: Icon(Icons.smart_display, size: 16, color: AppTheme.accent),
+      label: Text(
         'Pub +1',
         style: TextStyle(
           fontSize: 11,

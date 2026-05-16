@@ -169,7 +169,6 @@ class _HomeScreenState extends State<HomeScreen>
     required Duration? remainingDuration,
     required bool noLives,
   }) {
-    return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {
         if (kDebugMode && didPop) {
@@ -197,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen>
                             scale: _rewardAnimationController,
                             child: LivesIndicator(
                               lives: _lifeSystemService.currentLives,
-                              remainingDuration: remainingDuration,
+                              remainingDuration: remainingDuration ?? Duration.zero,
                             ),
                           )
                         else
@@ -244,12 +243,12 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     const SizedBox(height: 12),
                     if (noLives)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
                           'Regardez une publicité complète pour récupérer 1 vie.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppTheme.textMuted,
                             fontSize: 13,
                           ),
@@ -322,7 +321,7 @@ class _ResumeButton extends StatelessWidget {
         label: const Text('Reprendre la partie'),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppTheme.accent,
-          side: const BorderSide(color: AppTheme.accent),
+          side: BorderSide(color: AppTheme.accent),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

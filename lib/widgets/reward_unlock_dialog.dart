@@ -136,7 +136,7 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                             color: AppTheme.accent.withValues(alpha: 0.5),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           '🎉 Nouveau déblocage !',
                           style: TextStyle(
                             color: AppTheme.accent,

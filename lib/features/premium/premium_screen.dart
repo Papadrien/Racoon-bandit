@@ -19,7 +19,7 @@ class PremiumScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(),
-              const Icon(
+              Icon(
                 Icons.workspace_premium,
                 size: 80,
                 color: AppTheme.accent,

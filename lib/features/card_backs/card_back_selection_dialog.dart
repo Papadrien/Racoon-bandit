@@ -207,7 +207,7 @@ class _CardBackTile extends StatelessWidget {
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, _a, _b) => Container(
                             width: double.infinity,
                             color: fallbackColor
                                 .withValues(alpha: isUnlocked ? 1.0 : 0.4),
