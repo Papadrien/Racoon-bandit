@@ -306,6 +306,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             ],
           ),
         ),
+      ),
       ), // Scaffold
     ); // PopScope
   }
