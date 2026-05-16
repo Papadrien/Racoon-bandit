@@ -169,6 +169,7 @@ class _HomeScreenState extends State<HomeScreen>
     required Duration? remainingDuration,
     required bool noLives,
   }) {
+    return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {
         if (kDebugMode && didPop) {
