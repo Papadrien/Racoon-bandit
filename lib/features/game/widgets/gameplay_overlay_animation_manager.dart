@@ -72,7 +72,7 @@ class GameplayOverlayAnimationManager extends StatelessWidget {
           builder: (context, animations, _) {
             return SizedBox.expand(
               child: Stack(
-                clipBehavior: Clip.none,
+                clipBehavior: Clip.hardEdge,
                 children: animations
                     .map(
                       (animation) => _AnimatedOverlayItem(

@@ -47,13 +47,9 @@ class _HomeScreenState extends State<HomeScreen>
     _initializeLives();
   }
 
-  /// Appelé quand l'app revient au premier plan (résumé depuis background).
-  /// Recharge la sauvegarde pour refléter l'état réel (ex : sauvegarde créée
-  /// puis app killée et relancée dans la même session Flutter).
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
-      // Recharge la sauvegarde depuis le disque au cas où elle aurait changé.
       GameSaveService.load().then((_) {
         if (mounted) setState(() {});
       });
@@ -65,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
       await _lifeSystemService.updateLivesFromTime();
-            if (mounted) setState(() {});
+      if (mounted) setState(() {});
     });
 
     if (mounted) {
@@ -85,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _startGame() async {
     await _lifeSystemService.consumeLife();
-        if (!mounted) return;
+    if (!mounted) return;
     setState(() {});
     Navigator.pushNamed(context, AppRoutes.lobby);
   }
@@ -134,16 +130,11 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  /// Reprend la partie sauvegardée.
-  ///
-  /// Recharge la sauvegarde avant de naviguer pour s'assurer qu'elle est
-  /// valide (protection contre un état mémoire périmé).
   Future<void> _resumeGame() async {
     await GameSaveService.load();
     if (!mounted) return;
 
     if (!GameSaveService.hasSavedGame) {
-      // La sauvegarde a disparu entre temps (rare, mais possible).
       setState(() {});
       return;
     }
@@ -159,8 +150,6 @@ class _HomeScreenState extends State<HomeScreen>
     final noLives = _lifeSystemService.currentLives <= 0;
 
     return PopScope(
-      // L'accueil est la racine de la pile : canPop: true laisse Android
-      // quitter l'app normalement. On logue uniquement en debug.
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {
         if (kDebugMode && didPop) {
@@ -168,76 +157,94 @@ class _HomeScreenState extends State<HomeScreen>
         }
       },
       child: Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (!_isLoading)
-                    ScaleTransition(
-                      scale: _rewardAnimationController,
-                      child: LivesIndicator(
-                        lives: _lifeSystemService.currentLives,
-                        remainingDuration: remainingDuration,
-                      ),
+        body: SafeArea(
+          // Padding minimum pour protéger des encoches / barres système
+          minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 360;
+              final hPad = isNarrow ? 16.0 : 32.0;
+
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+                child: Column(
+                  children: [
+                    // ── Top bar ───────────────────────────────────────────
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (!_isLoading)
+                          ScaleTransition(
+                            scale: _rewardAnimationController,
+                            child: LivesIndicator(
+                              lives: _lifeSystemService.currentLives,
+                              remainingDuration: remainingDuration,
+                            ),
+                          )
+                        else
+                          const SizedBox.shrink(),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.workspace_premium),
+                              color: AppTheme.accent,
+                              tooltip: 'Premium',
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, AppRoutes.premium),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.settings),
+                              color: AppTheme.textMuted,
+                              tooltip: 'Paramètres',
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, AppRoutes.settings),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.workspace_premium),
-                        color: AppTheme.accent,
-                        tooltip: 'Premium',
-                        onPressed: () =>
-                            Navigator.pushNamed(context, AppRoutes.premium),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.settings),
-                        color: AppTheme.textMuted,
-                        tooltip: 'Paramètres',
-                        onPressed: () =>
-                            Navigator.pushNamed(context, AppRoutes.settings),
-                      ),
+                    const Spacer(),
+                    // ── Logo ──────────────────────────────────────────────
+                    const _Logo(),
+                    const Spacer(),
+                    // ── Actions ───────────────────────────────────────────
+                    if (_hasSavedGame) ...[
+                      _ResumeButton(onPressed: _resumeGame),
+                      const SizedBox(height: 12),
                     ],
-                  ),
-                ],
-              ),
-              const Spacer(),
-              const _Logo(),
-              const Spacer(),
-              if (_hasSavedGame) ...[
-                _ResumeButton(onPressed: _resumeGame),
-                const SizedBox(height: 12),
-              ],
-              if (noLives)
-                _RewardAdButton(
-                  isLoading: _isRewardLoading,
-                  onPressed: _watchAdForLife,
-                )
-              else
-                PrimaryButton(
-                  label: 'JOUER',
-                  onPressed: _isLoading ? null : _startGame,
+                    if (noLives)
+                      _RewardAdButton(
+                        isLoading: _isRewardLoading,
+                        onPressed: _watchAdForLife,
+                      )
+                    else
+                      PrimaryButton(
+                        label: 'JOUER',
+                        onPressed: _isLoading ? null : _startGame,
+                      ),
+                    const SizedBox(height: 12),
+                    if (noLives)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          'Regardez une publicité complète pour récupérer 1 vie.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 32),
+                  ],
                 ),
-              const SizedBox(height: 16),
-              if (noLives)
-                const Text(
-                  'Regardez une publicité complète pour récupérer 1 vie.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 13,
-                  ),
-                ),
-              const SizedBox(height: 48),
-            ],
+              );
+            },
           ),
         ),
       ),
-    ), // Scaffold
-    ); // PopScope
+    );
   }
 }
 
@@ -312,32 +319,43 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          'RACCOON',
-          style: Theme.of(context)
-              .textTheme
-              .displayLarge
-              ?.copyWith(color: AppTheme.primary),
-        ),
-        Text(
-          'BANDIT',
-          style: Theme.of(context)
-              .textTheme
-              .displayLarge
-              ?.copyWith(color: AppTheme.accent),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'multijoueur local',
-          style: TextStyle(
-            color: AppTheme.textMuted,
-            letterSpacing: 3,
-            fontSize: 12,
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = (constraints.maxWidth / 360).clamp(0.75, 1.0);
+        return Column(
+          children: [
+            Text(
+              'RACCOON',
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: AppTheme.primary,
+                    fontSize:
+                        (Theme.of(context).textTheme.displayLarge?.fontSize ??
+                                48) *
+                            scale,
+                  ),
+            ),
+            Text(
+              'BANDIT',
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: AppTheme.accent,
+                    fontSize:
+                        (Theme.of(context).textTheme.displayLarge?.fontSize ??
+                                48) *
+                            scale,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'multijoueur local',
+              style: TextStyle(
+                color: AppTheme.textMuted,
+                letterSpacing: 3,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

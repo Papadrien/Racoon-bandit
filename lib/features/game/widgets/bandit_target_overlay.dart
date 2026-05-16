@@ -89,56 +89,73 @@ class _BanditTargetOverlayState extends State<BanditTargetOverlay>
   }
 
   Widget _buildCard(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 28),
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF241C36),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFF7C4DFF).withValues(alpha: 0.55),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF7C4DFF).withValues(alpha: 0.25),
-            blurRadius: 32,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── En-tête ──────────────────────────────────────────────────────
-          const Text(
-            '🥷',
-            style: TextStyle(fontSize: 40),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Choisir une cible',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Qui voulez-vous voler ?',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.55),
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 20),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Hauteur max disponible (ex : petit téléphone avec clavier logiciel)
+        final maxCardHeight = MediaQuery.of(context).size.height * 0.78;
 
-          // ── Liste des cibles ─────────────────────────────────────────────
-          ...widget.targets.map((target) => _buildTargetTile(target)),
-        ],
-      ),
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          constraints: BoxConstraints(maxHeight: maxCardHeight),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF241C36),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFF7C4DFF).withValues(alpha: 0.55),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF7C4DFF).withValues(alpha: 0.25),
+                blurRadius: 32,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── En-tête ─────────────────────────────────────────────────
+              const Text(
+                '🥷',
+                style: TextStyle(fontSize: 36),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Choisir une cible',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Qui voulez-vous voler ?',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.55),
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // ── Liste des cibles (scrollable si trop haute) ─────────────
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: widget.targets
+                        .map((target) => _buildTargetTile(target))
+                        .toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

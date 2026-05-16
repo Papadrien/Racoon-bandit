@@ -70,8 +70,9 @@ class _GameScreenState extends State<GameScreen>
   /// Empêche les double-pop et navigations simultanées.
   bool _navigationInProgress = false;
 
-  static const double _cardWidth = 180;
-  static const double _cardHeight = 260;
+  // Tailles de cartes adaptatives — calculées dans build() via LayoutBuilder
+  double _cardWidth = 160;
+  double _cardHeight = 230;
   static const double _cardRadius = 24;
   static const String _tag = 'GameScreen';
 
@@ -272,13 +273,6 @@ class _GameScreenState extends State<GameScreen>
 
   // ── Back button Android ────────────────────────────────────────────────────
 
-  /// Gestionnaire unique du retour Android.
-  ///
-  /// Ordre de vérification :
-  /// 1. Animation critique → bloqué
-  /// 2. Dialog déjà ouvert → bloqué (anti double-dialog)
-  /// 3. Navigation en cours → bloqué (anti double-pop)
-  /// 4. Sinon → confirmation quitter
   Future<void> _onBackPressed() async {
     NavigationGuard.log(_tag, 'back pressed');
 
@@ -592,7 +586,20 @@ class _GameScreenState extends State<GameScreen>
 
   // ── UI builders ────────────────────────────────────────────────────────────
 
-  Widget _buildPlayerCard(int index) {
+  /// Calcule une taille de carte adaptée à l'écran disponible.
+  /// Appelé depuis _buildCenterArea() via LayoutBuilder.
+  void _computeCardSize(BoxConstraints constraints) {
+    // Hauteur disponible ≈ écran moins la top bar (≈52px) moins zones joueurs
+    // On cible 55% de la hauteur max possible, plafonné à 260×180.
+    final maxH = constraints.maxHeight * 0.52;
+    final maxW = constraints.maxWidth * 0.55;
+
+    _cardHeight = maxH.clamp(180.0, 260.0);
+    // Ratio carte ≈ 7:10
+    _cardWidth = (_cardHeight * 0.70).clamp(130.0, 185.0).clamp(0.0, maxW);
+  }
+
+  Widget _buildPlayerCard(int index, {double maxWidth = 150}) {
     final player = _gameState.players[index];
     final active = index == _gameState.currentPlayerIndex;
 
@@ -600,79 +607,107 @@ class _GameScreenState extends State<GameScreen>
     _foodZoneKeys.putIfAbsent(player.id, GlobalKey.new);
     _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
 
-    return Container(
-      key: _playerKeys[player.id],
-      width: 150,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: active
-            ? player.profileColor.withValues(alpha: 0.18)
-            : Colors.black.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: active ? player.profileColor : Colors.white24,
-          width: active ? 2 : 1,
+    // Taille avatar réduite sur petits écrans
+    final avatarSize = maxWidth < 120 ? 32.0 : 40.0;
+    final nameFontSize = maxWidth < 120 ? 11.0 : 13.0;
+    final emojiFontSize = maxWidth < 120 ? 14.0 : 16.0;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: Container(
+        key: _playerKeys[player.id],
+        padding: EdgeInsets.symmetric(
+          horizontal: maxWidth < 120 ? 6 : 10,
+          vertical: 8,
         ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          PlayerAvatar(
-            emoji: player.emoji,
-            color: player.profileColor,
-            size: 40,
+        decoration: BoxDecoration(
+          color: active
+              ? player.profileColor.withValues(alpha: 0.18)
+              : Colors.black.withValues(alpha: 0.25),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: active ? player.profileColor : Colors.white24,
+            width: active ? 2 : 1,
           ),
-          const SizedBox(height: 6),
-          Text(
-            player.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            PlayerAvatar(
+              emoji: player.emoji,
+              color: player.profileColor,
+              size: avatarSize,
             ),
-          ),
-          const SizedBox(height: 4),
-          const SizedBox(height: 2),
-          Wrap(
-            key: _foodZoneKeys[player.id],
-            alignment: WrapAlignment.center,
-            spacing: 2,
-            children: [
-              ...List.generate(player.foodCount, (_) => const Text('🍎')),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Wrap(
-            key: _fridgeZoneKeys[player.id],
-            alignment: WrapAlignment.center,
-            spacing: 2,
-            children: [
-              ...List.generate(player.trashCount, (_) => const Text('🧊')),
-            ],
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              player.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: nameFontSize,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Wrap(
+              key: _foodZoneKeys[player.id],
+              alignment: WrapAlignment.center,
+              spacing: 1,
+              runSpacing: 1,
+              children: List.generate(
+                player.foodCount,
+                (_) => Text('🍎', style: TextStyle(fontSize: emojiFontSize)),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Wrap(
+              key: _fridgeZoneKeys[player.id],
+              alignment: WrapAlignment.center,
+              spacing: 1,
+              runSpacing: 1,
+              children: List.generate(
+                player.trashCount,
+                (_) => Text('🧊', style: TextStyle(fontSize: emojiFontSize)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  List<Widget> _buildPlayerPositions() {
-    const positions = {
+  /// Positionne les cartes joueur de façon SafeArea-aware.
+  /// On utilise un offset dynamique basé sur la taille réelle disponible
+  /// plutôt que des constantes hardcodées.
+  List<Widget> _buildPlayerPositions(BoxConstraints constraints) {
+    final sw = constraints.maxWidth;
+    final sh = constraints.maxHeight;
+
+    // Marge horizontale : assez pour ne pas coller au bord
+    const hMargin = 8.0;
+    // Offset vertical depuis le haut (sous la controls bar) / depuis le bas
+    final topOffset = sh * 0.01 + 44.0; // laisse place à la controls bar
+    final bottomOffset = sh * 0.01;
+
+    // Largeur max de chaque carte joueur (≤38% de la largeur écran)
+    final cardMaxW = (sw * 0.38).clamp(100.0, 150.0);
+
+    final positions = {
       2: [
-        {'top': 52.0, 'left': 12.0},
-        {'top': 52.0, 'right': 12.0},
+        {'top': topOffset, 'left': hMargin},
+        {'top': topOffset, 'right': hMargin},
       ],
       3: [
-        {'top': 52.0, 'left': 12.0},
-        {'top': 52.0, 'right': 12.0},
-        {'bottom': 12.0, 'right': 12.0},
+        {'top': topOffset, 'left': hMargin},
+        {'top': topOffset, 'right': hMargin},
+        {'bottom': bottomOffset, 'right': hMargin},
       ],
       4: [
-        {'top': 52.0, 'left': 12.0},
-        {'top': 52.0, 'right': 12.0},
-        {'bottom': 12.0, 'left': 12.0},
-        {'bottom': 12.0, 'right': 12.0},
+        {'top': topOffset, 'left': hMargin},
+        {'top': topOffset, 'right': hMargin},
+        {'bottom': bottomOffset, 'left': hMargin},
+        {'bottom': bottomOffset, 'right': hMargin},
       ],
     };
 
@@ -685,7 +720,7 @@ class _GameScreenState extends State<GameScreen>
         left: pos['left'],
         right: pos['right'],
         bottom: pos['bottom'],
-        child: _buildPlayerCard(index),
+        child: _buildPlayerCard(index, maxWidth: cardMaxW),
       );
     });
   }
@@ -744,13 +779,17 @@ class _GameScreenState extends State<GameScreen>
                             alignment: Alignment.center,
                             transform: Matrix4.identity()
                               ..rotateY(showFront ? math.pi : 0),
-                            child: Text(
-                              deckExhausted
-                                  ? ''
-                                  : showFront && _revealedCard != null
-                                      ? _revealedCard!.emoji
-                                      : '',
-                              style: const TextStyle(fontSize: 68),
+                            child: FittedBox(
+                              child: Text(
+                                deckExhausted
+                                    ? ''
+                                    : showFront && _revealedCard != null
+                                        ? _revealedCard!.emoji
+                                        : '',
+                                style: TextStyle(
+                                  fontSize: (_cardHeight * 0.26).clamp(42.0, 68.0),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -765,21 +804,28 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  Widget _buildCenterArea() {
+  Widget _buildCenterArea(BoxConstraints constraints) {
+    _computeCardSize(constraints);
+
     final showBackgroundCard = _gameState.remainingCards > 1;
+
+    // Taille de police du titre adaptée à la largeur
+    final titleFontSize = (constraints.maxWidth * 0.065).clamp(16.0, 24.0);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           'Tour de ${_gameState.currentPlayer.name}',
-          style: const TextStyle(
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
             color: Colors.white,
-            fontSize: 24,
+            fontSize: titleFontSize,
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         SizedBox(
           key: _deckKey,
           width: _cardWidth + 16,
@@ -799,7 +845,7 @@ class _GameScreenState extends State<GameScreen>
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
           child: Text(
@@ -807,18 +853,21 @@ class _GameScreenState extends State<GameScreen>
                 ? ''
                 : '${_gameState.remainingCards} carte${_gameState.remainingCards > 1 ? 's' : ''}',
             key: ValueKey(_gameState.remainingCards),
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         SizedBox(
-          height: 40,
+          height: 36,
           child: Text(
             _effectText,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
           ),
         ),
@@ -868,7 +917,6 @@ class _GameScreenState extends State<GameScreen>
     }
 
     return PopScope(
-      // canPop: false → on intercepte TOUJOURS le retour Android.
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
@@ -878,44 +926,56 @@ class _GameScreenState extends State<GameScreen>
       child: Scaffold(
         backgroundColor: const Color(0xFF1B1525),
         body: SafeArea(
-          child: Stack(
-            key: _rootStackKey,
-            children: [
-              Positioned.fill(
-                child: RepaintBoundary(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Stack(
-                      children: [
-                        ..._buildPlayerPositions(),
-                        Center(child: _buildCenterArea()),
-                      ],
+          // minimum: évite que les éléments passent sous la barre système
+          minimum: const EdgeInsets.only(top: 4, bottom: 4),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(
+                key: _rootStackKey,
+                children: [
+                  // ── Fond gameplay ─────────────────────────────────────────
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Stack(
+                          children: [
+                            ..._buildPlayerPositions(constraints),
+                            Center(
+                              child: _buildCenterArea(constraints),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
 
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: _buildGameplayControlsBar(),
-              ),
-
-              Positioned.fill(
-                child: GameplayOverlayAnimationManager(
-                  animationsNotifier: _animationsNotifier,
-                ),
-              ),
-
-              if (_showingBanditOverlay && _pendingBanditCallback != null)
-                Positioned.fill(
-                  child: BanditTargetOverlay(
-                    targets: _banditTargets,
-                    onTargetSelected: _pendingBanditCallback!,
+                  // ── Top bar (toujours visible) ────────────────────────────
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: _buildGameplayControlsBar(),
                   ),
-                ),
-            ],
+
+                  // ── Animations overlay ────────────────────────────────────
+                  Positioned.fill(
+                    child: GameplayOverlayAnimationManager(
+                      animationsNotifier: _animationsNotifier,
+                    ),
+                  ),
+
+                  // ── Bandit target overlay ─────────────────────────────────
+                  if (_showingBanditOverlay && _pendingBanditCallback != null)
+                    Positioned.fill(
+                      child: BanditTargetOverlay(
+                        targets: _banditTargets,
+                        onTargetSelected: _pendingBanditCallback!,
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ),
       ),

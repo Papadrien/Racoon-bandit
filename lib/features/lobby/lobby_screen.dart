@@ -218,12 +218,20 @@ class _LobbyScreenState extends State<LobbyScreen> {
         leading: const BackButton(),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Spacer(),
+        minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 360;
+            final hPad = isNarrow ? 16.0 : 24.0;
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Spacer(),
               // ── Sélecteur nombre de joueurs ─────────────────────────────
               const Text(
                 'Nombre de joueurs',
@@ -304,6 +312,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   ),
                 ),
             ],
+          ),
+        ),
+              ),
+            ),
           ),
         ),
       ),

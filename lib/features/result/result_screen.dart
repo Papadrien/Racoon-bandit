@@ -20,7 +20,6 @@ class _ResultScreenState extends State<ResultScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
-  /// Empêche double-tap et navigation simultanée depuis cet écran.
   bool _navigationInProgress = false;
 
   static const String _tag = 'ResultScreen';
@@ -33,7 +32,6 @@ class _ResultScreenState extends State<ResultScreen>
       duration: const Duration(milliseconds: 700),
     )..forward();
 
-    // Afficher les popups de récompense après le rendu initial
     WidgetsBinding.instance.addPostFrameCallback((_) => _showRewardPopups());
   }
 
@@ -49,7 +47,6 @@ class _ResultScreenState extends State<ResultScreen>
     if (args is! ResultScreenArgs) return;
     if (args.newUnlocks.isEmpty) return;
 
-    // Légère pause pour laisser l'écran de résultat s'afficher d'abord
     await Future<void>.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
 
@@ -59,7 +56,6 @@ class _ResultScreenState extends State<ResultScreen>
   GameState _getGameState(BuildContext context) {
     final args = ModalRoute.of(context)!.settings.arguments;
     if (args is ResultScreenArgs) return args.gameState;
-    // Compatibilité ascendante : arguments directs (ancien chemin)
     return args as GameState;
   }
 
@@ -69,7 +65,6 @@ class _ResultScreenState extends State<ResultScreen>
     final ranking = gameState.ranking;
     final winner = ranking.first;
 
-    // L'écran résultat autorise le retour Android (→ home).
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -78,104 +73,172 @@ class _ResultScreenState extends State<ResultScreen>
         _goHome();
       },
       child: Scaffold(
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                ScaleTransition(
-                  scale: Tween(begin: 0.8, end: 1.0).animate(
-                    CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-                  ),
+        body: SafeArea(
+          minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: FadeTransition(
+            opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 360;
+                final hPad = isNarrow ? 12.0 : 20.0;
+                final winnerAvatarSize = (constraints.maxWidth * 0.22).clamp(56.0, 84.0);
+                final trophySize = (constraints.maxWidth * 0.19).clamp(48.0, 72.0);
+
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 12),
                   child: Column(
                     children: [
-                      const Icon(Icons.emoji_events, size: 72, color: AppTheme.accent),
-                      const SizedBox(height: 12),
-                      PlayerAvatar(
-                        emoji: winner.emoji,
-                        color: winner.profileColor,
-                        size: 84,
+                      // ── Gagnant ─────────────────────────────────────────
+                      ScaleTransition(
+                        scale: Tween(begin: 0.8, end: 1.0).animate(
+                          CurvedAnimation(
+                            parent: _controller,
+                            curve: Curves.elasticOut,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.emoji_events,
+                              size: trophySize,
+                              color: AppTheme.accent,
+                            ),
+                            const SizedBox(height: 8),
+                            PlayerAvatar(
+                              emoji: winner.emoji,
+                              color: winner.profileColor,
+                              size: winnerAvatarSize,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${winner.name} remporte la partie !',
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize:
+                                    (constraints.maxWidth * 0.062).clamp(16.0, 24.0),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '${winner.name} remporte la partie !',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      const SizedBox(height: 16),
+
+                      // ── Classement & stats ───────────────────────────────
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    children: ranking.asMap().entries.map((entry) {
+                                      final player = entry.value;
+                                      final avatarSize =
+                                          (constraints.maxWidth * 0.10).clamp(32.0, 40.0);
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.symmetric(vertical: 6),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 28,
+                                              child: Text(
+                                                '#${entry.key + 1}',
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                            PlayerAvatar(
+                                              emoji: player.emoji,
+                                              color: player.profileColor,
+                                              size: avatarSize,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(
+                                                player.name,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Text('🍎 ${player.foodCount}'),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Résumé de partie',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _StatLine(
+                                        label: 'Cartes jouées',
+                                        value:
+                                            '${gameState.sessionStats.cardsPlayed}',
+                                      ),
+                                      _StatLine(
+                                        label: 'Nourriture gagnée',
+                                        value:
+                                            '${gameState.sessionStats.foodGained}',
+                                      ),
+                                      _StatLine(
+                                        label: 'Nourriture volée',
+                                        value:
+                                            '${gameState.sessionStats.foodStolen}',
+                                      ),
+                                      _StatLine(
+                                        label: 'Bandits joués',
+                                        value:
+                                            '${gameState.sessionStats.banditCardsPlayed}',
+                                      ),
+                                      _StatLine(
+                                        label: 'Raccoons joués',
+                                        value:
+                                            '${gameState.sessionStats.raccoonCardsPlayed}',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // ── Actions ──────────────────────────────────────────
+                      const SizedBox(height: 10),
+                      PrimaryButton(
+                        label: 'REJOUER',
+                        onPressed: _goLobby,
+                      ),
+                      TextButton(
+                        onPressed: _goHome,
+                        child: const Text('Retour accueil'),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 24),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              children: ranking.asMap().entries.map((entry) {
-                                final player = entry.value;
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                  child: Row(
-                                    children: [
-                                      Text('#${entry.key + 1}'),
-                                      const SizedBox(width: 12),
-                                      PlayerAvatar(
-                                        emoji: player.emoji,
-                                        color: player.profileColor,
-                                        size: 40,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(child: Text(player.name, overflow: TextOverflow.ellipsis)),
-                                      Text('🍎 ${player.foodCount}'),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Résumé de partie', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                const SizedBox(height: 12),
-                                _StatLine(label: 'Cartes jouées', value: '${gameState.sessionStats.cardsPlayed}'),
-                                _StatLine(label: 'Nourriture gagnée', value: '${gameState.sessionStats.foodGained}'),
-                                _StatLine(label: 'Nourriture volée', value: '${gameState.sessionStats.foodStolen}'),
-                                _StatLine(label: 'Bandits joués', value: '${gameState.sessionStats.banditCardsPlayed}'),
-                                _StatLine(label: 'Raccoons joués', value: '${gameState.sessionStats.raccoonCardsPlayed}'),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                PrimaryButton(
-                  label: 'REJOUER',
-                  onPressed: _goLobby,
-                ),
-                TextButton(
-                  onPressed: _goHome,
-                  child: const Text('Retour accueil'),
-                ),
-              ],
+                );
+              },
             ),
           ),
         ),
       ),
-    ), // PopScope
     );
   }
 
@@ -211,9 +274,12 @@ class _StatLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
-        children: [Expanded(child: Text(label)), Text(value)],
+        children: [
+          Expanded(child: Text(label)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }
