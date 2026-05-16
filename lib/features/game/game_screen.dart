@@ -457,8 +457,11 @@ class _GameScreenState extends State<GameScreen>
         break;
 
       case CardType.raccoon:
-        // Raton bloqué par frigo → pas d'animation nourriture
-        if (result.trashDestroyed) break;
+        // Raton bloqué par frigo → effet impact sur la zone frigo
+        if (result.trashDestroyed) {
+          _overlayCoordinator.playFridgeImpact(center: fridgeCenter);
+          break;
+        }
 
         // Raton mange → aspirer la nourriture vers la carte
         if (foodCountBeforeDraw > 0) {
@@ -471,6 +474,14 @@ class _GameScreenState extends State<GameScreen>
         break;
 
       case CardType.bandit:
+        // Bandit auto-cible (cible unique, résolue sans popup) :
+        // targetPlayerId est renseigné → jouer l'animation de vol.
+        if (result.targetPlayerId != null) {
+          _playBanditStealAnimation(
+            thiefId: currentPlayerId,
+            targetId: result.targetPlayerId!,
+          );
+        }
         break;
     }
   }

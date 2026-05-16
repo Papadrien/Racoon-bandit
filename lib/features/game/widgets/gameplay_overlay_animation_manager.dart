@@ -13,6 +13,10 @@ enum OverlayAnimationType {
   /// Raton laveur : la particule est aspirée depuis [start] vers [end].
   /// Utilise une courbe "easeInExpo" pour l'effet magnétique.
   raccoonDevour,
+
+  /// Impact frigo : explosion de particules depuis [start] (pas de [end]).
+  /// Utilisé quand un frigo bloque un raton.
+  fridgeImpact,
 }
 
 class GameplayOverlayAnimation {
@@ -28,6 +32,9 @@ class GameplayOverlayAnimation {
   /// Délai avant le démarrage (utilisé pour décaler les particules raton).
   final Duration delay;
 
+  /// Angle de direction en radians (utilisé pour fridgeImpact burst).
+  final double angle;
+
   const GameplayOverlayAnimation({
     required this.id,
     required this.emoji,
@@ -38,6 +45,7 @@ class GameplayOverlayAnimation {
     this.endScale = 0.7,
     this.type = OverlayAnimationType.travelTo,
     this.delay = Duration.zero,
+    this.angle = 0.0,
   });
 }
 
@@ -202,6 +210,24 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
                 scale = 1.3 - (1.3 - 0.2) * curved;
                 opacity = 1.0 - curved * 0.95;
               }
+
+            case OverlayAnimationType.fridgeImpact:
+              // Burst radial depuis [start] dans la direction [angle].
+              // Phase 1 (0→0.4) : jaillissement rapide vers l'extérieur.
+              // Phase 2 (0.4→1) : ralentissement + fondu.
+              const double burstRadius = 55.0;
+              final curved = Curves.easeOut.transform(t);
+              final dist = curved * burstRadius;
+              dx = widget.animation.start.dx +
+                  math.cos(widget.animation.angle) * dist;
+              dy = widget.animation.start.dy +
+                  math.sin(widget.animation.angle) * dist;
+              scale = widget.animation.beginScale *
+                  (1.0 - Curves.easeIn.transform(t) * 0.6);
+              opacity = t == 0.0
+                  ? 0.0
+                  : (t < 0.35 ? 1.0 : (1.0 - (t - 0.35) / 0.65))
+                      .clamp(0.0, 1.0);
           }
 
           return Positioned.fill(
@@ -331,6 +357,30 @@ class GameplayOverlayCoordinator {
         endScale: 0.2,
         type: OverlayAnimationType.raccoonDevour,
         delay: delay,
+      ));
+    }
+  }
+
+  // ── Animation Frigo bloque Raton ─────────────────────────────────────────
+
+  /// Burst de particules ❄️ autour du frigo : 6 particules radiales rapides
+  /// (200–400 ms), sans bloquer l'UI.
+  void playFridgeImpact({required Offset center}) {
+    const int count = 6;
+    const List<String> emojis = ['❄️', '💥', '❄️', '✨', '❄️', '💥'];
+    for (int i = 0; i < count; i++) {
+      final angle = (2 * math.pi / count) * i;
+      _addRaw(GameplayOverlayAnimation(
+        id: _counter++,
+        emoji: emojis[i % emojis.length],
+        start: center,
+        end: center, // non utilisé pour fridgeImpact
+        duration: const Duration(milliseconds: 420),
+        beginScale: 1.6,
+        endScale: 0.3,
+        type: OverlayAnimationType.fridgeImpact,
+        delay: Duration(milliseconds: i * 18),
+        angle: angle,
       ));
     }
   }
