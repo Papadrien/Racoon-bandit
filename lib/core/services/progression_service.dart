@@ -1,14 +1,21 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_assets.dart';
 import '../models/card_back_config.dart';
 import '../models/global_progression.dart';
 import '../models/reward_unlock.dart';
+import '../theme/app_theme_provider.dart';
 
 /// Service central de progression : déblocages de dos de cartes.
 ///
-/// Unique condition de déblocage : nombre de parties jouées ([requiredGames]).
-/// Les dos avec [unlockedByDefault] sont toujours disponibles.
+/// Ordre MVP :
+/// 1. Violet  — débloqué par défaut
+/// 2. Bleu    — 5 parties
+/// 3. Vert    — 10 parties
+/// 4. Rose    — 20 parties
+/// 5. Jaune   — 30 parties
 ///
 /// Anti-doublon garanti : un dos déjà dans [unlockedCardBackIds] ne
 /// génère plus jamais de [RewardUnlock].
@@ -19,33 +26,42 @@ class ProgressionService {
 
   // ── Catalogue des dos de cartes ──────────────────────────────────────────
 
-  static const List<CardBackConfig> cardBacks = [
-    CardBackConfig(
-      id: 'classic',
-      name: 'Classic',
-      requiredGames: 0,
-      unlockedByDefault: true,
-    ),
+  static final List<CardBackConfig> cardBacks = [
     CardBackConfig(
       id: 'purple',
-      name: 'Purple',
+      name: 'Violet',
+      assetPath: AppAssets.cardBackPurple,
+      themeColor: const Color(0xFFFF6D00),
       requiredGames: 0,
       unlockedByDefault: true,
     ),
     CardBackConfig(
-      id: 'bandit',
-      name: 'Bandit',
+      id: 'blue',
+      name: 'Bleu',
+      assetPath: AppAssets.cardBackBlue,
+      themeColor: const Color(0xFF2196F3),
       requiredGames: 5,
     ),
     CardBackConfig(
-      id: 'gold',
-      name: 'Or',
+      id: 'green',
+      name: 'Vert',
+      assetPath: AppAssets.cardBackGreen,
+      themeColor: const Color(0xFF4CAF50),
       requiredGames: 10,
     ),
     CardBackConfig(
-      id: 'champion',
-      name: 'Champion',
+      id: 'pink',
+      name: 'Rose',
+      assetPath: AppAssets.cardBackPink,
+      themeColor: const Color(0xFFE91E8C),
       requiredGames: 20,
+    ),
+    CardBackConfig(
+      id: 'yellow',
+      name: 'Jaune',
+      assetPath: AppAssets.cardBackYellow,
+      themeColor: const Color(0xFFFFC107),
+      requiredGames: 30,
     ),
   ];
 
@@ -65,14 +81,18 @@ class ProgressionService {
       if (raw == null) {
         _progression = GlobalProgression.initial();
         await save();
-        return;
+      } else {
+        _progression = GlobalProgression.fromJsonString(raw);
+        _ensureDefaults();
       }
-
-      _progression = GlobalProgression.fromJsonString(raw);
-      _ensureDefaults();
     } catch (_) {
       _progression = GlobalProgression.initial();
     }
+
+    // Initialise le thème sans notifier (premier chargement)
+    AppThemeProvider.instance.initFromCardBack(
+      _progression.selectedCardBackId,
+    );
   }
 
   static Future<void> save() async {
@@ -95,13 +115,25 @@ class ProgressionService {
 
   // ── Sélection / équipement ───────────────────────────────────────────────
 
-  /// Équipe immédiatement un dos de carte débloqué.
+  /// Équipe immédiatement un dos de carte débloqué et met à jour le thème.
   static Future<void> equipCardBack(String cardBackId) =>
       selectCardBack(cardBackId);
 
   static Future<void> selectCardBack(String cardBackId) async {
     if (!_progression.unlockedCardBackIds.contains(cardBackId)) return;
     _progression = _progression.copyWith(selectedCardBackId: cardBackId);
+    await save();
+    // Met à jour le thème dynamiquement (notifie les listeners)
+    AppThemeProvider.instance.updateFromCardBack(cardBackId);
+  }
+
+  // ── Debug : tout débloquer ───────────────────────────────────────────────
+
+  /// Débloque immédiatement tous les dos (debug mode uniquement).
+  static Future<void> debugUnlockAll() async {
+    assert(kDebugMode, 'debugUnlockAll ne doit être appelé qu\'en debug mode');
+    final allIds = cardBacks.map((cb) => cb.id).toSet();
+    _progression = _progression.copyWith(unlockedCardBackIds: allIds);
     await save();
   }
 
@@ -149,9 +181,10 @@ class ProgressionService {
       ...defaults,
     };
 
-    final selected = unlockedIds.contains(_progression.selectedCardBackId)
-        ? _progression.selectedCardBackId
-        : 'classic';
+    // Migration : si l'ancien id 'classic' est sélectionné, on bascule sur 'purple'
+    var selected = _progression.selectedCardBackId;
+    if (selected == 'classic') selected = 'purple';
+    if (!unlockedIds.contains(selected)) selected = 'purple';
 
     _progression = _progression.copyWith(
       unlockedCardBackIds: unlockedIds,

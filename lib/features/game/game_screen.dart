@@ -699,11 +699,12 @@ class _GameScreenState extends State<GameScreen>
   Widget _buildCardBackWidget() {
     final id = ProgressionService.progression.selectedCardBackId;
     final assetPath = AppAssets.cardBackAsset(id);
-
-    if (assetPath != null) {
-      return Image.asset(assetPath, fit: BoxFit.fill);
-    }
-    return ColoredBox(color: AppAssets.cardBackFallbackColor(id));
+    return Image.asset(
+      assetPath,
+      fit: BoxFit.fill,
+      errorBuilder: (_, __, ___) =>
+          ColoredBox(color: AppAssets.cardBackFallbackColor(id)),
+    );
   }
 
   Widget _buildDeckCard({required bool backgroundCard}) {

@@ -177,10 +177,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   Future<void> _debugTriggerReward() async {
     const fakeReward = RewardUnlock(
-      id: 'purple',
-      name: 'Purple',
+      id: 'blue',
+      name: 'Bleu',
       type: RewardType.cardBack,
-      assetPath: 'assets/images/cards/card_back_purple.png',
+      assetPath: 'assets/images/cards/card_back_blue.png',
     );
 
     if (!mounted) return;

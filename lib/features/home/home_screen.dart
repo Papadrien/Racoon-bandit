@@ -9,6 +9,7 @@ import '../../core/services/game_save_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_theme_provider.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/primary_button.dart';
 
@@ -153,6 +154,21 @@ class _HomeScreenState extends State<HomeScreen>
 
     final noLives = _lifeSystemService.currentLives <= 0;
 
+    return ListenableBuilder(
+      listenable: AppThemeProvider.instance,
+      builder: (context, _) => _buildScaffold(
+        context,
+        remainingDuration: remainingDuration,
+        noLives: noLives,
+      ),
+    );
+  }
+
+  Widget _buildScaffold(
+    BuildContext context, {
+    required Duration? remainingDuration,
+    required bool noLives,
+  }) {
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {

@@ -1,13 +1,21 @@
+import 'package:flutter/material.dart';
+
 class CardBackConfig {
   const CardBackConfig({
     required this.id,
     required this.name,
+    required this.assetPath,
+    required this.themeColor,
     required this.requiredGames,
     this.unlockedByDefault = false,
   });
 
   final String id;
   final String name;
+  final String assetPath;
+
+  /// Couleur accent associée à ce dos (change l'accent UI quand équipé).
+  final Color themeColor;
 
   /// Nombre de parties jouées requis pour débloquer ce dos.
   /// 0 si [unlockedByDefault] est vrai.

@@ -10,21 +10,29 @@ class GlobalProgression {
   factory GlobalProgression.initial() {
     return const GlobalProgression(
       totalGamesPlayed: 0,
-      unlockedCardBackIds: {'classic'},
-      selectedCardBackId: 'classic',
+      unlockedCardBackIds: {'purple'},
+      selectedCardBackId: 'purple',
     );
   }
 
   factory GlobalProgression.fromMap(Map<String, dynamic> map) {
-    final unlocked = (map['unlockedCardBackIds'] as List<dynamic>?)
+    var unlocked = (map['unlockedCardBackIds'] as List<dynamic>?)
             ?.map((e) => e.toString())
             .toSet() ??
-        {'classic'};
+        {'purple'};
+
+    // Migration : remplacer l'ancien id 'classic' par 'purple'
+    if (unlocked.contains('classic')) {
+      unlocked = {...unlocked.where((id) => id != 'classic'), 'purple'};
+    }
+
+    var selected = map['selectedCardBackId'] as String? ?? 'purple';
+    if (selected == 'classic') selected = 'purple';
 
     return GlobalProgression(
       totalGamesPlayed: map['totalGamesPlayed'] as int? ?? 0,
       unlockedCardBackIds: unlocked,
-      selectedCardBackId: map['selectedCardBackId'] as String? ?? 'classic',
+      selectedCardBackId: selected,
     );
   }
 

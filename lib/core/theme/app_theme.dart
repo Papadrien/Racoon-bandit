@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 
+import 'app_theme_provider.dart';
+
 class AppTheme {
   AppTheme._();
 
-  static const Color primary = Color(0xFF7C4DFF);
-  static const Color accent = Color(0xFFFF6D00);
+  static const Color primary   = Color(0xFF7C4DFF);
   static const Color textMuted = Color(0xFF9E9E9E);
+
+  /// Couleur accent courante — change selon le dos équipé.
+  /// Utiliser [AppThemeProvider.instance.accent] pour réagir aux changements.
+  static Color get accent => AppThemeProvider.instance.accent;
 
   static final ThemeData dark = ThemeData(
     brightness: Brightness.dark,
     colorScheme: const ColorScheme.dark(
       primary: primary,
-      secondary: accent,
+      secondary: Color(0xFFFF6D00), // valeur initiale, remplacée dynamiquement
     ),
     scaffoldBackgroundColor: const Color(0xFF121212),
     elevatedButtonTheme: ElevatedButtonThemeData(

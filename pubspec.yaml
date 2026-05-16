@@ -25,3 +25,8 @@ flutter:
   assets:
     - assets/sounds/
     - assets/images/cards/
+    - assets/images/cards/card_back_purple.png
+    - assets/images/cards/card_back_blue.png
+    - assets/images/cards/card_back_green.png
+    - assets/images/cards/card_back_pink.png
+    - assets/images/cards/card_back_yellow.png
