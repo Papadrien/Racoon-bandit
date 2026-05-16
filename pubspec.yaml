@@ -25,6 +25,7 @@ flutter:
   assets:
     - assets/sounds/
     - assets/images/cards/
+    # Nota : assets/sounds/ inclut automatiquement tous les .mp3 du dossier
     - assets/images/cards/card_back_purple.png
     - assets/images/cards/card_back_blue.png
     - assets/images/cards/card_back_green.png

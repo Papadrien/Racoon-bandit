@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/services/audio_service.dart';
 import '../core/services/haptic_service.dart';
 
 class PrimaryButton extends StatelessWidget {
@@ -21,6 +22,7 @@ class PrimaryButton extends StatelessWidget {
             ? null
             : () {
                 HapticService.trigger(HapticType.selection);
+                AudioService.instance.playSfx(SoundEffect.button);
                 onPressed!();
               },
         child: Text(label),

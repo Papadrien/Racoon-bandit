@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/models/reward_unlock.dart';
+import '../core/services/audio_service.dart';
 import '../core/services/progression_service.dart';
 import '../core/theme/app_theme.dart';
 
@@ -30,6 +31,8 @@ class RewardUnlockDialog extends StatefulWidget {
     BuildContext context,
     RewardUnlock reward,
   ) async {
+    // Son joué avant affichage pour coïncider avec l'apparition de la popup
+    AudioService.instance.playSfx(SoundEffect.popupRecompense);
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,

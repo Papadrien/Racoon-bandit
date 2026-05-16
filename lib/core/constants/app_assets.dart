@@ -35,3 +35,7 @@ class AppAssets {
         _         => const Color(0xFF37474F),
       };
 }
+
+// Extension ajoutée dans lib/core/constants/app_assets.dart
+// Les constantes audio sont centralisées dans AudioService._sounds
+// (lib/core/services/audio_service.dart)

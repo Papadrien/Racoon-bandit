@@ -298,7 +298,7 @@ class _GameScreenState extends State<GameScreen>
     if (_isAnimating || _showingBanditOverlay || _gameState.isGameOver) return;
 
     HapticService.trigger(HapticType.light);
-    AudioService.instance.playSfx(SoundEffect.draw);
+    AudioService.instance.playSfx(SoundEffect.piocheCarte);
 
     setState(() {
       _isAnimating = true;
@@ -422,7 +422,7 @@ class _GameScreenState extends State<GameScreen>
 
       await GameSaveService.clear();
       HapticService.trigger(HapticType.heavy);
-      AudioService.instance.playSfx(SoundEffect.gameOver);
+      AudioService.instance.playSfx(SoundEffect.popupRecompense);
 
       if (!mounted || _disposed) return;
 
@@ -551,19 +551,26 @@ class _GameScreenState extends State<GameScreen>
 
     switch (card.type) {
       case CardType.trash:
+        // Frigo posé → son frigo
         HapticService.trigger(HapticType.medium);
-        AudioService.instance.playSfx(SoundEffect.trash);
+        AudioService.instance.playSfx(SoundEffect.frigo);
       case CardType.raccoon:
         HapticService.trigger(HapticType.medium);
-        AudioService.instance.playSfx(
-          result.trashDestroyed ? SoundEffect.trash : SoundEffect.steal,
-        );
+        if (result.trashDestroyed) {
+          // Raton bloqué par le frigo → son frigo
+          AudioService.instance.playSfx(SoundEffect.frigo);
+        } else {
+          // Raton vole de la nourriture → son raccoon
+          AudioService.instance.playSfx(SoundEffect.raccoon);
+        }
       case CardType.bandit:
+        // Bandit attaque → son bandit
         HapticService.trigger(HapticType.medium);
-        AudioService.instance.playSfx(SoundEffect.steal);
+        AudioService.instance.playSfx(SoundEffect.bandit);
       case CardType.food:
+        // Nourriture gagnée → son gain_nourriture
         HapticService.trigger(HapticType.light);
-        AudioService.instance.playSfx(SoundEffect.cardPlayed);
+        AudioService.instance.playSfx(SoundEffect.gainNourriture);
     }
   }
 
