@@ -311,15 +311,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     textStyle: const TextStyle(fontSize: 12),
                   ),
                 ),
-            ],
-          ),
-        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
-      ), // Scaffold
+      ),  // Scaffold
     ); // PopScope
   }
 }
