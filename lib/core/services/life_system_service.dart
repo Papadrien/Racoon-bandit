@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class LifeSystemService {
   static const int maxLives = 3;
-  static const Duration rechargeDuration = Duration(hours: 8);
+  static const Duration rechargeDuration = Duration(minutes: 15);
 
   static const _livesKey = 'current_lives';
   static const _timestampKey = 'last_life_recharge_timestamp';

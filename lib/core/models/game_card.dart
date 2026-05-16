@@ -17,29 +17,17 @@ class GameCard {
     this.assetPath,
   });
 
-  String get emoji {
-    switch (type) {
-      case CardType.food:
-        return '🍎';
-      case CardType.trash:
-        return '🗑️';
-      case CardType.raccoon:
-        return '🦝';
-      case CardType.bandit:
-        return '🥷';
-    }
-  }
+  String get emoji => switch (type) {
+        CardType.food => '🍎',
+        CardType.trash => '🗑️',
+        CardType.raccoon => '🦝',
+        CardType.bandit => '🥷',
+      };
 
-  Color get color {
-    switch (type) {
-      case CardType.food:
-        return const Color(0xFF4CAF50);
-      case CardType.trash:
-        return const Color(0xFF757575);
-      case CardType.raccoon:
-        return const Color(0xFFFF9800);
-      case CardType.bandit:
-        return const Color(0xFF7C4DFF);
-    }
-  }
+  Color get color => switch (type) {
+        CardType.food => const Color(0xFF4CAF50),
+        CardType.trash => const Color(0xFF757575),
+        CardType.raccoon => const Color(0xFFFF9800),
+        CardType.bandit => const Color(0xFF7C4DFF),
+      };
 }

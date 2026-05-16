@@ -9,8 +9,7 @@ enum SoundEffect { draw, cardPlayed, steal, trash, gameOver, button }
 /// Service audio centralisé. Utiliser [AudioService.instance].
 ///
 /// Tous les appels échouent silencieusement (fichiers manquants,
-/// audio indisponible, etc.). Prêt pour l'ajout futur de musique
-/// d'ambiance via [AudioPlayer] dédié.
+/// audio indisponible, etc.).
 class AudioService {
   AudioService._();
 
@@ -30,7 +29,6 @@ class AudioService {
   final _lastPlayed = <SoundEffect, DateTime>{};
 
   /// Joue un effet sonore si le son est activé et hors cooldown.
-  /// Non-bloquant : le gameplay n'attend pas la fin du son.
   void playSfx(SoundEffect effect) {
     if (!SettingsService.soundEnabled) return;
 
@@ -51,6 +49,7 @@ class AudioService {
       player = AudioPlayer();
       await player.setReleaseMode(ReleaseMode.release);
       await player.play(AssetSource(path));
+      // Le player se dispose lui-même après play en mode release
     } catch (_) {
       // Fichier manquant ou audio indisponible → silencieux
       await player?.dispose();

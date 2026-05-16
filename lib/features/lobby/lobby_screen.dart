@@ -12,13 +12,10 @@ import '../../core/services/lobby_service.dart';
 import '../../core/services/player_profiles_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/services/life_system_service.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/reward_unlock_dialog.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LobbyScreen
-// ─────────────────────────────────────────────────────────────────────────────
 
 class LobbyScreen extends StatefulWidget {
   const LobbyScreen({super.key});
@@ -30,7 +27,6 @@ class LobbyScreen extends StatefulWidget {
 class _LobbyScreenState extends State<LobbyScreen> {
   int _playerCount = 2;
 
-  /// Profil sélectionné pour chaque slot (length == _playerCount).
   late List<PlayerProfile?> _selectedProfiles;
 
   @override
@@ -38,8 +34,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
     super.initState();
     _initFromSaved();
   }
-
-  // ── Init ──────────────────────────────────────────────────────────────────
 
   void _initFromSaved() {
     final saved = LobbyService.lastComposition;
@@ -64,7 +58,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
     _fillEmptySlots();
   }
 
-  /// Remplit les slots vides avec les premiers profils non encore utilisés.
   void _fillEmptySlots() {
     final usedIds = _usedProfileIds;
     final available = PlayerProfilesService.sortedProfiles
@@ -80,8 +73,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
     }
   }
 
-  // ── Player count ──────────────────────────────────────────────────────────
-
   void _onCountChanged(int count) {
     setState(() {
       _playerCount = count;
@@ -94,8 +85,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
     });
   }
 
-  // ── Profile picker ────────────────────────────────────────────────────────
-
   Set<String> get _usedProfileIds => _selectedProfiles
       .where((p) => p != null)
       .map((p) => p!.id)
@@ -105,7 +94,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final all = PlayerProfilesService.sortedProfiles;
     final current = _selectedProfiles[slotIndex];
 
-    // IDs utilisés dans les AUTRES slots uniquement
     final otherUsedIds = <String>{};
     for (int i = 0; i < _selectedProfiles.length; i++) {
       if (i != slotIndex && _selectedProfiles[i] != null) {
@@ -129,19 +117,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
     }
   }
 
-  // ── Card back selection ───────────────────────────────────────────────────
-
   Future<void> _openCardBackSelection() async {
     final changed = await CardBackSelectionDialog.show(context);
     if (changed && mounted) setState(() {});
   }
 
-  // ── Start game ────────────────────────────────────────────────────────────
-
   bool get _canStart =>
       _playerCount >= 2 && _selectedProfiles.every((p) => p != null);
 
-  /// Guard contre double-tap sur "Jouer" qui créerait deux navigations simultanées.
   bool _navigationInProgress = false;
 
   Future<void> _startGame() async {
@@ -161,6 +144,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
       );
     });
 
+    final lifeSystemService = LifeSystemService();
+    await lifeSystemService.load();
+
+    if (lifeSystemService.currentLives <= 0) {
+      _navigationInProgress = false;
+      return;
+    }
+
+    await lifeSystemService.consumeLife();
+
     await LobbyService.saveComposition(
       LobbyComposition(
         playerCount: _playerCount,
@@ -178,12 +171,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
       AppRoutes.game,
       arguments: GameState(players: players),
     ).then((_) {
-      // Réinitialise le guard si l'utilisateur revient au lobby (ex : abandon).
       if (mounted) _navigationInProgress = false;
     });
   }
-
-  // ── Debug ─────────────────────────────────────────────────────────────────
 
   Future<void> _debugTriggerReward() async {
     const fakeReward = RewardUnlock(
@@ -197,13 +187,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
     await RewardUnlockDialog.showAll(context, [fakeReward]);
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
-    // Le lobby autorise le retour standard (vers home).
-    // PopScope avec canPop: true laisse Flutter gérer le pop normalement
-    // tout en nous permettant de logger l'événement en debug.
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {
@@ -213,114 +198,112 @@ class _LobbyScreenState extends State<LobbyScreen> {
         }
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text('LOBBY'),
-        leading: const BackButton(),
-      ),
-      body: SafeArea(
-        minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 360;
-            final hPad = isNarrow ? 16.0 : 24.0;
-            return SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Spacer(),
-              // ── Sélecteur nombre de joueurs ─────────────────────────────
-              const Text(
-                'Nombre de joueurs',
-                style: TextStyle(fontSize: 18, color: AppTheme.textMuted),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [2, 3, 4].map((count) {
-                  final selected = count == _playerCount;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: GestureDetector(
-                      onTap: () => _onCountChanged(count),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color:
-                              selected ? AppTheme.primary : Colors.transparent,
-                          border: Border.all(
-                            color: selected
-                                ? AppTheme.primary
-                                : AppTheme.textMuted,
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+        appBar: AppBar(
+          title: const Text('SALON'),
+          leading: const BackButton(),
+        ),
+        body: SafeArea(
+          minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 360;
+              final hPad = isNarrow ? 16.0 : 24.0;
+              return SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Spacer(),
+                        // ── Sélecteur nombre de joueurs ─────────────────────
+                        const Text(
+                          'Nombre de joueurs',
+                          style: TextStyle(fontSize: 18, color: AppTheme.textMuted),
                         ),
-                        child: Center(
-                          child: Text(
-                            '$count',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  selected ? Colors.white : AppTheme.textMuted,
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [2, 3, 4].map((count) {
+                            final selected = count == _playerCount;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: GestureDetector(
+                                onTap: () => _onCountChanged(count),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  width: 64,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    color: selected ? AppTheme.primary : Colors.transparent,
+                                    border: Border.all(
+                                      color: selected
+                                          ? AppTheme.primary
+                                          : AppTheme.textMuted,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '$count',
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: selected ? Colors.white : AppTheme.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 32),
+                        // ── Slots joueurs ──────────────────────────────────
+                        ...List.generate(
+                          _playerCount,
+                          (i) => _PlayerSlotCard(
+                            slotIndex: i,
+                            profile: _selectedProfiles[i],
+                            onTap: () => _openPicker(i),
+                          ),
+                        ),
+                        const Spacer(),
+                        // ── Bouton démarrer ────────────────────────────────
+                        PrimaryButton(
+                          label: 'COMMENCER',
+                          onPressed: _canStart ? _startGame : null,
+                        ),
+                        const SizedBox(height: 12),
+                        // ── Bouton dos de cartes ───────────────────────────
+                        _CardBackButton(
+                          selectedId: ProgressionService.progression.selectedCardBackId,
+                          onTap: _openCardBackSelection,
+                        ),
+                        const SizedBox(height: 16),
+                        // ── Debug : test popup de récompense ──────────────
+                        if (kDebugMode)
+                          TextButton.icon(
+                            onPressed: _debugTriggerReward,
+                            icon: const Icon(Icons.bug_report, size: 16),
+                            label: const Text('Débloquer récompense test'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.textMuted,
+                              textStyle: const TextStyle(fontSize: 12),
                             ),
                           ),
-                        ),
-                      ),
+                      ],
                     ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 32),
-              // ── Slots joueurs ──────────────────────────────────────────
-              ...List.generate(
-                _playerCount,
-                (i) => _PlayerSlotCard(
-                  slotIndex: i,
-                  profile: _selectedProfiles[i],
-                  onTap: () => _openPicker(i),
-                ),
-              ),
-              const Spacer(),
-              // ── Bouton démarrer ────────────────────────────────────────
-              PrimaryButton(
-                label: 'COMMENCER',
-                onPressed: _canStart ? _startGame : null,
-              ),
-              const SizedBox(height: 12),
-              // ── Bouton dos de cartes ───────────────────────────────────
-              _CardBackButton(
-                selectedId: ProgressionService.progression.selectedCardBackId,
-                onTap: _openCardBackSelection,
-              ),
-              const SizedBox(height: 16),
-              // ── Debug : test popup de récompense ──────────────────────
-              if (kDebugMode)
-                TextButton.icon(
-                  onPressed: _debugTriggerReward,
-                  icon: const Icon(Icons.bug_report, size: 16),
-                  label: const Text('Débloquer récompense test'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.textMuted,
-                    textStyle: const TextStyle(fontSize: 12),
                   ),
                 ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
-      ),  // Scaffold
-    ); // PopScope
+    );
   }
 }
 
@@ -368,7 +351,6 @@ class _PlayerSlotCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Avatar
                 if (hasProfile)
                   PlayerAvatar(
                     emoji: profile!.emoji,
@@ -394,7 +376,6 @@ class _PlayerSlotCard extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(width: 16),
-                // Nom + label slot
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,7 +400,6 @@ class _PlayerSlotCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Chevron
                 Icon(
                   Icons.chevron_right,
                   color: color.withValues(alpha: 0.7),
@@ -501,7 +481,6 @@ class _ProfilePickerSheet extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Handle
               const SizedBox(height: 12),
               Container(
                 width: 40,
@@ -523,7 +502,6 @@ class _ProfilePickerSheet extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Divider(color: Colors.white12),
-              // Liste des profils
               Expanded(
                 child: profiles.isEmpty
                     ? const Center(

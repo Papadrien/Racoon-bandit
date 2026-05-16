@@ -47,10 +47,6 @@ class GameState {
         isGameOver = false;
 
   /// Constructeur de restauration depuis une [SavedGame].
-  ///
-  /// Reconstruit le deck depuis les types sérialisés.
-  /// Les cartes restaurées ont des IDs reconstitués (séquentiels par type) :
-  /// IDs stables entre sessions n'est pas nécessaire pour le gameplay.
   GameState.fromSave(SavedGame save)
       : currentPlayerIndex = save.currentPlayerIndex,
         revealedCard = null,
@@ -70,13 +66,12 @@ class GameState {
             .toList(),
         remainingDeck = _rebuildDeck(save.remainingDeckTypes);
 
-  /// Reconstruit une liste de [GameCard] depuis les noms de types sérialisés.
   static List<GameCard> _rebuildDeck(List<String> typeNames) {
     int id = 0;
     return typeNames.map((name) {
       final type = CardType.values.firstWhere(
         (t) => t.name == name,
-        orElse: () => CardType.food, // fallback robuste
+        orElse: () => CardType.food,
       );
       return GameCard(
         id: id++,
@@ -87,35 +82,22 @@ class GameState {
     }).toList();
   }
 
-  static String _cardName(CardType type) {
-    switch (type) {
-      case CardType.food:
-        return 'Nourriture';
-      case CardType.raccoon:
-        return 'Raton';
-      case CardType.trash:
-        return 'Poubelle';
-      case CardType.bandit:
-        return 'Bandit';
-    }
-  }
+  static String _cardName(CardType type) => switch (type) {
+        CardType.food => 'Nourriture',
+        CardType.raccoon => 'Raton',
+        CardType.trash => 'Poubelle',
+        CardType.bandit => 'Bandit',
+      };
 
-  static String _cardDescription(CardType type) {
-    switch (type) {
-      case CardType.food:
-        return '+1 nourriture';
-      case CardType.raccoon:
-        return 'Mange toute la nourriture';
-      case CardType.trash:
-        return 'Protège votre nourriture';
-      case CardType.bandit:
-        return 'Vole un autre joueur';
-    }
-  }
+  static String _cardDescription(CardType type) => switch (type) {
+        CardType.food => '+1 nourriture',
+        CardType.raccoon => 'Mange toute la nourriture',
+        CardType.trash => 'Protège votre nourriture',
+        CardType.bandit => 'Vole un autre joueur',
+      };
 
   // ── Sérialisation ─────────────────────────────────────────────────────────
 
-  /// Crée un [SavedGame] snapshot de l'état courant.
   SavedGame toSave() => SavedGame(
         version: SavedGame.schemaVersion,
         savedAt: DateTime.now(),
@@ -144,8 +126,6 @@ class GameState {
 
   // ─── Détection cibles Bandit ──────────────────────────────────────────────
 
-  /// Retourne les joueurs valides pour le vol Bandit :
-  /// tous sauf le joueur actif, ayant au moins 1 nourriture.
   List<PlayerState> banditValidTargets() {
     final active = players[currentPlayerIndex];
     return players
@@ -155,11 +135,6 @@ class GameState {
 
   // ─── Tirage de carte ──────────────────────────────────────────────────────
 
-  /// Tire une carte et applique son effet.
-  ///
-  /// Pour le Bandit avec plusieurs cibles, retourne un [CardResolution]
-  /// avec [needsTargetSelection] == true : la logique de vol n'est pas
-  /// encore appliquée. Appeler [resolveBandit] une fois la cible connue.
   CardResolution drawCard() {
     if (remainingDeck.isEmpty) {
       _markGameOver();
@@ -170,8 +145,6 @@ class GameState {
     revealedCard = remainingDeck.removeLast();
     final result = _applyEffect(revealedCard!);
 
-    // On n'avance PAS si le Bandit nécessite une sélection de cible :
-    // _advance() sera appelé dans resolveBandit().
     if (!result.needsTargetSelection) {
       if (remainingDeck.isEmpty) {
         isGameOver = true;
@@ -185,9 +158,6 @@ class GameState {
 
   // ─── Résolution différée Bandit ───────────────────────────────────────────
 
-  /// Applique l'effet Bandit sur la cible choisie par l'UI.
-  /// À appeler uniquement après [drawCard] lorsque
-  /// [CardResolution.needsTargetSelection] est true.
   CardResolution resolveBandit(PlayerState target) {
     final playerIdx = _resolvedPlayerIndex ?? currentPlayerIndex;
     final player = players[playerIdx];
@@ -254,7 +224,6 @@ class GameState {
           );
         }
 
-        // Cible unique → sélection automatique, résolution immédiate
         if (validTargets.length == 1) {
           final target = validTargets.first;
           player.foodCount++;
@@ -267,7 +236,6 @@ class GameState {
           );
         }
 
-        // Plusieurs cibles → UI doit choisir
         return const CardResolution(
           message: '',
           needsTargetSelection: true,

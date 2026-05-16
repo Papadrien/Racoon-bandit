@@ -61,16 +61,14 @@ class _GameScreenState extends State<GameScreen>
 
   // ── Navigation guards ──────────────────────────────────────────────────────
 
-  /// Vrai pendant une animation critique où le retour Android doit être bloqué.
   bool get _isCriticalAnimationRunning =>
       _flipController.isAnimating ||
       _slideController.isAnimating ||
       _showingBanditOverlay;
 
-  /// Empêche les double-pop et navigations simultanées.
   bool _navigationInProgress = false;
 
-  // Tailles de cartes adaptatives — calculées dans build() via LayoutBuilder
+  // Tailles de cartes adaptatives
   double _cardWidth = 160;
   double _cardHeight = 230;
   static const double _cardRadius = 24;
@@ -97,6 +95,7 @@ class _GameScreenState extends State<GameScreen>
     unawaited(WakelockService.disable());
     _flipController.dispose();
     _slideController.dispose();
+    // Vide la liste avant dispose pour éviter listeners dangling
     _animationsNotifier.value = [];
     _animationsNotifier.dispose();
     super.dispose();
@@ -479,18 +478,12 @@ class _GameScreenState extends State<GameScreen>
     final unit = screenHeight * 0.04;
     final totalPlayers = _gameState.players.length;
 
-    switch (totalPlayers) {
-      case 2:
-        return -unit * 0.5;
-      case 3:
-        if (playerIndex <= 1) return -unit * 0.5;
-        return -unit * 1.5;
-      case 4:
-        if (playerIndex <= 1) return -unit * 0.5;
-        return -unit * 1.5;
-      default:
-        return 0;
-    }
+    return switch (totalPlayers) {
+      2 => (-unit * 0.5) - 4,
+      3 => playerIndex <= 1 ? (-unit * 0.5) - 4 : (-unit * 1.5) - 4,
+      4 => playerIndex <= 1 ? (-unit * 0.5) - 4 : (-unit * 1.5) - 4,
+      _ => 0.0,
+    };
   }
 
   Offset _playerFoodCenter(int playerId) {
@@ -528,25 +521,20 @@ class _GameScreenState extends State<GameScreen>
     switch (card.type) {
       case CardType.food:
         _overlayCoordinator.playFoodGain(start: start, end: playerCenter);
-        break;
 
       case CardType.trash:
         _overlayCoordinator.playFridgeDeposit(start: start, end: fridgeCenter);
-        break;
 
       case CardType.raccoon:
         if (result.trashDestroyed) {
           _overlayCoordinator.playFridgeImpact(center: fridgeCenter);
-          break;
-        }
-        if (foodCountBeforeDraw > 0) {
+        } else if (foodCountBeforeDraw > 0) {
           _overlayCoordinator.playRaccoonDevour(
             playerCenter: playerCenter,
             cardCenter: start,
             foodCount: foodCountBeforeDraw,
           );
         }
-        break;
 
       case CardType.bandit:
         if (result.targetPlayerId != null) {
@@ -555,7 +543,6 @@ class _GameScreenState extends State<GameScreen>
             targetId: result.targetPlayerId!,
           );
         }
-        break;
     }
   }
 
@@ -566,36 +553,27 @@ class _GameScreenState extends State<GameScreen>
       case CardType.trash:
         HapticService.trigger(HapticType.medium);
         AudioService.instance.playSfx(SoundEffect.trash);
-        break;
       case CardType.raccoon:
         HapticService.trigger(HapticType.medium);
         AudioService.instance.playSfx(
           result.trashDestroyed ? SoundEffect.trash : SoundEffect.steal,
         );
-        break;
       case CardType.bandit:
         HapticService.trigger(HapticType.medium);
         AudioService.instance.playSfx(SoundEffect.steal);
-        break;
       case CardType.food:
         HapticService.trigger(HapticType.light);
         AudioService.instance.playSfx(SoundEffect.cardPlayed);
-        break;
     }
   }
 
   // ── UI builders ────────────────────────────────────────────────────────────
 
-  /// Calcule une taille de carte adaptée à l'écran disponible.
-  /// Appelé depuis _buildCenterArea() via LayoutBuilder.
   void _computeCardSize(BoxConstraints constraints) {
-    // Hauteur disponible ≈ écran moins la top bar (≈52px) moins zones joueurs
-    // On cible 55% de la hauteur max possible, plafonné à 260×180.
     final maxH = constraints.maxHeight * 0.52;
     final maxW = constraints.maxWidth * 0.55;
 
     _cardHeight = maxH.clamp(180.0, 260.0);
-    // Ratio carte ≈ 7:10
     _cardWidth = (_cardHeight * 0.70).clamp(130.0, 185.0).clamp(0.0, maxW);
   }
 
@@ -607,7 +585,6 @@ class _GameScreenState extends State<GameScreen>
     _foodZoneKeys.putIfAbsent(player.id, GlobalKey.new);
     _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
 
-    // Taille avatar réduite sur petits écrans
     final avatarSize = maxWidth < 120 ? 32.0 : 40.0;
     final nameFontSize = maxWidth < 120 ? 11.0 : 13.0;
     final emojiFontSize = maxWidth < 120 ? 14.0 : 16.0;
@@ -677,37 +654,31 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  /// Positionne les cartes joueur de façon SafeArea-aware.
-  /// On utilise un offset dynamique basé sur la taille réelle disponible
-  /// plutôt que des constantes hardcodées.
   List<Widget> _buildPlayerPositions(BoxConstraints constraints) {
     final sw = constraints.maxWidth;
     final sh = constraints.maxHeight;
 
-    // Marge horizontale : assez pour ne pas coller au bord
     const hMargin = 8.0;
-    // Offset vertical depuis le haut (sous la controls bar) / depuis le bas
-    final topOffset = sh * 0.01 + 44.0; // laisse place à la controls bar
+    final topOffset = sh * 0.01 + 44.0;
     final bottomOffset = sh * 0.01;
 
-    // Largeur max de chaque carte joueur (≤38% de la largeur écran)
     final cardMaxW = (sw * 0.38).clamp(100.0, 150.0);
 
     final positions = {
       2: [
-        {'top': topOffset, 'left': hMargin},
-        {'top': topOffset, 'right': hMargin},
+        <String, double>{'top': topOffset, 'left': hMargin},
+        <String, double>{'top': topOffset, 'right': hMargin},
       ],
       3: [
-        {'top': topOffset, 'left': hMargin},
-        {'top': topOffset, 'right': hMargin},
-        {'bottom': bottomOffset, 'right': hMargin},
+        <String, double>{'top': topOffset, 'left': hMargin},
+        <String, double>{'top': topOffset, 'right': hMargin},
+        <String, double>{'bottom': bottomOffset, 'right': hMargin},
       ],
       4: [
-        {'top': topOffset, 'left': hMargin},
-        {'top': topOffset, 'right': hMargin},
-        {'bottom': bottomOffset, 'left': hMargin},
-        {'bottom': bottomOffset, 'right': hMargin},
+        <String, double>{'top': topOffset, 'left': hMargin},
+        <String, double>{'top': topOffset, 'right': hMargin},
+        <String, double>{'bottom': bottomOffset, 'left': hMargin},
+        <String, double>{'bottom': bottomOffset, 'right': hMargin},
       ],
     };
 
@@ -808,8 +779,6 @@ class _GameScreenState extends State<GameScreen>
     _computeCardSize(constraints);
 
     final showBackgroundCard = _gameState.remainingCards > 1;
-
-    // Taille de police du titre adaptée à la largeur
     final titleFontSize = (constraints.maxWidth * 0.065).clamp(16.0, 24.0);
 
     return Column(
@@ -851,7 +820,7 @@ class _GameScreenState extends State<GameScreen>
           child: Text(
             _gameState.remainingCards == 0
                 ? ''
-                : '${_gameState.remainingCards} carte${_gameState.remainingCards > 1 ? 's' : ''}',
+                : '${_gameState.remainingCards} carte${_gameState.remainingCards > 1 ? "s" : ""}',
             key: ValueKey(_gameState.remainingCards),
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
@@ -876,7 +845,6 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _buildGameplayControlsBar() {
-    // Désactivé pendant toute animation ET overlay Bandit.
     final bool quitEnabled = !_isAnimating && !_showingBanditOverlay;
 
     return Padding(
@@ -926,7 +894,6 @@ class _GameScreenState extends State<GameScreen>
       child: Scaffold(
         backgroundColor: const Color(0xFF1B1525),
         body: SafeArea(
-          // minimum: évite que les éléments passent sous la barre système
           minimum: const EdgeInsets.only(top: 4, bottom: 4),
           child: LayoutBuilder(
             builder: (context, constraints) {

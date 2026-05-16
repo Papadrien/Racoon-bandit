@@ -33,28 +33,16 @@ List<GameCard> buildShuffledDeck() {
   return deck;
 }
 
-String _cardName(CardType type) {
-  switch (type) {
-    case CardType.food:
-      return 'Nourriture';
-    case CardType.raccoon:
-      return 'Raton';
-    case CardType.trash:
-      return 'Poubelle';
-    case CardType.bandit:
-      return 'Bandit';
-  }
-}
+String _cardName(CardType type) => switch (type) {
+      CardType.food => 'Nourriture',
+      CardType.raccoon => 'Raton',
+      CardType.trash => 'Poubelle',
+      CardType.bandit => 'Bandit',
+    };
 
-String _cardDescription(CardType type) {
-  switch (type) {
-    case CardType.food:
-      return '+1 nourriture';
-    case CardType.raccoon:
-      return 'Mange toute la nourriture';
-    case CardType.trash:
-      return 'Protège votre nourriture';
-    case CardType.bandit:
-      return 'Vole un autre joueur';
-  }
-}
+String _cardDescription(CardType type) => switch (type) {
+      CardType.food => '+1 nourriture',
+      CardType.raccoon => 'Mange toute la nourriture',
+      CardType.trash => 'Protège votre nourriture',
+      CardType.bandit => 'Vole un autre joueur',
+    };

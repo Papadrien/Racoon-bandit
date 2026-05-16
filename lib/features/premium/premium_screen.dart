@@ -43,15 +43,13 @@ class PremiumScreen extends StatelessWidget {
               const Spacer(),
               PrimaryButton(
                 label: 'ACHETER — 2,99 €',
-                onPressed: () {
-                  // TODO: intégration achat in-app
-                },
+                // Intégration achat in-app prévue pour la prochaine phase
+                onPressed: () {},
               ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () {
-                  // TODO: restaurer achats
-                },
+                // Restauration achats prévue pour la prochaine phase
+                onPressed: () {},
                 child: const Text(
                   'Restaurer les achats',
                   style: TextStyle(color: AppTheme.textMuted),

@@ -50,14 +50,20 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
+      // Recharge la sauvegarde et les vies au retour de l'app
       GameSaveService.load().then((_) {
-        if (mounted) setState(() {});
+        if (mounted) {
+          _lifeSystemService.updateLivesFromTime().then((_) {
+            if (mounted) setState(() {});
+          });
+        }
       });
     }
   }
 
   Future<void> _initializeLives() async {
     await _lifeSystemService.load();
+    await RewardedAdService.instance.preloadAd();
 
     _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
       await _lifeSystemService.updateLivesFromTime();
@@ -80,9 +86,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _startGame() async {
-    await _lifeSystemService.consumeLife();
-    if (!mounted) return;
-    setState(() {});
     Navigator.pushNamed(context, AppRoutes.lobby);
   }
 
@@ -95,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen>
       _isRewardLoading = true;
     });
 
+    // Capture le ScaffoldMessenger avant les appels async
     final messenger = ScaffoldMessenger.of(context);
 
     await RewardedAdService.instance.showRewardedLifeAd(
@@ -158,7 +162,6 @@ class _HomeScreenState extends State<HomeScreen>
       },
       child: Scaffold(
         body: SafeArea(
-          // Padding minimum pour protéger des encoches / barres système
           minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: LayoutBuilder(
             builder: (context, constraints) {
