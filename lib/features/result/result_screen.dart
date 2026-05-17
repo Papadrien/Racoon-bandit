@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/reward_unlock_dialog.dart';
+import '../../widgets/unlock_progress_widget.dart';
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -132,6 +133,7 @@ class _ResultScreenState extends State<ResultScreen>
                         child: SingleChildScrollView(
                           child: Column(
                             children: [
+                              // Classement
                               Card(
                                 child: Padding(
                                   padding: const EdgeInsets.all(12),
@@ -174,6 +176,12 @@ class _ResultScreenState extends State<ResultScreen>
                                 ),
                               ),
                               const SizedBox(height: 12),
+
+                              // ── Widget progression déblocage ─────────────
+                              const UnlockProgressWidget(),
+                              const SizedBox(height: 12),
+
+                              // Résumé de partie
                               Card(
                                 child: Padding(
                                   padding: const EdgeInsets.all(12),
