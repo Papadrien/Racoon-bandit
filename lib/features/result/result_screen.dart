@@ -167,7 +167,7 @@ class _ResultScreenState extends State<ResultScreen>
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                            Text('🍎 ${player.foodCount}'),
+                                            Text('${player.foodCount} nourriture'),
                                           ],
                                         ),
                                       );

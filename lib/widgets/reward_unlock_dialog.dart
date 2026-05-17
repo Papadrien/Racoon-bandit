@@ -378,8 +378,6 @@ class _UnlockBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('🎉', style: TextStyle(fontSize: 14)),
-          const SizedBox(width: 6),
           Text(
             'NOUVEAU DOS DÉBLOQUÉ',
             style: TextStyle(

@@ -200,7 +200,7 @@ class _BanditTargetOverlayState extends State<BanditTargetOverlay>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${target.foodCount} 🍎  nourriture disponible',
+                      '${target.foodCount} nourriture disponible',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12,

@@ -291,11 +291,11 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
 
-            // ── Bouton Jouer positionné à ~20% du bas, responsive ────────
+            // ── Bouton Jouer positionné à ~10% du bas, responsive ────────
             Positioned(
               left: 0,
               right: 0,
-              bottom: MediaQuery.sizeOf(context).height * 0.20,
+              bottom: MediaQuery.sizeOf(context).height * 0.10,
               child: SafeArea(
                 top: false,
                 child: _PlayButtonArea(

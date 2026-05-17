@@ -268,7 +268,7 @@ class _NavigationButtons extends StatelessWidget {
           shadowColor: AppTheme.primary.withOpacity(0.4),
         ),
         child: Text(
-          isLast ? 'C\'est parti ! 🎮' : 'Suivant',
+          isLast ? 'C\'est parti !' : 'Suivant',
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

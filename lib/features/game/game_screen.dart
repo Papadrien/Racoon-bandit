@@ -373,8 +373,10 @@ class _GameScreenState extends State<GameScreen>
       _effectText = resolution.message;
     });
 
-    // Son bandit joué au moment réel du vol, synchronisé avec l'animation
-    AudioService.instance.playSfx(SoundEffect.bandit);
+    // Son bandit joué uniquement en cas de vol effectif
+    if (resolution.foodStolen) {
+      AudioService.instance.playSfx(SoundEffect.bandit);
+    }
 
     _playBanditStealAnimation(
       thiefId: _lastResolvedPlayerId,
@@ -573,10 +575,10 @@ class _GameScreenState extends State<GameScreen>
           AudioService.instance.playSfx(SoundEffect.raccoon);
         }
       case CardType.bandit:
-        // Bandit : ne jouer le son qu'en cas d'attaque automatique
+        // Bandit : ne jouer le son qu'en cas de vol effectif
         // (sélection manuelle : le son sera joué après choix de la cible)
         HapticService.trigger(HapticType.medium);
-        if (!result.needsTargetSelection) {
+        if (!result.needsTargetSelection && result.foodStolen) {
           AudioService.instance.playSfx(SoundEffect.bandit);
         }
       case CardType.food:

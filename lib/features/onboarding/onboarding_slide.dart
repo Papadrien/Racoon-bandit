@@ -39,33 +39,33 @@ class OnboardingSlides {
   static const List<OnboardingSlide> all = [
     OnboardingSlide(
       emoji: '🍎',
-      title: 'Collecte la nourriture',
+      title: 'Nourriture',
       description:
-          'Pioche des cartes Nourriture pour remplir ton stock.\nLe premier joueur à 10 aliments gagne la partie !',
+          'Ramasse le maximum de nourriture sans te les faire voler.',
       cardColor: Color(0xFF1B5E20),
       accentColor: Color(0xFF66BB6A),
     ),
     OnboardingSlide(
-      emoji: '🦹',
-      title: 'Le Bandit vole !',
+      emoji: '🥷',
+      title: 'Bandit',
       description:
-          'La carte Bandit te permet de voler de la nourriture\nà un autre joueur de ton choix.',
+          'Le bandit te permet de voler une nourriture à un autre joueur.',
       cardColor: Color(0xFF1A237E),
       accentColor: Color(0xFF7C4DFF),
     ),
     OnboardingSlide(
       emoji: '🦝',
-      title: 'Le Raton retire',
+      title: 'Raton laveur',
       description:
-          'La carte Raton Laveur retire de la nourriture\nde ton propre stock. Aïe !',
+          'Le raton laveur vole toute ta nourriture. Fais attention.',
       cardColor: Color(0xFF37474F),
       accentColor: Color(0xFF90A4AE),
     ),
     OnboardingSlide(
       emoji: '🧊',
-      title: 'Le Frigo protège',
+      title: 'Frigo',
       description:
-          'La carte Frigo te protège du Raton Laveur.\nTon stock est en sécurité pour ce tour !',
+          'Le frigo te protège contre un passage du raton laveur.',
       cardColor: Color(0xFF0D47A1),
       accentColor: Color(0xFF42A5F5),
     ),
