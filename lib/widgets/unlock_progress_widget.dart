@@ -145,7 +145,7 @@ class _UnlockProgressWidgetState extends State<UnlockProgressWidget>
                         const SizedBox(height: 6),
                         Text(
                           remaining == 0
-                              ? '${totalGames} / $toGames parties'
+                              ? '$totalGames / $toGames parties'
                               : '$remaining partie${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
@@ -281,7 +281,7 @@ class _CardBackPreview extends StatelessWidget {
                     fit: BoxFit.cover,
                     width: _w,
                     height: _h,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, a, b) => Container(
                       decoration: BoxDecoration(
                         color: config.themeColor
                             .withValues(alpha: isLocked ? 0.3 : 0.8),
@@ -366,7 +366,7 @@ class _CardBackPreview extends StatelessWidget {
           )
         else
           Text(
-            '${config.requiredGames == 0 ? "Défaut" : "${config.requiredGames} parties"}',
+            config.requiredGames == 0 ? 'Défaut' : '${config.requiredGames} parties',
             style: TextStyle(
               fontSize: 8,
               color: Colors.white.withValues(alpha: 0.3),

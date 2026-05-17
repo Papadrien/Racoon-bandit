@@ -183,7 +183,7 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                       borderRadius: BorderRadius.circular(28),
                       child: AnimatedBuilder(
                         animation: _particlesCtrl,
-                        builder: (_, __) => CustomPaint(
+                        builder: (_, w) => CustomPaint(
                           painter: _ParticlesPainter(
                             progress: _particlesCtrl.value,
                             color: _accent,
@@ -209,7 +209,7 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                             _floatCtrl,
                             _glowCtrl,
                           ]),
-                          builder: (_, __) {
+                          builder: (_, w) {
                             return Transform.translate(
                               offset: Offset(0, _floatOffset.value),
                               child: _CardDisplay(
@@ -452,7 +452,7 @@ class _CardDisplay extends StatelessWidget {
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
-          errorBuilder: (_, __, ___) => _CardPlaceholder(
+          errorBuilder: (_, a, b) => _CardPlaceholder(
             reward: reward,
             accent: accent,
           ),

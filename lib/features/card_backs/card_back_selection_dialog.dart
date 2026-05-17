@@ -63,7 +63,7 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
     // Sauvegarde + mise à jour thème (instantané, sans fermer le sheet)
     await ProgressionService.equipCardBack(cardBackId);
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     if (mounted) setState(() => _animatingId = null);
   }
 
@@ -495,7 +495,7 @@ class _CardPreview extends StatelessWidget {
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _a, _b) => Container(
                 width: double.infinity,
                 color: fallbackColor.withValues(alpha: isUnlocked ? 1.0 : 0.3),
               ),
