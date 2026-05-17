@@ -9,11 +9,13 @@ import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/game_save_service.dart';
 import '../../core/services/life_system_service.dart';
+import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_theme_provider.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/primary_button.dart';
+import '../onboarding/onboarding_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +27,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   final LifeSystemService _lifeSystemService = LifeSystemService();
+
+  // Onboarding — premier lancement uniquement
+  bool _showOnboarding = false;
 
   Timer? _timer;
   bool _isLoading = true;
@@ -90,6 +95,8 @@ class _HomeScreenState extends State<HomeScreen>
     if (mounted) {
       setState(() {
         _isLoading = false;
+        // Déclencher l'onboarding au bon moment : après chargement, avant UI
+        _showOnboarding = OnboardingService.shouldShowOnboarding;
       });
     }
   }
@@ -168,6 +175,15 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Onboarding premier lancement — affiché AVANT l'écran principal
+    if (_showOnboarding) {
+      return OnboardingScreen(
+        onDone: () {
+          if (mounted) setState(() => _showOnboarding = false);
+        },
+      );
+    }
+
     final remainingDuration =
         _lifeSystemService.getRemainingRechargeDuration();
 

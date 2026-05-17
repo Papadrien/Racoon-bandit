@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/game/game_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/lobby/lobby_screen.dart';
+import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/premium/premium_screen.dart';
 import '../../features/result/result_screen.dart';
 import '../../features/profiles/profiles_screen.dart';
@@ -18,6 +19,8 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String premium = '/premium';
   static const String profiles = '/profiles';
+  // Onboarding — utilisé pour futurs tutoriels standalone
+  static const String onboarding = '/onboarding';
 }
 
 class AppRouter {
@@ -39,6 +42,17 @@ class AppRouter {
         return _slide(const PremiumScreen(), routeSettings);
       case AppRoutes.profiles:
         return _slide(const ProfilesScreen(), routeSettings);
+      case AppRoutes.onboarding:
+        return _fade(
+          Builder(
+            builder: (context) => OnboardingScreen(
+              onDone: () {
+                if (Navigator.canPop(context)) Navigator.pop(context);
+              },
+            ),
+          ),
+          routeSettings,
+        );
       default:
         return _fade(const HomeScreen(), routeSettings);
     }

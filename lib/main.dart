@@ -9,6 +9,7 @@ import 'core/services/settings_service.dart';
 import 'core/services/rewarded_ad_service.dart';
 import 'core/services/progression_service.dart';
 import 'core/services/stats_service.dart';
+import 'core/services/onboarding_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +19,7 @@ void main() async {
   await GameSaveService.load();
   await ProgressionService.load();
   await StatsService.load();
+  await OnboardingService.load();
   await RewardedAdService.initialize();
 
   // Préchargement des SFX fréquents — évite le délai au premier son

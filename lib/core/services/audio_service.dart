@@ -69,8 +69,8 @@ class AudioService {
     SoundEffect.gainNourriture: 'sounds/gain_nourriture.mp3',
     SoundEffect.bandit:         'sounds/bandit.mp3',
     SoundEffect.raccoon:        'sounds/raccoon.mp3',
-    SoundEffect.frigo:          'sounds/frigo.mp3',
-    SoundEffect.fridgeBlock:    'sounds/fridge_block.mp3',
+    SoundEffect.frigo:          'sounds/fridge_block.mp3',
+    SoundEffect.fridgeBlock:    'sounds/frigo.mp3',
     SoundEffect.popupRecompense:'sounds/popup_recompense.mp3',
     SoundEffect.button:         'sounds/button_click.mp3',
 

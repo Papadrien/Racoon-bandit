@@ -5,7 +5,6 @@ import '../../core/game/game_state.dart';
 import '../../core/models/lobby_composition.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/models/player_state.dart';
-import '../../core/models/reward_unlock.dart';
 import '../../core/navigation/app_router.dart';
 import '../card_backs/card_back_selection_dialog.dart';
 import '../../core/services/lobby_service.dart';
@@ -16,7 +15,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
-import '../../widgets/reward_unlock_dialog.dart';
 
 class LobbyScreen extends StatefulWidget {
   const LobbyScreen({super.key});
@@ -176,18 +174,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
     });
   }
 
-  Future<void> _debugTriggerReward() async {
-    const fakeReward = RewardUnlock(
-      id: 'blue',
-      name: 'Bleu',
-      type: RewardType.cardBack,
-      assetPath: 'assets/images/cards/card_back_blue.png',
-    );
-
-    if (!mounted) return;
-    await RewardUnlockDialog.showAll(context, [fakeReward]);
-  }
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -290,20 +276,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        // ── Debug : test popup de récompense ──────────────
-                        if (kDebugMode)
-                          TextButton.icon(
-                            onPressed: () {
-                              AudioService.instance.playButtonSound();
-                              _debugTriggerReward();
-                            },
-                            icon: const Icon(Icons.bug_report, size: 16),
-                            label: const Text('Débloquer récompense test'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppTheme.textMuted,
-                              textStyle: const TextStyle(fontSize: 12),
-                            ),
-                          ),
                       ],
                     ),
                   ),

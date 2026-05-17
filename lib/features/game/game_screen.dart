@@ -488,9 +488,9 @@ class _GameScreenState extends State<GameScreen>
     final totalPlayers = _gameState.players.length;
 
     return switch (totalPlayers) {
-      2 => (-unit * 0.5) - 4,
-      3 => playerIndex <= 1 ? (-unit * 0.5) - 4 : (-unit * 1.5) - 4,
-      4 => playerIndex <= 1 ? (-unit * 0.5) - 4 : (-unit * 1.5) - 4,
+      2 => (-unit * 0.5) - 6,
+      3 => playerIndex <= 1 ? (-unit * 0.5) - 6 : (-unit * 1.5) - 4,
+      4 => playerIndex <= 1 ? (-unit * 0.5) - 6 : (-unit * 1.5) - 4,
       _ => 0.0,
     };
   }

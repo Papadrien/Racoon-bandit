@@ -144,11 +144,21 @@ class ProgressionService {
     final newUnlocks = <RewardUnlock>[];
     final unlockedIds = {..._progression.unlockedCardBackIds};
 
+    // En debug, seuils accélérés pour faciliter les tests.
+    // En release, progression normale (requiredGames inchangé).
+    final debugThresholds = kDebugMode
+        ? <String, int>{
+            'blue': 1,   // 1ère partie → déblocage bleu
+            'green': 3,  // 3ème partie → déblocage vert
+          }
+        : <String, int>{};
+
     for (final cardBack in cardBacks) {
       if (unlockedIds.contains(cardBack.id)) continue;
 
+      final threshold = debugThresholds[cardBack.id] ?? cardBack.requiredGames;
       final shouldUnlock = cardBack.unlockedByDefault ||
-          _progression.totalGamesPlayed >= cardBack.requiredGames;
+          _progression.totalGamesPlayed >= threshold;
 
       if (!shouldUnlock) continue;
 

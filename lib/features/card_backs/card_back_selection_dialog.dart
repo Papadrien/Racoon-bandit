@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
@@ -14,7 +13,6 @@ import '../../core/theme/app_theme_provider.dart';
 /// - animation scale + glow au moment de l'équipement
 /// - thème UI mis à jour instantanément sans fermer le sheet
 /// - dos verrouillés : désaturés, cadenas, barre de progression
-/// - bouton debug en mode debug uniquement
 ///
 /// Appeler via [CardBackSelectionDialog.show].
 class CardBackSelectionDialog extends StatefulWidget {
@@ -65,12 +63,6 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
 
     await Future<void>.delayed(const Duration(milliseconds: 500));
     if (mounted) setState(() => _animatingId = null);
-  }
-
-  Future<void> _debugUnlockAll() async {
-    await ProgressionService.debugUnlockAll();
-    if (!mounted) return;
-    setState(() {});
   }
 
   @override
@@ -145,24 +137,6 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
                       ],
                     ),
                   ),
-
-                  if (kDebugMode) ...[
-                    const SizedBox(height: 4),
-                    TextButton.icon(
-                      onPressed: () {
-                        AudioService.instance.playButtonSound();
-                        _debugUnlockAll();
-                      },
-                      icon: const Icon(Icons.lock_open_rounded, size: 15),
-                      label: const Text('Débloquer tous les dos'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.orangeAccent,
-                        textStyle: const TextStyle(fontSize: 11),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                      ),
-                    ),
-                  ],
 
                   const SizedBox(height: 6),
                   Divider(
