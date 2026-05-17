@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
 import '../../core/models/card_back_config.dart';
+import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_theme_provider.dart';
@@ -98,7 +99,10 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
                   if (kDebugMode) ...[
                     const SizedBox(height: 8),
                     TextButton.icon(
-                      onPressed: _debugUnlockAll,
+                      onPressed: () {
+                        AudioService.instance.playButtonSound();
+                        _debugUnlockAll();
+                      },
                       icon: const Icon(Icons.lock_open, size: 16),
                       label: const Text('Débloquer tous les dos'),
                       style: TextButton.styleFrom(
@@ -166,7 +170,10 @@ class _CardBackTile extends StatelessWidget {
     final tileColor = config.themeColor;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: onTap == null ? null : () {
+        AudioService.instance.playButtonSound();
+        onTap!();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(

@@ -212,14 +212,20 @@ class _GameScreenState extends State<GameScreen>
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
+            onPressed: () {
+              AudioService.instance.playButtonSound();
+              Navigator.of(ctx).pop(false);
+            },
             child: const Text(
               'Annuler',
               style: TextStyle(color: Colors.white54),
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
+            onPressed: () {
+              AudioService.instance.playButtonSound();
+              Navigator.of(ctx).pop(true);
+            },
             style: TextButton.styleFrom(
               foregroundColor: Colors.redAccent,
             ),
@@ -366,6 +372,9 @@ class _GameScreenState extends State<GameScreen>
       _pendingBanditCallback = null;
       _effectText = resolution.message;
     });
+
+    // Son bandit joué au moment réel du vol, synchronisé avec l'animation
+    AudioService.instance.playSfx(SoundEffect.bandit);
 
     _playBanditStealAnimation(
       thiefId: _lastResolvedPlayerId,
@@ -557,16 +566,19 @@ class _GameScreenState extends State<GameScreen>
       case CardType.raccoon:
         HapticService.trigger(HapticType.medium);
         if (result.trashDestroyed) {
-          // Raton bloqué par le frigo → son frigo
-          AudioService.instance.playSfx(SoundEffect.frigo);
+          // Raton bloqué par le frigo → SFX dédié blocage frigo
+          AudioService.instance.playSfx(SoundEffect.fridgeBlock);
         } else {
           // Raton vole de la nourriture → son raccoon
           AudioService.instance.playSfx(SoundEffect.raccoon);
         }
       case CardType.bandit:
-        // Bandit attaque → son bandit
+        // Bandit : ne jouer le son qu'en cas d'attaque automatique
+        // (sélection manuelle : le son sera joué après choix de la cible)
         HapticService.trigger(HapticType.medium);
-        AudioService.instance.playSfx(SoundEffect.bandit);
+        if (!result.needsTargetSelection) {
+          AudioService.instance.playSfx(SoundEffect.bandit);
+        }
       case CardType.food:
         // Nourriture gagnée → son gain_nourriture
         HapticService.trigger(HapticType.light);
@@ -863,6 +875,7 @@ class _GameScreenState extends State<GameScreen>
           TextButton.icon(
             onPressed: quitEnabled
                 ? () async {
+                    AudioService.instance.playButtonSound();
                     final confirmed = await _showQuitDialog();
                     if (confirmed && mounted) await _quitToHome();
                   }

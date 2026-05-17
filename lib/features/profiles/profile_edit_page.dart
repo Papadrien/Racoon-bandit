@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/player_profile.dart';
+import '../../core/services/audio_service.dart';
 import '../../core/services/player_profiles_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/player_avatar.dart';
@@ -85,7 +86,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           IconButton(
             icon: const Icon(Icons.check),
             tooltip: 'Enregistrer',
-            onPressed: _save,
+            onPressed: () {
+              AudioService.instance.playButtonSound();
+              _save();
+            },
           ),
         ],
       ),
@@ -124,7 +128,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               children: _emojis.map((e) {
                 final selected = e == _emoji;
                 return GestureDetector(
-                  onTap: () => setState(() => _emoji = e),
+                  onTap: () {
+                    AudioService.instance.playButtonSound();
+                    setState(() => _emoji = e);
+                  },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     decoration: BoxDecoration(
@@ -161,7 +168,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               children: _presetColors.map((c) {
                 final selected = c.toARGB32() == _color.toARGB32();
                 return GestureDetector(
-                  onTap: () => setState(() => _color = c),
+                  onTap: () {
+                    AudioService.instance.playButtonSound();
+                    setState(() => _color = c);
+                  },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     decoration: BoxDecoration(
@@ -181,7 +191,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             const SizedBox(height: 40),
 
             ElevatedButton(
-              onPressed: _save,
+              onPressed: () {
+                AudioService.instance.playButtonSound();
+                _save();
+              },
               child: Text(widget.isNew ? 'CRÉER' : 'ENREGISTRER'),
             ),
             const SizedBox(height: 16),

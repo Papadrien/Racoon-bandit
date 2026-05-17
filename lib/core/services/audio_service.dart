@@ -19,8 +19,11 @@ enum SoundEffect {
   /// Raton laveur vole de la nourriture
   raccoon,
 
-  /// Frigo bloque le raton / carte trash posée
+  /// Frigo pose de carte trash
   frigo,
+
+  /// Frigo bloque le raton (SFX dédié au blocage)
+  fridgeBlock,
 
   /// Popup de récompense (débloquage)
   popupRecompense,
@@ -67,6 +70,7 @@ class AudioService {
     SoundEffect.bandit:         'sounds/bandit.mp3',
     SoundEffect.raccoon:        'sounds/raccoon.mp3',
     SoundEffect.frigo:          'sounds/frigo.mp3',
+    SoundEffect.fridgeBlock:    'sounds/fridge_block.mp3',
     SoundEffect.popupRecompense:'sounds/popup_recompense.mp3',
     SoundEffect.button:         'sounds/button_click.mp3',
 
@@ -85,6 +89,7 @@ class AudioService {
     SoundEffect.bandit,
     SoundEffect.raccoon,
     SoundEffect.frigo,
+    SoundEffect.fridgeBlock,
     SoundEffect.button,
   ];
 
@@ -145,7 +150,8 @@ class AudioService {
   void playRewardSound()  => playSfx(SoundEffect.popupRecompense);
   void playButtonSound()  => playSfx(SoundEffect.button);
   void playFoodSound()    => playSfx(SoundEffect.gainNourriture);
-  void playFrigoSound()   => playSfx(SoundEffect.frigo);
+  void playFrigoSound()    => playSfx(SoundEffect.frigo);
+  void playFridgeBlockSound() => playSfx(SoundEffect.fridgeBlock);
 
   /// Libère toutes les ressources audio (appel optionnel à la fermeture).
   Future<void> dispose() async {

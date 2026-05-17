@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/models/player_state.dart';
+import '../../../core/services/audio_service.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../widgets/player_avatar.dart';
 
@@ -64,6 +65,7 @@ class _BanditTargetOverlayState extends State<BanditTargetOverlay>
     _chosen = true;
 
     HapticService.trigger(HapticType.medium);
+    AudioService.instance.playButtonSound();
 
     // Fermeture animée avant de notifier l'appelant
     await _controller.reverse();

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/services/audio_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/primary_button.dart';
 
@@ -48,8 +49,9 @@ class PremiumScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               TextButton(
-                // Restauration achats prévue pour la prochaine phase
-                onPressed: () {},
+                onPressed: () {
+                  AudioService.instance.playButtonSound();
+                },
                 child: const Text(
                   'Restaurer les achats',
                   style: TextStyle(color: AppTheme.textMuted),

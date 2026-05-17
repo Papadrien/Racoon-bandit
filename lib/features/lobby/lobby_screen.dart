@@ -10,6 +10,7 @@ import '../../core/navigation/app_router.dart';
 import '../card_backs/card_back_selection_dialog.dart';
 import '../../core/services/lobby_service.dart';
 import '../../core/services/player_profiles_service.dart';
+import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
@@ -230,7 +231,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             return Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 8),
                               child: GestureDetector(
-                                onTap: () => _onCountChanged(count),
+                                onTap: () {
+                                  AudioService.instance.playButtonSound();
+                                  _onCountChanged(count);
+                                },
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 150),
                                   width: 64,
@@ -280,13 +284,19 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         // ── Bouton dos de cartes ───────────────────────────
                         _CardBackButton(
                           selectedId: ProgressionService.progression.selectedCardBackId,
-                          onTap: _openCardBackSelection,
+                          onTap: () {
+                            AudioService.instance.playButtonSound();
+                            _openCardBackSelection();
+                          },
                         ),
                         const SizedBox(height: 16),
                         // ── Debug : test popup de récompense ──────────────
                         if (kDebugMode)
                           TextButton.icon(
-                            onPressed: _debugTriggerReward,
+                            onPressed: () {
+                              AudioService.instance.playButtonSound();
+                              _debugTriggerReward();
+                            },
                             icon: const Icon(Icons.bug_report, size: 16),
                             label: const Text('Débloquer récompense test'),
                             style: TextButton.styleFrom(
@@ -337,7 +347,10 @@ class _PlayerSlotCard extends StatelessWidget {
         color: color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            AudioService.instance.playButtonSound();
+            onTap();
+          },
           borderRadius: BorderRadius.circular(14),
           child: Container(
             padding:
@@ -431,7 +444,10 @@ class _CardBackButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: onTap,
+        onPressed: () {
+          AudioService.instance.playButtonSound();
+          onTap();
+        },
         icon: const Icon(Icons.style_outlined, size: 18),
         label: Text('Dos de cartes · $selectedId'.toUpperCase()),
         style: OutlinedButton.styleFrom(
@@ -537,7 +553,10 @@ class _ProfilePickerSheet extends StatelessWidget {
                                 child: InkWell(
                                   onTap: isDisabled
                                       ? null
-                                      : () => Navigator.pop(context, p),
+                                      : () {
+                                          AudioService.instance.playButtonSound();
+                                          Navigator.pop(context, p);
+                                        },
                                   borderRadius: BorderRadius.circular(12),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(

@@ -4,6 +4,7 @@ import '../../core/game/game_state.dart';
 import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
+import '../../core/services/audio_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
@@ -228,7 +229,10 @@ class _ResultScreenState extends State<ResultScreen>
                         onPressed: _goLobby,
                       ),
                       TextButton(
-                        onPressed: _goHome,
+                        onPressed: () {
+                          AudioService.instance.playButtonSound();
+                          _goHome();
+                        },
                         child: const Text('Retour accueil'),
                       ),
                     ],

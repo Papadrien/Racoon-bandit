@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models/player_profile.dart';
+import '../../core/services/audio_service.dart';
 import '../../core/services/player_profiles_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../widgets/player_avatar.dart';
@@ -53,11 +54,17 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
         content: Text('Supprimer "${profile.name}" définitivement ?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
+            onPressed: () {
+              AudioService.instance.playButtonSound();
+              Navigator.pop(ctx, false);
+            },
             child: const Text('Annuler'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
+            onPressed: () {
+              AudioService.instance.playButtonSound();
+              Navigator.pop(ctx, true);
+            },
             child: const Text(
               'Supprimer',
               style: TextStyle(color: Colors.redAccent),
@@ -117,12 +124,18 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                         IconButton(
                           icon: const Icon(Icons.edit_outlined,
                               color: AppTheme.primary),
-                          onPressed: () => _editProfile(p),
+                          onPressed: () {
+                            AudioService.instance.playButtonSound();
+                            _editProfile(p);
+                          },
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete_outline,
                               color: Colors.redAccent),
-                          onPressed: () => _deleteProfile(p),
+                          onPressed: () {
+                            AudioService.instance.playButtonSound();
+                            _deleteProfile(p);
+                          },
                         ),
                       ],
                     ),
@@ -131,7 +144,10 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
               ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addProfile,
+        onPressed: () {
+          AudioService.instance.playButtonSound();
+          _addProfile();
+        },
         backgroundColor: AppTheme.primary,
         tooltip: 'Ajouter un profil',
         child: const Icon(Icons.add),

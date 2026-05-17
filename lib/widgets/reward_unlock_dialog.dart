@@ -183,7 +183,10 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: widget.onTryNow,
+                          onPressed: () {
+                            AudioService.instance.playButtonSound();
+                            widget.onTryNow();
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
                             foregroundColor: Colors.white,
@@ -205,7 +208,10 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
 
                       // Bouton Plus tard
                       TextButton(
-                        onPressed: widget.onLater,
+                        onPressed: () {
+                          AudioService.instance.playButtonSound();
+                          widget.onLater();
+                        },
                         child: const Text(
                           'Plus tard',
                           style: TextStyle(color: AppTheme.textMuted),
