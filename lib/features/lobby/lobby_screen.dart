@@ -221,11 +221,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
                               color: Colors.white.withValues(alpha: 0.08),
                             ),
                           ),
-                          child: const Column(
+                          child: Column(
                             children: [
                               Row(
                                 children: [
-                                  Expanded(
+                                  const Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -252,20 +252,20 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                       showDialog<void>(
                                         context: context,
                                         builder: (_) => AlertDialog(
-                                          title: Text('Mode Pagaille'),
-                                          content: Text(
+                                          title: const Text('Mode Pagaille'),
+                                          content: const Text(
                                             'Des cartes spéciales seront ajoutées dans une future mise à jour.',
                                           ),
                                           actions: [
                                             TextButton(
                                               onPressed: () => Navigator.pop(context),
-                                              child: Text('OK'),
+                                              child: const Text('OK'),
                                             ),
                                           ],
                                         ),
                                       );
                                     },
-                                    icon: Icon(Icons.help_outline),
+                                    icon: const Icon(Icons.help_outline),
                                   ),
                                   Switch(
                                     value: _chaosModeEnabled,

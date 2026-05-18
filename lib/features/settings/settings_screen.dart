@@ -56,7 +56,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _debugUnlockAll() async {
     await ProgressionService.debugUnlockAll();
-    if (!context.mounted) return;
+    if (!mounted) return;
+    // ignore: use_build_context_synchronously
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Tous les dos débloqués !'),
