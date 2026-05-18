@@ -17,12 +17,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Icône + titre
               Center(
-                child: Column(
+                child: const Column(
                   children: [
                     const SizedBox(height: 32),
                     Container(
@@ -72,17 +72,17 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.07),
                   ),
                 ),
-                child: Column(
+                child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _PolicySection(
+                    const _PolicySection(
                       title: 'Collecte de données',
                       content:
                           'Raccoon Bandit ne collecte aucune donnée personnelle. '
                           'Toutes les données de jeu sont stockées localement sur votre appareil.',
                     ),
                     const SizedBox(height: 16),
-                    _PolicySection(
+                    const _PolicySection(
                       title: 'Publicités',
                       content:
                           'L\'application peut afficher des publicités via Google AdMob. '
@@ -90,7 +90,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                           'conformément à la politique de Google.',
                     ),
                     const SizedBox(height: 16),
-                    _PolicySection(
+                    const _PolicySection(
                       title: 'Contact',
                       content:
                           'Pour toute question concernant la confidentialité, '
@@ -127,7 +127,7 @@ class _PolicySection extends StatelessWidget {
   final String title;
   final String content;
 
-  const _PolicySection({required this.title, required this.content});
+  const const _PolicySection({required this.title, required this.content});
 
   @override
   Widget build(BuildContext context) {

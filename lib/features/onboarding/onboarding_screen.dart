@@ -76,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     child: Text(
                       'Passer',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 14,
                         letterSpacing: 0.5,
                       ),
@@ -149,15 +149,15 @@ class _SlideCard extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 420),
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
           decoration: BoxDecoration(
-            color: slide.cardColor.withOpacity(0.85),
+            color: slide.cardColor.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: slide.accentColor.withOpacity(0.4),
+              color: slide.accentColor.withValues(alpha: 0.4),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: slide.accentColor.withOpacity(0.15),
+                color: slide.accentColor.withValues(alpha: 0.15),
                 blurRadius: 32,
                 spreadRadius: 2,
               ),
@@ -192,7 +192,7 @@ class _SlideCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: descSize,
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     height: 1.5,
                   ),
                 ),
@@ -268,7 +268,7 @@ class _NavigationButtons extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
           ),
           elevation: 4,
-          shadowColor: AppTheme.primary.withOpacity(0.4),
+          shadowColor: AppTheme.primary.withValues(alpha: 0.4),
         ),
         child: Text(
           isLast ? 'C\'est parti !' : 'Suivant',

@@ -187,8 +187,6 @@ class GameState {
     CardType type,
     PlayerState target,
   ) {
-    final playerIdx = _resolvedPlayerIndex ?? currentPlayerIndex;
-
     switch (type) {
       case CardType.babyRaccoon:
         final stolen = _removeFood(target, 2);

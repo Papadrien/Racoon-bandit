@@ -38,12 +38,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _replayTutorial() async {
-    if (!mounted) return;
+    if (!context.mounted) return;
     await Navigator.pushNamed(context, AppRoutes.onboarding);
   }
 
   Future<void> _debugSimulateReward() async {
-    if (!mounted) return;
+    if (!context.mounted) return;
     const fakeReward = RewardUnlock(
       id: 'debug_reward',
       name: 'Dos Bleu',
@@ -56,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _debugUnlockAll() async {
     await ProgressionService.debugUnlockAll();
-    if (!mounted) return;
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Tous les dos débloqués !'),
@@ -78,7 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           children: [
             // ── Son & Vibrations ──────────────────────────────────────────
-            _SectionLabel(label: 'Audio & Retours'),
+            const _SectionLabel(label: 'Audio & Retours'),
             _SettingsCard(
               children: [
                 _ToggleTile(
@@ -88,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   value: _soundEnabled,
                   onChanged: _onSoundChanged,
                 ),
-                _CardDivider(),
+                const _CardDivider(),
                 _ToggleTile(
                   icon: Icons.vibration_rounded,
                   label: 'Vibrations',
@@ -102,7 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 20),
 
             // ── Profils & Tutoriel ────────────────────────────────────────
-            _SectionLabel(label: 'Jeu'),
+            const _SectionLabel(label: 'Jeu'),
             _SettingsCard(
               children: [
                 _NavTile(
@@ -110,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   label: 'Gestion des profils',
                   onTap: () => Navigator.pushNamed(context, AppRoutes.profiles),
                 ),
-                _CardDivider(),
+                const _CardDivider(),
                 _NavTile(
                   icon: Icons.school_outlined,
                   label: 'Revoir le tutoriel',
@@ -122,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 20),
 
             // ── Légal ─────────────────────────────────────────────────────
-            _SectionLabel(label: 'Légal'),
+            const _SectionLabel(label: 'Légal'),
             _SettingsCard(
               children: [
                 _NavTile(
@@ -158,7 +158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     label: 'Reset onboarding (relancer app)',
                     onTap: () async {
                       await OnboardingService.resetForDebug();
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Onboarding reset — relancez l\'app'),
@@ -283,7 +283,7 @@ class _ToggleTile extends StatelessWidget {
       ),
       value: value,
       onChanged: onChanged,
-      activeColor: AppTheme.primary,
+      activeThumbColor: AppTheme.primary,
     );
   }
 }

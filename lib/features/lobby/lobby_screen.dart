@@ -221,7 +221,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                               color: Colors.white.withValues(alpha: 0.08),
                             ),
                           ),
-                          child: Column(
+                          child: const Column(
                             children: [
                               Row(
                                 children: [
