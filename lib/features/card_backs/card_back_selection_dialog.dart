@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_assets.dart';
-import '../../core/models/card_back_config.dart';
+import '../../core/constants/appassets.dart';
+import '../../core/models/cardback_config.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/theme/app_theme_provider.dart';
@@ -37,7 +37,7 @@ class CardBackSelectionDialog extends StatefulWidget {
 class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
   late String _selectedId;
   late String _initialId;
-  String? _animatingId;
+  String? animatingId;
   bool _hasChanged = false;
 
   @override
@@ -51,7 +51,7 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
     if (_selectedId == cardBackId) return;
 
     setState(() {
-      _animatingId = cardBackId;
+      animatingId = cardBackId;
       _selectedId = cardBackId;
       _hasChanged = _selectedId != _initialId;
     });
@@ -62,7 +62,7 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
     await ProgressionService.equipCardBack(cardBackId);
 
     await Future<void>.delayed(const Duration(milliseconds: 500));
-    if (mounted) setState(() => _animatingId = null);
+    if (mounted) setState(() => animatingId = null);
   }
 
   @override
@@ -166,7 +166,7 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
                         final cb = allBacks[i];
                         final isUnlocked = unlockedIds.contains(cb.id);
                         final isEquipped = cb.id == _selectedId;
-                        final isAnimating = cb.id == _animatingId;
+                        final isAnimating = cb.id == animatingId;
 
                         return _CardBackTile(
                           key: ValueKey(cb.id),
@@ -471,7 +471,7 @@ class _CardPreview extends StatelessWidget {
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-              errorBuilder: (_, _a, _b) => Container(
+              errorBuilder: (_, a, b) => Container(
                 width: double.infinity,
                 color: fallbackColor.withValues(alpha: isUnlocked ? 1.0 : 0.3),
               ),

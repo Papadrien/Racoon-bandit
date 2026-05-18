@@ -617,7 +617,7 @@ class _GameScreenState extends State<GameScreen>
 
   Future<void> _showChaosHelpPopup() async {
     AudioService.instance.playButtonSound();
-    await showDialog(
+    await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2A1F3D),

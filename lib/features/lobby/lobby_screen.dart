@@ -249,7 +249,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                   ),
                                   IconButton(
                                     onPressed: () {
-                                      showDialog(
+                                      showDialog<void>(
                                         context: context,
                                         builder: (_) => AlertDialog(
                                           title: const Text('Mode Pagaille'),

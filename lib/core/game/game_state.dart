@@ -188,7 +188,6 @@ class GameState {
     PlayerState target,
   ) {
     final playerIdx = _resolvedPlayerIndex ?? currentPlayerIndex;
-    final player = players[playerIdx];
 
     switch (type) {
       case CardType.babyRaccoon:
