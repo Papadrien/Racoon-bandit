@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/appassets.dart';
-import '../../core/models/cardback_config.dart';
+import '../../core/constants/app_assets.dart';
+import '../../core/models/card_back_config.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/theme/app_theme_provider.dart';
