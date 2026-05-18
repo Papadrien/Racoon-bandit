@@ -187,7 +187,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('SALON'),
+          title: Text('SALON'),
           leading: const BackButton(),
         ),
         body: SafeArea(
@@ -204,14 +204,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Spacer(),
+                        Spacer(),
                         // ── Sélecteur nombre de joueurs ─────────────────────
-                        const Text(
+                        Text(
                           'Nombre de joueurs',
                           style: TextStyle(fontSize: 18, color: AppTheme.textMuted),
                         ),
-                        const SizedBox(height: 20),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 20),
+                        SizedBox(height: 24),
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -229,15 +229,15 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
+                                        Text(
                                           'Mode Pagaille',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
-                                        const Text(
+                                        SizedBox(height: 4),
+                                        Text(
                                           'Ajoute des cartes spéciales.',
                                           style: TextStyle(
                                             color: AppTheme.textMuted,
@@ -252,20 +252,20 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                       showDialog<void>(
                                         context: context,
                                         builder: (_) => AlertDialog(
-                                          title: const Text('Mode Pagaille'),
-                                          content: const Text(
+                                          title: Text('Mode Pagaille'),
+                                          content: Text(
                                             'Des cartes spéciales seront ajoutées dans une future mise à jour.',
                                           ),
                                           actions: [
                                             TextButton(
                                               onPressed: () => Navigator.pop(context),
-                                              child: const Text('OK'),
+                                              child: Text('OK'),
                                             ),
                                           ],
                                         ),
                                       );
                                     },
-                                    icon: const Icon(Icons.help_outline),
+                                    icon: Icon(Icons.help_outline),
                                   ),
                                   Switch(
                                     value: _chaosModeEnabled,
@@ -319,7 +319,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             );
                           }).toList(),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         // ── Slots joueurs ──────────────────────────────────
                         ...List.generate(
                           _playerCount,
@@ -329,13 +329,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             onTap: () => _openPicker(i),
                           ),
                         ),
-                        const Spacer(),
+                        Spacer(),
                         // ── Bouton démarrer ────────────────────────────────
                         PrimaryButton(
                           label: 'COMMENCER',
                           onPressed: _canStart ? _startGame : null,
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         // ── Bouton dos de cartes ───────────────────────────
                         _CardBackButton(
                           selectedId: ProgressionService.progression.selectedCardBackId,
@@ -344,7 +344,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             _openCardBackSelection();
                           },
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -423,13 +423,13 @@ class _PlayerSlotCard extends StatelessWidget {
                         width: 1.5,
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person_add_outlined,
                       color: AppTheme.textMuted,
                       size: 22,
                     ),
                   ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,7 +442,7 @@ class _PlayerSlotCard extends StatelessWidget {
                           letterSpacing: 1,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         hasProfile ? profile!.name : 'Choisir un profil',
                         style: TextStyle(
@@ -489,7 +489,7 @@ class _CardBackButton extends StatelessWidget {
           AudioService.instance.playButtonSound();
           onTap();
         },
-        icon: const Icon(Icons.style_outlined, size: 18),
+        icon: Icon(Icons.style_outlined, size: 18),
         label: Text(
           'Dos de cartes · $selectedId'.toUpperCase(),
           overflow: TextOverflow.ellipsis,
@@ -543,7 +543,7 @@ class _ProfilePickerSheet extends StatelessWidget {
           ),
           child: Column(
             children: [
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Container(
                 width: 40,
                 height: 4,
@@ -552,8 +552,8 @@ class _ProfilePickerSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 16),
+              Text(
                 'Choisir un profil',
                 style: TextStyle(
                   fontSize: 16,
@@ -562,7 +562,7 @@ class _ProfilePickerSheet extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               const Divider(color: Colors.white12),
               Expanded(
                 child: profiles.isEmpty
@@ -623,7 +623,7 @@ class _ProfilePickerSheet extends StatelessWidget {
                                           color: color,
                                           size: 44,
                                         ),
-                                        const SizedBox(width: 14),
+                                        SizedBox(width: 14),
                                         Expanded(
                                           child: Text(
                                             p.name,
@@ -637,7 +637,7 @@ class _ProfilePickerSheet extends StatelessWidget {
                                           ),
                                         ),
                                         if (isDisabled)
-                                          const Text(
+                                          Text(
                                             'Déjà utilisé',
                                             style: TextStyle(
                                               fontSize: 11,
@@ -661,7 +661,7 @@ class _ProfilePickerSheet extends StatelessWidget {
                         },
                       ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
             ],
           ),
         );

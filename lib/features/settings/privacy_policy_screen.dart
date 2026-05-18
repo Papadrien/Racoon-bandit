@@ -75,14 +75,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _PolicySection(
+                    _PolicySection(
                       title: 'Collecte de données',
                       content:
                           'Raccoon Bandit ne collecte aucune donnée personnelle. '
                           'Toutes les données de jeu sont stockées localement sur votre appareil.',
                     ),
                     const SizedBox(height: 16),
-                    const _PolicySection(
+                    _PolicySection(
                       title: 'Publicités',
                       content:
                           'L\'application peut afficher des publicités via Google AdMob. '
@@ -90,7 +90,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                           'conformément à la politique de Google.',
                     ),
                     const SizedBox(height: 16),
-                    const _PolicySection(
+                    _PolicySection(
                       title: 'Contact',
                       content:
                           'Pour toute question concernant la confidentialité, '
@@ -127,7 +127,7 @@ class _PolicySection extends StatelessWidget {
   final String title;
   final String content;
 
-  const _PolicySection({required this.title, required this.content});
+  _PolicySection({required this.title, required this.content});
 
   @override
   Widget build(BuildContext context) {
