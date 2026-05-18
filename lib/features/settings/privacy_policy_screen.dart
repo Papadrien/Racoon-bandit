@@ -127,7 +127,7 @@ class _PolicySection extends StatelessWidget {
   final String title;
   final String content;
 
-  const const _PolicySection({required this.title, required this.content});
+  const _PolicySection({required this.title, required this.content});
 
   @override
   Widget build(BuildContext context) {
