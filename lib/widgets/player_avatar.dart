@@ -19,18 +19,20 @@ class PlayerAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        shape: BoxShape.circle,
-        border: Border.all(color: color, width: size * 0.04),
-      ),
-      child: Center(
-        child: Text(
-          emoji,
-          style: TextStyle(fontSize: size * 0.48),
+    return RepaintBoundary(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.2),
+          shape: BoxShape.circle,
+          border: Border.all(color: color, width: size * 0.04),
+        ),
+        child: Center(
+          child: Text(
+            emoji,
+            style: TextStyle(fontSize: size * 0.48),
+          ),
         ),
       ),
     );

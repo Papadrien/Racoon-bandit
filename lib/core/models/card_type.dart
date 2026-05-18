@@ -1,1 +1,9 @@
-enum CardType { food, raccoon, trash, bandit }
+enum CardType {
+  food,
+  raccoon,
+  trash,
+  bandit,
+  banquet,
+  babyRaccoon,
+  vacuum,
+}

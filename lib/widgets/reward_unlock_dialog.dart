@@ -159,17 +159,26 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    // Hauteur max safe : 90% de l'écran moins les insets (encoche, barre nav)
+    final verticalInsets = MediaQuery.of(context).viewInsets.vertical +
+        MediaQuery.of(context).padding.vertical;
+    final maxDialogHeight = (size.height - verticalInsets) * 0.90;
 
     return FadeTransition(
       opacity: _entryFade,
       child: Center(
         child: ScaleTransition(
           scale: _entryScale,
-          child: SizedBox(
-            width: math.min(size.width - 40, 360),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: math.min(size.width - 40, 360),
+              maxHeight: maxDialogHeight,
+            ),
             child: Material(
               color: Colors.transparent,
-              child: Stack(
+              child: SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                child: Stack(
                 clipBehavior: Clip.none,
                 children: [
                   // ── Fond popup (s'étire au contenu via Positioned.fill) ─
@@ -304,6 +313,7 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           ),

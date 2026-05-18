@@ -8,6 +8,23 @@ class AppTheme {
   static const Color primary   = Color(0xFF7C4DFF);
   static const Color textMuted = Color(0xFF9E9E9E);
 
+  // ── Responsive helpers ────────────────────────────────────────────────────
+
+  /// Padding horizontal standard selon la largeur d'écran.
+  static double horizontalPadding(double screenWidth) {
+    if (screenWidth < 340) return 12.0;
+    if (screenWidth < 360) return 16.0;
+    return 24.0;
+  }
+
+  /// Vrai si l'écran est étroit (< 360 dp).
+  static bool isNarrow(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < 360;
+
+  /// Vrai si l'écran est petit en hauteur (< 640 dp).
+  static bool isShortScreen(BuildContext context) =>
+      MediaQuery.sizeOf(context).height < 640;
+
   /// Couleur accent courante — change selon le dos équipé.
   /// Utiliser [AppThemeProvider.instance.accent] pour réagir aux changements.
   static Color get accent => AppThemeProvider.instance.accent;
@@ -24,13 +41,28 @@ class AppTheme {
         backgroundColor: primary,
         foregroundColor: Colors.white,
         minimumSize: const Size(double.infinity, 52),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
         ),
         textStyle: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
           letterSpacing: 2,
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1,
         ),
       ),
     ),

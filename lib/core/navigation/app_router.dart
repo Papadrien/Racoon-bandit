@@ -8,6 +8,7 @@ import '../../features/premium/premium_screen.dart';
 import '../../features/result/result_screen.dart';
 import '../../features/profiles/profiles_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/settings/privacy_policy_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -19,6 +20,7 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String premium = '/premium';
   static const String profiles = '/profiles';
+  static const String privacyPolicy = '/privacy-policy';
   // Onboarding — utilisé pour futurs tutoriels standalone
   static const String onboarding = '/onboarding';
 }
@@ -42,6 +44,8 @@ class AppRouter {
         return _slide(const PremiumScreen(), routeSettings);
       case AppRoutes.profiles:
         return _slide(const ProfilesScreen(), routeSettings);
+      case AppRoutes.privacyPolicy:
+        return _slide(const PrivacyPolicyScreen(), routeSettings);
       case AppRoutes.onboarding:
         return _fade(
           Builder(

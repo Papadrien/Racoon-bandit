@@ -14,6 +14,7 @@ class CardResolution {
   /// Bandit uniquement : vrai si l'UI doit présenter le choix de cible.
   /// Dans ce cas, l'effet n'est pas encore appliqué en logique.
   final bool needsTargetSelection;
+  final CardType? pendingTargetCardType;
 
   const CardResolution({
     required this.message,
@@ -21,6 +22,7 @@ class CardResolution {
     this.trashDestroyed = false,
     this.foodStolen = false,
     this.needsTargetSelection = false,
+    this.pendingTargetCardType,
   });
 }
 
@@ -32,6 +34,7 @@ class GameState {
   bool isGameOver;
   bool _gameOverHandled = false;
   final GameSessionStats sessionStats = GameSessionStats();
+  final bool chaosMode;
 
   /// Index du joueur actif au moment où la carte a été tirée.
   /// Conservé pour que la résolution différée (Bandit) utilise
@@ -40,9 +43,9 @@ class GameState {
 
   // ── Constructeurs ─────────────────────────────────────────────────────────
 
-  GameState({required this.players})
+  GameState({required this.players, this.chaosMode = false})
       : currentPlayerIndex = 0,
-        remainingDeck = buildShuffledDeck(),
+        remainingDeck = buildShuffledDeck(chaosMode: chaosMode),
         revealedCard = null,
         isGameOver = false;
 
@@ -51,6 +54,7 @@ class GameState {
       : currentPlayerIndex = save.currentPlayerIndex,
         revealedCard = null,
         isGameOver = false,
+        chaosMode = save.chaosMode,
         players = save.players
             .map(
               (s) => PlayerState(
@@ -87,6 +91,9 @@ class GameState {
         CardType.raccoon => 'Raton',
         CardType.trash => 'Poubelle',
         CardType.bandit => 'Bandit',
+        CardType.banquet => 'Banquet',
+        CardType.babyRaccoon => 'Bébé Raton',
+        CardType.vacuum => 'Aspirateur',
       };
 
   static String _cardDescription(CardType type) => switch (type) {
@@ -94,6 +101,9 @@ class GameState {
         CardType.raccoon => 'Mange toute la nourriture',
         CardType.trash => 'Protège votre nourriture',
         CardType.bandit => 'Vole un autre joueur',
+        CardType.banquet => '+2 nourritures',
+        CardType.babyRaccoon => 'Retire 2 nourritures à un joueur',
+        CardType.vacuum => 'Vole 1 nourriture à chaque joueur',
       };
 
   // ── Sérialisation ─────────────────────────────────────────────────────────
@@ -116,6 +126,7 @@ class GameState {
             .toList(),
         currentPlayerIndex: currentPlayerIndex,
         remainingDeckTypes: remainingDeck.map((c) => c.type.name).toList(),
+        chaosMode: chaosMode,
       );
 
   // ── Accesseurs ────────────────────────────────────────────────────────────
@@ -158,6 +169,50 @@ class GameState {
 
   // ─── Résolution différée Bandit ───────────────────────────────────────────
 
+
+
+  void _gainFood(PlayerState player, int amount) {
+    if (amount <= 0) return;
+    player.foodCount += amount;
+    sessionStats.foodGained += amount;
+  }
+
+  int _removeFood(PlayerState player, int amount) {
+    final removed = amount > player.foodCount ? player.foodCount : amount;
+    player.foodCount -= removed;
+    return removed;
+  }
+
+  CardResolution resolveTargetedSpecial(
+    CardType type,
+    PlayerState target,
+  ) {
+    final playerIdx = _resolvedPlayerIndex ?? currentPlayerIndex;
+    final player = players[playerIdx];
+
+    switch (type) {
+      case CardType.babyRaccoon:
+        final stolen = _removeFood(target, 2);
+
+        if (remainingDeck.isEmpty) {
+          _markGameOver();
+        } else {
+          _advance();
+        }
+
+        return CardResolution(
+          message: stolen > 0
+              ? '${target.name} perd $stolen nourriture${stolen > 1 ? 's' : ''}'
+              : 'Aucune nourriture à voler',
+          targetPlayerId: target.id,
+          foodStolen: stolen > 0,
+        );
+
+      default:
+        return resolveBandit(target);
+    }
+  }
+
   CardResolution resolveBandit(PlayerState target) {
     final playerIdx = _resolvedPlayerIndex ?? currentPlayerIndex;
     final player = players[playerIdx];
@@ -187,8 +242,7 @@ class GameState {
 
     switch (card.type) {
       case CardType.food:
-        player.foodCount++;
-        sessionStats.foodGained++;
+        _gainFood(player, 1);
         return CardResolution(message: '${player.name} gagne 1 nourriture');
 
       case CardType.trash:
@@ -214,6 +268,56 @@ class GameState {
           foodStolen: true,
         );
 
+      case CardType.banquet:
+        _gainFood(player, 2);
+        return CardResolution(
+          message: '${player.name} gagne 2 nourritures',
+        );
+
+      case CardType.babyRaccoon:
+        final validTargets = banditValidTargets();
+
+        if (validTargets.isEmpty) {
+          return const CardResolution(
+            message: 'Aucune nourriture à retirer',
+          );
+        }
+
+        if (validTargets.length == 1) {
+          final target = validTargets.first;
+          final removed = _removeFood(target, 2);
+
+          return CardResolution(
+            message:
+                '${target.name} perd $removed nourriture${removed > 1 ? 's' : ''}',
+            targetPlayerId: target.id,
+            foodStolen: removed > 0,
+          );
+        }
+
+        return const CardResolution(
+          message: '',
+          needsTargetSelection: true,
+          pendingTargetCardType: CardType.babyRaccoon,
+        );
+
+      case CardType.vacuum:
+        int stolenTotal = 0;
+
+        for (final target in players.where((p) => p.id != player.id)) {
+          final stolen = _removeFood(target, 1);
+          stolenTotal += stolen;
+        }
+
+        _gainFood(player, stolenTotal);
+
+        return CardResolution(
+          message: stolenTotal > 0
+              ? '${player.name} vole $stolenTotal nourriture${stolenTotal > 1 ? 's' : ''}'
+              : 'Aucune nourriture à aspirer',
+          foodStolen: stolenTotal > 0,
+        );
+
       case CardType.bandit:
         sessionStats.banditCardsPlayed++;
         final validTargets = banditValidTargets();
@@ -226,8 +330,8 @@ class GameState {
 
         if (validTargets.length == 1) {
           final target = validTargets.first;
-          player.foodCount++;
-          target.foodCount--;
+          _gainFood(player, 1);
+          _removeFood(target, 1);
           sessionStats.foodStolen++;
           return CardResolution(
             message: '${player.name} vole 1 nourriture à ${target.name}',
@@ -239,6 +343,7 @@ class GameState {
         return const CardResolution(
           message: '',
           needsTargetSelection: true,
+          pendingTargetCardType: CardType.bandit,
         );
     }
   }

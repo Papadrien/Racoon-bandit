@@ -15,17 +15,19 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onPressed == null
-            ? null
-            : () {
-                HapticService.trigger(HapticType.selection);
-                AudioService.instance.playSfx(SoundEffect.button);
-                onPressed!();
-              },
-        child: Text(label),
+    return RepaintBoundary(
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: onPressed == null
+              ? null
+              : () {
+                  HapticService.trigger(HapticType.selection);
+                  AudioService.instance.playSfx(SoundEffect.button);
+                  onPressed!();
+                },
+          child: Text(label),
+        ),
       ),
     );
   }

@@ -167,7 +167,12 @@ class _ResultScreenState extends State<ResultScreen>
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                            Text('${player.foodCount} nourriture'),
+                                            Text(
+                                              '${player.foodCount} 🍎',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       );

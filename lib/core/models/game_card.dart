@@ -22,6 +22,9 @@ class GameCard {
         CardType.trash => '🗑️',
         CardType.raccoon => '🦝',
         CardType.bandit => '🥷',
+      CardType.banquet => '🍽️',
+      CardType.babyRaccoon => '🦝',
+      CardType.vacuum => '🧹',
       };
 
   Color get color => switch (type) {
@@ -29,5 +32,8 @@ class GameCard {
         CardType.trash => const Color(0xFF757575),
         CardType.raccoon => const Color(0xFFFF9800),
         CardType.bandit => const Color(0xFF7C4DFF),
+      CardType.banquet => const Color(0xFFE91E63),
+      CardType.babyRaccoon => const Color(0xFFFFB74D),
+      CardType.vacuum => const Color(0xFF29B6F6),
       };
 }

@@ -298,6 +298,7 @@ class _HomeScreenState extends State<HomeScreen>
               bottom: MediaQuery.sizeOf(context).height * 0.10,
               child: SafeArea(
                 top: false,
+                maintainBottomViewPadding: true,
                 child: _PlayButtonArea(
                   hasSavedGame: _hasSavedGame,
                   noLives: noLives,
@@ -489,9 +490,10 @@ class _RewardAdButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.accent,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 18),
+          minimumSize: const Size(double.infinity, 52),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
       ),
@@ -518,9 +520,10 @@ class _ResumeButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppTheme.accent,
           side: BorderSide(color: AppTheme.accent),
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          minimumSize: const Size(double.infinity, 48),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
       ),
@@ -535,27 +538,28 @@ class _Logo extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final scale = (constraints.maxWidth / 360).clamp(0.75, 1.0);
+        final screenH = MediaQuery.sizeOf(context).height;
+        final scale = (constraints.maxWidth / 360).clamp(0.72, 1.0);
+        final baseFontSize =
+            (Theme.of(context).textTheme.displayLarge?.fontSize ?? 48);
+        // Réduction supplémentaire sur petits écrans en hauteur
+        final heightScale = screenH < 600 ? 0.85 : 1.0;
+        final fontSize = baseFontSize * scale * heightScale;
+
         return Column(
           children: [
             Text(
               'RACCOON',
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     color: AppTheme.primary,
-                    fontSize:
-                        (Theme.of(context).textTheme.displayLarge?.fontSize ??
-                                48) *
-                            scale,
+                    fontSize: fontSize,
                   ),
             ),
             Text(
               'BANDIT',
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     color: AppTheme.accent,
-                    fontSize:
-                        (Theme.of(context).textTheme.displayLarge?.fontSize ??
-                                48) *
-                            scale,
+                    fontSize: fontSize,
                   ),
             ),
           ],

@@ -23,6 +23,7 @@ class SavedGame {
   // ── Deck ─────────────────────────────────────────────────────────────────
   /// Types des cartes restantes dans le deck, dans l'ordre (last = prochain).
   final List<String> remainingDeckTypes;
+  final bool chaosMode;
 
   // ── Métadonnées futures ──────────────────────────────────────────────────
   // Prévu pour : statistiques, succès, dos de cartes, mode de jeu
@@ -33,6 +34,7 @@ class SavedGame {
     required this.players,
     required this.currentPlayerIndex,
     required this.remainingDeckTypes,
+    required this.chaosMode,
   });
 
   Map<String, dynamic> toJson() => {
@@ -41,6 +43,7 @@ class SavedGame {
         'players': players.map((p) => p.toJson()).toList(),
         'currentPlayerIndex': currentPlayerIndex,
         'remainingDeckTypes': remainingDeckTypes,
+        'chaosMode': chaosMode,
       };
 
   factory SavedGame.fromJson(Map<String, dynamic> json) => SavedGame(
@@ -52,6 +55,7 @@ class SavedGame {
         currentPlayerIndex: json['currentPlayerIndex'] as int,
         remainingDeckTypes:
             List<String>.from(json['remainingDeckTypes'] as List),
+        chaosMode: json['chaosMode'] as bool? ?? false,
       );
 
   String toJsonString() => jsonEncode(toJson());

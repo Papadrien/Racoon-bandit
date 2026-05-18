@@ -12,11 +12,23 @@ const Map<CardType, int> deckComposition = {
   CardType.bandit: 6,
 };
 
-List<GameCard> buildShuffledDeck() {
+const Map<CardType, int> chaosDeckComposition = {
+  CardType.food: 17,
+  CardType.raccoon: 6,
+  CardType.trash: 3,
+  CardType.bandit: 6,
+  CardType.banquet: 1,
+  CardType.babyRaccoon: 1,
+  CardType.vacuum: 1,
+};
+
+List<GameCard> buildShuffledDeck({bool chaosMode = false}) {
+  final composition = chaosMode ? chaosDeckComposition : deckComposition;
+
   final deck = <GameCard>[];
   int id = 0;
 
-  for (final entry in deckComposition.entries) {
+  for (final entry in composition.entries) {
     for (int i = 0; i < entry.value; i++) {
       deck.add(
         GameCard(
@@ -36,8 +48,11 @@ List<GameCard> buildShuffledDeck() {
 String _cardName(CardType type) => switch (type) {
       CardType.food => 'Nourriture',
       CardType.raccoon => 'Raton',
-      CardType.trash => 'Poubelle',
+      CardType.trash => 'Frigo',
       CardType.bandit => 'Bandit',
+      CardType.banquet => 'Banquet',
+      CardType.babyRaccoon => 'Bébé Raton',
+      CardType.vacuum => 'Aspirateur',
     };
 
 String _cardDescription(CardType type) => switch (type) {
@@ -45,4 +60,7 @@ String _cardDescription(CardType type) => switch (type) {
       CardType.raccoon => 'Mange toute la nourriture',
       CardType.trash => 'Protège votre nourriture',
       CardType.bandit => 'Vole un autre joueur',
+      CardType.banquet => '+2 nourritures',
+      CardType.babyRaccoon => 'Retire 2 nourritures à un joueur',
+      CardType.vacuum => 'Vole 1 nourriture à chaque joueur',
     };

@@ -73,97 +73,113 @@ class _SettingsScreenState extends State<SettingsScreen> {
         leading: const BackButton(),
       ),
       body: SafeArea(
+        minimum: const EdgeInsets.symmetric(horizontal: 4),
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           children: [
-            const SizedBox(height: 16),
-
             // ── Son & Vibrations ──────────────────────────────────────────
-            _SettingTile(
-              icon: Icons.volume_up,
-              label: 'Sons',
-              value: _soundEnabled,
-              onChanged: _onSoundChanged,
+            _SectionLabel(label: 'Audio & Retours'),
+            _SettingsCard(
+              children: [
+                _ToggleTile(
+                  icon: Icons.volume_up_rounded,
+                  label: 'Sons',
+                  subtitle: 'Effets sonores du jeu',
+                  value: _soundEnabled,
+                  onChanged: _onSoundChanged,
+                ),
+                _CardDivider(),
+                _ToggleTile(
+                  icon: Icons.vibration_rounded,
+                  label: 'Vibrations',
+                  subtitle: 'Retours haptiques',
+                  value: _vibrationEnabled,
+                  onChanged: _onVibrationChanged,
+                ),
+              ],
             ),
-            const Divider(color: AppTheme.textMuted, height: 1),
-            _SettingTile(
-              icon: Icons.vibration,
-              label: 'Vibrations',
-              value: _vibrationEnabled,
-              onChanged: _onVibrationChanged,
-            ),
-            const Divider(color: AppTheme.textMuted, height: 1),
 
-            // ── Profils ───────────────────────────────────────────────────
-            ListTile(
-              leading: const Icon(Icons.person_outline, color: AppTheme.primary),
-              title: const Text('Gestion des profils'),
-              trailing: const Icon(Icons.chevron_right, color: AppTheme.textMuted),
-              onTap: () => Navigator.pushNamed(context, AppRoutes.profiles),
-            ),
-            const Divider(color: AppTheme.textMuted, height: 1),
+            const SizedBox(height: 20),
 
-            // ── Tutoriel (toujours visible) ───────────────────────────────
-            ListTile(
-              leading: const Icon(Icons.school_outlined, color: AppTheme.primary),
-              title: const Text('Revoir le tutoriel'),
-              trailing: const Icon(Icons.chevron_right, color: AppTheme.textMuted),
-              onTap: _replayTutorial,
+            // ── Profils & Tutoriel ────────────────────────────────────────
+            _SectionLabel(label: 'Jeu'),
+            _SettingsCard(
+              children: [
+                _NavTile(
+                  icon: Icons.person_outline_rounded,
+                  label: 'Gestion des profils',
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.profiles),
+                ),
+                _CardDivider(),
+                _NavTile(
+                  icon: Icons.school_outlined,
+                  label: 'Revoir le tutoriel',
+                  onTap: _replayTutorial,
+                ),
+              ],
             ),
-            const Divider(color: AppTheme.textMuted, height: 1),
+
+            const SizedBox(height: 20),
+
+            // ── Légal ─────────────────────────────────────────────────────
+            _SectionLabel(label: 'Légal'),
+            _SettingsCard(
+              children: [
+                _NavTile(
+                  icon: Icons.privacy_tip_outlined,
+                  label: 'Politique de confidentialité',
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.privacyPolicy),
+                ),
+              ],
+            ),
 
             const SizedBox(height: 32),
 
             // ── Section Debug (debug uniquement) ─────────────────────────
             if (kDebugMode) ...[
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 8),
-                child: Text(
-                  'DEBUG',
-                  style: TextStyle(
-                    color: Colors.orange.withOpacity(0.7),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
+              _SectionLabel(label: 'Debug', color: Colors.orange),
+              _SettingsCard(
+                borderColor: Colors.orange.withValues(alpha: 0.3),
+                children: [
+                  _DebugTile(
+                    icon: Icons.emoji_events_outlined,
+                    label: 'Simuler récompense',
+                    onTap: _debugSimulateReward,
                   ),
-                ),
+                  _CardDivider(color: Colors.orange.withValues(alpha: 0.2)),
+                  _DebugTile(
+                    icon: Icons.lock_open_rounded,
+                    label: 'Débloquer tous les dos',
+                    onTap: _debugUnlockAll,
+                  ),
+                  _CardDivider(color: Colors.orange.withValues(alpha: 0.2)),
+                  _DebugTile(
+                    icon: Icons.replay_rounded,
+                    label: 'Reset onboarding (relancer app)',
+                    onTap: () async {
+                      await OnboardingService.resetForDebug();
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Onboarding reset — relancez l\'app'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-              _DebugTile(
-                icon: Icons.emoji_events_outlined,
-                label: 'Simuler récompense',
-                onTap: _debugSimulateReward,
-              ),
-              const Divider(color: Colors.orange, height: 1, indent: 16, endIndent: 16),
-              _DebugTile(
-                icon: Icons.lock_open_rounded,
-                label: 'Débloquer tous les dos',
-                onTap: _debugUnlockAll,
-              ),
-              const Divider(color: Colors.orange, height: 1, indent: 16, endIndent: 16),
-              _DebugTile(
-                icon: Icons.replay,
-                label: 'Reset onboarding (relancer app)',
-                onTap: () async {
-                  await OnboardingService.resetForDebug();
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Onboarding reset — relancez l\'app'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
             ],
 
             // ── Version ───────────────────────────────────────────────────
             const Center(
               child: Text(
-                'v0.1.0 — Raccoon Bandit',
+                'v1.0.0 — Raccoon Bandit',
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
               ),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -172,18 +188,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Widgets internes
+// Composants internes
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SettingTile extends StatelessWidget {
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  final Color? color;
+
+  const _SectionLabel({required this.label, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          color: (color ?? AppTheme.primary).withValues(alpha: 0.8),
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.5,
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsCard extends StatelessWidget {
+  final List<Widget> children;
+  final Color? borderColor;
+
+  const _SettingsCard({required this.children, this.borderColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: borderColor ?? Colors.white.withValues(alpha: 0.07),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: children,
+      ),
+    );
+  }
+}
+
+class _CardDivider extends StatelessWidget {
+  final Color? color;
+  const _CardDivider({this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Divider(
+      height: 1,
+      color: color ?? Colors.white.withValues(alpha: 0.07),
+      indent: 16,
+      endIndent: 16,
+    );
+  }
+}
+
+class _ToggleTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  const _SettingTile({
+  const _ToggleTile({
     required this.icon,
     required this.label,
+    required this.subtitle,
     required this.value,
     required this.onChanged,
   });
@@ -191,11 +271,45 @@ class _SettingTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SwitchListTile(
-      secondary: Icon(icon, color: AppTheme.primary),
-      title: Text(label),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      secondary: Icon(icon, color: AppTheme.primary, size: 22),
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+      ),
       value: value,
       onChanged: onChanged,
-      activeThumbColor: AppTheme.primary,
+      activeColor: AppTheme.primary,
+    );
+  }
+}
+
+class _NavTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _NavTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Icon(icon, color: AppTheme.primary, size: 22),
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 20),
+      onTap: onTap,
     );
   }
 }
@@ -214,10 +328,11 @@ class _DebugTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: Colors.orange),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Icon(icon, color: Colors.orange, size: 22),
       title: Text(
         label,
-        style: const TextStyle(color: Colors.orange, fontSize: 14),
+        style: const TextStyle(color: Colors.orange, fontSize: 14, fontWeight: FontWeight.w500),
       ),
       onTap: onTap,
     );

@@ -147,7 +147,7 @@ class _SlideCard extends StatelessWidget {
         child: Container(
           width: double.infinity,
           constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
           decoration: BoxDecoration(
             color: slide.cardColor.withOpacity(0.85),
             borderRadius: BorderRadius.circular(24),
@@ -163,38 +163,41 @@ class _SlideCard extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Emoji
-              Text(
-                slide.emoji,
-                style: TextStyle(fontSize: emojiSize),
-              ),
-              const SizedBox(height: 28),
-              // Titre
-              Text(
-                slide.title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: titleSize,
-                  fontWeight: FontWeight.w900,
-                  color: slide.accentColor,
-                  letterSpacing: 0.5,
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Emoji
+                Text(
+                  slide.emoji,
+                  style: TextStyle(fontSize: emojiSize),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Description
-              Text(
-                slide.description,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: descSize,
-                  color: Colors.white.withOpacity(0.85),
-                  height: 1.5,
+                SizedBox(height: screenHeight < 650 ? 20 : 28),
+                // Titre
+                Text(
+                  slide.title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: titleSize,
+                    fontWeight: FontWeight.w900,
+                    color: slide.accentColor,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+                // Description
+                Text(
+                  slide.description,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: descSize,
+                    color: Colors.white.withOpacity(0.85),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

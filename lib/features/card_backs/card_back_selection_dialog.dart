@@ -77,8 +77,10 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
 
         return DraggableScrollableSheet(
           initialChildSize: 0.65,
-          minChildSize: 0.40,
-          maxChildSize: 0.92,
+          minChildSize: 0.42,
+          maxChildSize: 0.94,
+          snap: true,
+          snapSizes: const [0.65, 0.94],
           builder: (_, scrollController) {
             return Container(
               decoration: BoxDecoration(

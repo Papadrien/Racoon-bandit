@@ -87,6 +87,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
         leading: const BackButton(),
       ),
       body: SafeArea(
+        minimum: const EdgeInsets.symmetric(horizontal: 4),
         child: _profiles.isEmpty
             ? const Center(
                 child: Text(

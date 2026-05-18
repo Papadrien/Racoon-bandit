@@ -27,6 +27,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   int _playerCount = 2;
 
   late List<PlayerProfile?> _selectedProfiles;
+  bool _chaosModeEnabled = false;
 
   @override
   void initState() {
@@ -168,7 +169,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     Navigator.pushNamed(
       context,
       AppRoutes.game,
-      arguments: GameState(players: players),
+      arguments: GameState(players: players, chaosMode: _chaosModeEnabled),
     ).then((_) {
       if (mounted) _navigationInProgress = false;
     });
@@ -210,6 +211,74 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           style: TextStyle(fontSize: 18, color: AppTheme.textMuted),
                         ),
                         const SizedBox(height: 20),
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.08),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Mode Pagaille',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const Text(
+                                          'Ajoute des cartes spéciales.',
+                                          style: TextStyle(
+                                            color: AppTheme.textMuted,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                          title: const Text('Mode Pagaille'),
+                                          content: const Text(
+                                            'Des cartes spéciales seront ajoutées dans une future mise à jour.',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              child: const Text('OK'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.help_outline),
+                                  ),
+                                  Switch(
+                                    value: _chaosModeEnabled,
+                                    onChanged: (value) {
+                                      setState(() => _chaosModeEnabled = value);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [2, 3, 4].map((count) {
@@ -326,7 +395,7 @@ class _PlayerSlotCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           child: Container(
             padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
@@ -421,18 +490,23 @@ class _CardBackButton extends StatelessWidget {
           onTap();
         },
         icon: const Icon(Icons.style_outlined, size: 18),
-        label: Text('Dos de cartes · $selectedId'.toUpperCase()),
+        label: Text(
+          'Dos de cartes · $selectedId'.toUpperCase(),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+        ),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppTheme.textMuted,
           side: const BorderSide(color: Colors.white12, width: 1.5),
           minimumSize: const Size(double.infinity, 48),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           textStyle: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             letterSpacing: 1,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
       ),

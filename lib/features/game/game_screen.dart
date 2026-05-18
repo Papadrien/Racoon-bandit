@@ -325,7 +325,7 @@ class _GameScreenState extends State<GameScreen>
     _playCardFeedback(card, result);
 
     if (result.needsTargetSelection) {
-      await _handleBanditTargetSelection(card);
+      await _handleTargetSelection(card, result.pendingTargetCardType ?? CardType.bandit);
       return;
     }
 
@@ -342,7 +342,7 @@ class _GameScreenState extends State<GameScreen>
     await _finishCardAnimation(extraDelay: isRaccoonEffect ? 600 : 0);
   }
 
-  Future<void> _handleBanditTargetSelection(GameCard? card) async {
+  Future<void> _handleTargetSelection(GameCard? card, CardType targetCardType) async {
     final targets = _gameState.banditValidTargets();
 
     setState(() {
@@ -364,7 +364,9 @@ class _GameScreenState extends State<GameScreen>
 
     if (!mounted || _disposed) return;
 
-    final resolution = _gameState.resolveBandit(target);
+    final resolution = targetCardType == CardType.bandit
+        ? _gameState.resolveBandit(target)
+        : _gameState.resolveTargetedSpecial(targetCardType, target);
 
     setState(() {
       _showingBanditOverlay = false;
@@ -532,28 +534,43 @@ class _GameScreenState extends State<GameScreen>
     switch (card.type) {
       case CardType.food:
         _overlayCoordinator.playFoodGain(start: start, end: playerCenter);
-
+        return;
       case CardType.trash:
         _overlayCoordinator.playFridgeDeposit(start: start, end: fridgeCenter);
-
+        return;
       case CardType.raccoon:
         if (result.trashDestroyed) {
           _overlayCoordinator.playFridgeImpact(center: fridgeCenter);
         } else if (foodCountBeforeDraw > 0) {
-          _overlayCoordinator.playRaccoonDevour(
-            playerCenter: playerCenter,
-            cardCenter: start,
-            foodCount: foodCountBeforeDraw,
-          );
+          _overlayCoordinator.playRaccoonDevour(playerCenter: playerCenter, cardCenter: start, foodCount: foodCountBeforeDraw);
         }
-
+        return;
       case CardType.bandit:
         if (result.targetPlayerId != null) {
-          _playBanditStealAnimation(
-            thiefId: currentPlayerId,
-            targetId: result.targetPlayerId!,
-          );
+          _playBanditStealAnimation(thiefId: currentPlayerId, targetId: result.targetPlayerId!);
         }
+        return;
+      case CardType.banquet:
+        _overlayCoordinator.playFoodGain(start: start, end: playerCenter);
+        Future.delayed(const Duration(milliseconds: 120), () {
+          if (mounted) {
+            _overlayCoordinator.playFoodGain(start: start, end: playerCenter);
+          }
+        });
+        return;
+      case CardType.babyRaccoon:
+        if (result.targetPlayerId != null) {
+          final targetCenter = _playerFoodCenter(result.targetPlayerId!);
+          _overlayCoordinator.playRaccoonDevour(playerCenter: targetCenter, cardCenter: start, foodCount: 2);
+        }
+        return;
+      case CardType.vacuum:
+        for (final player in _gameState.players) {
+          if (player.id == currentPlayerId || player.foodCount <= 0) continue;
+          final targetCenter = _playerFoodCenter(player.id);
+          _overlayCoordinator.playFoodSteal(fromTarget: targetCenter, toThief: playerCenter);
+        }
+        return;
     }
   }
 
@@ -562,33 +579,82 @@ class _GameScreenState extends State<GameScreen>
 
     switch (card.type) {
       case CardType.trash:
-        // Frigo posé → son frigo
         HapticService.trigger(HapticType.medium);
         AudioService.instance.playSfx(SoundEffect.frigo);
+        return;
       case CardType.raccoon:
         HapticService.trigger(HapticType.medium);
         if (result.trashDestroyed) {
-          // Raton bloqué par le frigo → SFX dédié blocage frigo
           AudioService.instance.playSfx(SoundEffect.fridgeBlock);
         } else {
-          // Raton vole de la nourriture → son raccoon
           AudioService.instance.playSfx(SoundEffect.raccoon);
         }
+        return;
       case CardType.bandit:
-        // Bandit : ne jouer le son qu'en cas de vol effectif
-        // (sélection manuelle : le son sera joué après choix de la cible)
         HapticService.trigger(HapticType.medium);
         if (!result.needsTargetSelection && result.foodStolen) {
           AudioService.instance.playSfx(SoundEffect.bandit);
         }
+        return;
       case CardType.food:
-        // Nourriture gagnée → son gain_nourriture
         HapticService.trigger(HapticType.light);
         AudioService.instance.playSfx(SoundEffect.gainNourriture);
+        return;
+      case CardType.banquet:
+        HapticService.trigger(HapticType.medium);
+        AudioService.instance.playBanquetSound();
+        return;
+      case CardType.babyRaccoon:
+        HapticService.trigger(HapticType.medium);
+        AudioService.instance.playBabyRaccoonSound();
+        return;
+      case CardType.vacuum:
+        HapticService.trigger(HapticType.heavy);
+        AudioService.instance.playVacuumSound();
+        return;
     }
   }
 
-  // ── UI builders ────────────────────────────────────────────────────────────
+  Future<void> _showChaosHelpPopup() async {
+    AudioService.instance.playButtonSound();
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF2A1F3D),
+        title: const Text('Mode Pagaille', style: TextStyle(color: Colors.white)),
+        content: const SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Text('🍎', style: TextStyle(fontSize: 28)),
+                title: Text('Banquet', style: TextStyle(color: Colors.white)),
+                subtitle: Text('+2 nourritures', style: TextStyle(color: Colors.white70)),
+              ),
+              ListTile(
+                leading: Text('🦝', style: TextStyle(fontSize: 28)),
+                title: Text('Bébé Raton', style: TextStyle(color: Colors.white)),
+                subtitle: Text('Retire 2 nourritures', style: TextStyle(color: Colors.white70)),
+              ),
+              ListTile(
+                leading: Text('🌀', style: TextStyle(fontSize: 28)),
+                title: Text('Aspirateur', style: TextStyle(color: Colors.white)),
+                subtitle: Text('Vole 1 nourriture à tous', style: TextStyle(color: Colors.white70)),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── UI builders  // ── UI builders ────────────────────────────────────────────────────────────
 
   void _computeCardSize(BoxConstraints constraints) {
     final maxH = constraints.maxHeight * 0.52;
@@ -606,16 +672,18 @@ class _GameScreenState extends State<GameScreen>
     _foodZoneKeys.putIfAbsent(player.id, GlobalKey.new);
     _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
 
-    final avatarSize = maxWidth < 120 ? 32.0 : 40.0;
-    final nameFontSize = maxWidth < 120 ? 11.0 : 13.0;
-    final emojiFontSize = maxWidth < 120 ? 14.0 : 16.0;
+    final isCompact = maxWidth < 115;
+    final avatarSize = isCompact ? 28.0 : 38.0;
+    final nameFontSize = isCompact ? 10.0 : 12.0;
+    final emojiFontSize = isCompact ? 12.0 : 15.0;
+    final hPad = isCompact ? 5.0 : 9.0;
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: Container(
         key: _playerKeys[player.id],
         padding: EdgeInsets.symmetric(
-          horizontal: maxWidth < 120 ? 6 : 10,
+          horizontal: hPad,
           vertical: 8,
         ),
         decoration: BoxDecoration(
@@ -801,19 +869,23 @@ class _GameScreenState extends State<GameScreen>
     _computeCardSize(constraints);
 
     final showBackgroundCard = _gameState.remainingCards > 1;
-    final titleFontSize = (constraints.maxWidth * 0.065).clamp(16.0, 24.0);
+    final titleFontSize = (constraints.maxWidth * 0.062).clamp(14.0, 22.0);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Tour de ${_gameState.currentPlayer.name}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: titleFontSize,
-            fontWeight: FontWeight.bold,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text(
+            'Tour de ${_gameState.currentPlayer.name}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: titleFontSize,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -848,8 +920,8 @@ class _GameScreenState extends State<GameScreen>
           ),
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 36,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 36, maxHeight: 48),
           child: Text(
             _effectText,
             maxLines: 2,
@@ -915,9 +987,15 @@ class _GameScreenState extends State<GameScreen>
         await _onBackPressed();
       },
       child: Scaffold(
+        floatingActionButton: _gameState.chaosMode
+            ? FloatingActionButton.small(
+                onPressed: _showChaosHelpPopup,
+                child: const Icon(Icons.help_outline),
+              )
+            : null,
         backgroundColor: const Color(0xFF1B1525),
         body: SafeArea(
-          minimum: const EdgeInsets.only(top: 4, bottom: 4),
+          minimum: const EdgeInsets.only(top: 4, left: 4, right: 4, bottom: 8),
           child: LayoutBuilder(
             builder: (context, constraints) {
               return Stack(
