@@ -709,7 +709,8 @@ class _GameScreenState extends State<GameScreen>
                 (_) => Image.asset(
                   'assets/images/icon_trash.png',
                   width: emojiFontSize * 1.4,
-                  height: emojiFontSize * 1.4,
+                  height: emojiFontSize * 1.75,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
@@ -786,7 +787,15 @@ class _GameScreenState extends State<GameScreen>
           final showFront = angle > math.pi / 2;
           final isBack = !deckExhausted && !(showFront && _revealedCard != null);
 
-          return Transform.translate(
+          // Masquer la carte lorsqu'elle est presque de profil (angle ≈ π/2)
+          // pour éviter le flash de backface visible pendant la rotation 3D.
+          final nearEdge = !backgroundCard &&
+              angle > math.pi / 2 - 0.08 &&
+              angle < math.pi / 2 + 0.08;
+
+          return Opacity(
+            opacity: nearEdge ? 0.0 : 1.0,
+            child: Transform.translate(
             offset: backgroundCard
                 ? const Offset(0, 0)
                 : Offset(0, slide * 600),
@@ -847,7 +856,7 @@ class _GameScreenState extends State<GameScreen>
                 ),
               ),
             ),
-          );
+          ));
         },
       ),
     );
