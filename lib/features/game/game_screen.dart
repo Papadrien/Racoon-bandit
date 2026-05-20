@@ -626,46 +626,7 @@ class _GameScreenState extends State<GameScreen>
     }
   }
 
-  Future<void> _showChaosHelpPopup() async {
-    AudioService.instance.playButtonSound();
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A1F3D),
-        title: const Text('Mode Pagaille', style: TextStyle(color: Colors.white)),
-        content: const SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Text('🍎', style: TextStyle(fontSize: 28)),
-                title: Text('Banquet', style: TextStyle(color: Colors.white)),
-                subtitle: Text('+2 nourritures', style: TextStyle(color: Colors.white70)),
-              ),
-              ListTile(
-                leading: Text('🦝', style: TextStyle(fontSize: 28)),
-                title: Text('Bébé Raton', style: TextStyle(color: Colors.white)),
-                subtitle: Text('Retire 2 nourritures', style: TextStyle(color: Colors.white70)),
-              ),
-              ListTile(
-                leading: Text('🌀', style: TextStyle(fontSize: 28)),
-                title: Text('Aspirateur', style: TextStyle(color: Colors.white)),
-                subtitle: Text('Vole 1 nourriture à tous', style: TextStyle(color: Colors.white70)),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── UI builders  // ── UI builders ────────────────────────────────────────────────────────────
+  // ── UI builders ──────────────────────────────────────────────────────────
 
   void _computeCardSize(BoxConstraints constraints) {
     final maxH = constraints.maxHeight * 0.52;
@@ -998,12 +959,6 @@ class _GameScreenState extends State<GameScreen>
         await _onBackPressed();
       },
       child: Scaffold(
-        floatingActionButton: _gameState.chaosMode
-            ? FloatingActionButton.small(
-                onPressed: _showChaosHelpPopup,
-                child: const Icon(Icons.help_outline),
-              )
-            : null,
         backgroundColor: const Color(0xFF1B1525),
         body: SafeArea(
           minimum: const EdgeInsets.only(top: 4, left: 4, right: 4, bottom: 8),

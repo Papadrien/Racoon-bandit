@@ -18,6 +18,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
+import 'chaos_mode_tutorial.dart';
 
 class LobbyScreen extends StatefulWidget {
   const LobbyScreen({super.key});
@@ -125,6 +126,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
     if (changed && mounted) setState(() {});
   }
 
+  Future<void> _openChaosTutorial() async {
+    AudioService.instance.playButtonSound();
+    await ChaosTutorial.show(context);
+  }
+
   bool get _canStart =>
       _playerCount >= 2 && _selectedProfiles.every((p) => p != null);
 
@@ -201,7 +207,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('SALON'),
+          title: const Text('SALON'),
           leading: const BackButton(),
         ),
         body: SafeArea(
@@ -213,103 +219,44 @@ class _LobbyScreenState extends State<LobbyScreen> {
               return SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight - 32,
+                  ),
                   child: IntrinsicHeight(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Spacer(),
-                        // ── Sélecteur nombre de joueurs ─────────────────────
+                        // ── Sélecteur nombre de joueurs ───────────────────
+                        const SizedBox(height: 8),
                         Text(
                           'Nombre de joueurs',
-                          style: TextStyle(fontSize: 18, color: AppTheme.textMuted),
-                        ),
-                        SizedBox(height: 20),
-                        SizedBox(height: 24),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.08),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  const Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Mode Pagaille',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Text(
-                                          'Ajoute des cartes spéciales.',
-                                          style: TextStyle(
-                                            color: AppTheme.textMuted,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: () {
-                                      showDialog<void>(
-                                        context: context,
-                                        builder: (_) => AlertDialog(
-                                          title: const Text('Mode Pagaille'),
-                                          content: const Text(
-                                            'Des cartes spéciales seront ajoutées dans une future mise à jour.',
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context),
-                                              child: const Text('OK'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                    icon: const Icon(Icons.help_outline),
-                                  ),
-                                  Switch(
-                                    value: _chaosModeEnabled,
-                                    onChanged: (value) {
-                                      setState(() => _chaosModeEnabled = value);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: AppTheme.textMuted,
                           ),
                         ),
-
+                        const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [2, 3, 4].map((count) {
                             final selected = count == _playerCount;
                             return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
                               child: GestureDetector(
                                 onTap: () {
                                   AudioService.instance.playButtonSound();
                                   _onCountChanged(count);
                                 },
                                 child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 150),
+                                  duration:
+                                      const Duration(milliseconds: 150),
                                   width: 64,
                                   height: 64,
                                   decoration: BoxDecoration(
-                                    color: selected ? AppTheme.primary : Colors.transparent,
+                                    color: selected
+                                        ? AppTheme.primary
+                                        : Colors.transparent,
                                     border: Border.all(
                                       color: selected
                                           ? AppTheme.primary
@@ -324,7 +271,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                       style: TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
-                                        color: selected ? Colors.white : AppTheme.textMuted,
+                                        color: selected
+                                            ? Colors.white
+                                            : AppTheme.textMuted,
                                       ),
                                     ),
                                   ),
@@ -333,7 +282,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             );
                           }).toList(),
                         ),
-                        SizedBox(height: 32),
+                        const SizedBox(height: 28),
+
                         // ── Slots joueurs ──────────────────────────────────
                         ...List.generate(
                           _playerCount,
@@ -343,22 +293,37 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             onTap: () => _openPicker(i),
                           ),
                         ),
-                        Spacer(),
+
+                        const Spacer(),
+
+                        // ── Section Mode Pagaille ──────────────────────────
+                        const SizedBox(height: 20),
+                        _ChaosModeSection(
+                          enabled: _chaosModeEnabled,
+                          onToggle: (value) {
+                            setState(() => _chaosModeEnabled = value);
+                          },
+                          onHelpTap: _openChaosTutorial,
+                        ),
+                        const SizedBox(height: 20),
+
                         // ── Bouton démarrer ────────────────────────────────
                         PrimaryButton(
                           label: 'COMMENCER',
                           onPressed: _canStart ? _startGame : null,
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
+
                         // ── Bouton dos de cartes ───────────────────────────
                         _CardBackButton(
-                          selectedId: ProgressionService.progression.selectedCardBackId,
+                          selectedId:
+                              ProgressionService.progression.selectedCardBackId,
                           onTap: () {
                             AudioService.instance.playButtonSound();
                             _openCardBackSelection();
                           },
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -367,6 +332,95 @@ class _LobbyScreenState extends State<LobbyScreen> {
             },
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _ChaosModeSection
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ChaosModeSection extends StatelessWidget {
+  final bool enabled;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onHelpTap;
+
+  const _ChaosModeSection({
+    required this.enabled,
+    required this.onToggle,
+    required this.onHelpTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: enabled
+              ? const Color(0xFF7C4DFF).withValues(alpha: 0.4)
+              : Colors.white.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Row(
+        children: [
+          // ── Icône + texte ────────────────────────────────────────────────
+          Expanded(
+            child: Row(
+              children: [
+                const Text('🌀', style: TextStyle(fontSize: 24)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Mode Pagaille',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Cartes spéciales · plus de chaos !',
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Bouton aide ──────────────────────────────────────────────────
+          IconButton(
+            onPressed: onHelpTap,
+            icon: const Icon(Icons.help_outline, size: 20),
+            color: AppTheme.textMuted,
+            tooltip: 'Tutoriel Mode Pagaille',
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
+          ),
+
+          // ── Toggle ───────────────────────────────────────────────────────
+          Switch(
+            value: enabled,
+            onChanged: (val) {
+              AudioService.instance.playButtonSound();
+              onToggle(val);
+            },
+            activeColor: const Color(0xFF7C4DFF),
+          ),
+        ],
       ),
     );
   }
@@ -437,13 +491,13 @@ class _PlayerSlotCard extends StatelessWidget {
                         width: 1.5,
                       ),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.person_add_outlined,
                       color: AppTheme.textMuted,
                       size: 22,
                     ),
                   ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,7 +510,7 @@ class _PlayerSlotCard extends StatelessWidget {
                           letterSpacing: 1,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         hasProfile ? profile!.name : 'Choisir un profil',
                         style: TextStyle(
@@ -503,7 +557,7 @@ class _CardBackButton extends StatelessWidget {
           AudioService.instance.playButtonSound();
           onTap();
         },
-        icon: Icon(Icons.style_outlined, size: 18),
+        icon: const Icon(Icons.style_outlined, size: 18),
         label: Text(
           'Dos de cartes · $selectedId'.toUpperCase(),
           overflow: TextOverflow.ellipsis,
@@ -557,7 +611,7 @@ class _ProfilePickerSheet extends StatelessWidget {
           ),
           child: Column(
             children: [
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Container(
                 width: 40,
                 height: 4,
@@ -566,8 +620,8 @@ class _ProfilePickerSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 16),
+              const Text(
                 'Choisir un profil',
                 style: TextStyle(
                   fontSize: 16,
@@ -576,7 +630,7 @@ class _ProfilePickerSheet extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               const Divider(color: Colors.white12),
               Expanded(
                 child: profiles.isEmpty
@@ -614,7 +668,8 @@ class _ProfilePickerSheet extends StatelessWidget {
                                   onTap: isDisabled
                                       ? null
                                       : () {
-                                          AudioService.instance.playButtonSound();
+                                          AudioService.instance
+                                              .playButtonSound();
                                           Navigator.pop(context, p);
                                         },
                                   borderRadius: BorderRadius.circular(12),
@@ -637,7 +692,7 @@ class _ProfilePickerSheet extends StatelessWidget {
                                           color: color,
                                           size: 44,
                                         ),
-                                        SizedBox(width: 14),
+                                        const SizedBox(width: 14),
                                         Expanded(
                                           child: Text(
                                             p.name,
@@ -651,7 +706,7 @@ class _ProfilePickerSheet extends StatelessWidget {
                                           ),
                                         ),
                                         if (isDisabled)
-                                          Text(
+                                          const Text(
                                             'Déjà utilisé',
                                             style: TextStyle(
                                               fontSize: 11,
@@ -675,7 +730,7 @@ class _ProfilePickerSheet extends StatelessWidget {
                         },
                       ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
             ],
           ),
         );
