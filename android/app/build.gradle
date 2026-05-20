@@ -3,6 +3,8 @@ plugins {
     id "org.jetbrains.kotlin.android"
     // Le plugin Flutter Gradle DOIT être appliqué après les plugins Android et Kotlin.
     id "dev.flutter.flutter-gradle-plugin"
+    // Google Services — lit google-services.json et configure Firebase
+    id "com.google.gms.google-services"
 }
 
 android {
@@ -25,6 +27,7 @@ android {
         targetSdk 36
         versionCode flutter.versionCode
         versionName flutter.versionName
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -34,6 +37,8 @@ android {
             signingConfig signingConfigs.debug
             minifyEnabled false
             shrinkResources false
+            // Si minifyEnabled est activé plus tard, inclure les règles Firebase :
+            // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

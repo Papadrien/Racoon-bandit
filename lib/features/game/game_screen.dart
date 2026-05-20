@@ -11,6 +11,7 @@ import '../../core/models/player_state.dart';
 import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/game_save_service.dart';
 import '../../core/services/haptic_service.dart';
@@ -432,6 +433,16 @@ class _GameScreenState extends State<GameScreen>
 
       final newUnlocks = await ProgressionService.registerCompletedGame();
       await StatsService.registerGame(_gameState);
+
+      // Analytics — partie terminée
+      final ranking = _gameState.ranking;
+      final winner = ranking.isNotEmpty ? ranking.first : null;
+      unawaited(AnalyticsService.instance.logGameFinished(
+        nombreJoueurs: _gameState.players.length,
+        modePagailleActif: _gameState.chaosMode,
+        vainqueur: winner?.name ?? 'inconnu',
+        dureePartieEstimee: _gameState.sessionStats.cardsPlayed * 8,
+      ));
 
       await GameSaveService.clear();
       HapticService.trigger(HapticType.heavy);

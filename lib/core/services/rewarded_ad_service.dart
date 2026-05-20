@@ -1,3 +1,4 @@
+import 'analytics_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -34,14 +35,17 @@ class RewardedAdService {
           _rewardedInterstitialAd?.dispose();
           _rewardedInterstitialAd = ad;
           _isLoading = false;
+          // Analytics
+          AnalyticsService.instance.logRewardedAdLoaded();
         },
         onAdFailedToLoad: (error) {
           if (kDebugMode) {
             print('[Ads] Failed to preload ad: ${error.message}');
           }
-
           _rewardedInterstitialAd = null;
           _isLoading = false;
+          // Analytics
+          AnalyticsService.instance.logRewardedAdFailed(reason: error.message);
         },
       ),
     );
@@ -85,13 +89,17 @@ class RewardedAdService {
         },
       );
 
+      // Analytics — pub affichée
+      AnalyticsService.instance.logRewardedAdShown();
+
       await _rewardedInterstitialAd!.show(
         onUserEarnedReward: (_, reward) {
           if (_hasRewardBeenGranted) {
             return;
           }
-
           _hasRewardBeenGranted = true;
+          // Analytics — récompense obtenue
+          AnalyticsService.instance.logRewardedAdRewarded();
           onRewardEarned();
         },
       );

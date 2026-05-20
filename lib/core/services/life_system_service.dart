@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'analytics_service.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LifeSystemService {
@@ -37,6 +39,10 @@ class LifeSystemService {
 
     lastLifeRechargeTimestamp ??= DateTime.now();
 
+    // Note : l'appel Analytics de consumeLife est aussi fait dans lobby_screen
+    // au moment du démarrage de partie (contexte riche avec nb joueurs).
+    // Ici on logue la consommation pure pour d'autres éventuels points futurs.
+
     await _save();
   }
 
@@ -50,6 +56,13 @@ class LifeSystemService {
     if (currentLives >= maxLives) {
       lastLifeRechargeTimestamp = null;
     }
+
+    // Analytics — vie restaurée (source = timer, la source 'ad' est loguée
+    // via logRewardedAdRewarded dans rewarded_ad_service)
+    AnalyticsService.instance.logLifeRestored(
+      livesAfter: currentLives,
+      source: 'timer',
+    );
 
     await _save();
   }

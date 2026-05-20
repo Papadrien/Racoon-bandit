@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +9,7 @@ import '../../core/models/player_profile.dart';
 import '../../core/models/player_state.dart';
 import '../../core/navigation/app_router.dart';
 import '../card_backs/card_back_selection_dialog.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/services/lobby_service.dart';
 import '../../core/services/player_profiles_service.dart';
 import '../../core/services/audio_service.dart';
@@ -153,6 +156,17 @@ class _LobbyScreenState extends State<LobbyScreen> {
     }
 
     await lifeSystemService.consumeLife();
+
+    // Analytics — vie consommée au démarrage d'une partie
+    unawaited(AnalyticsService.instance.logLifeConsumed(
+      livesRemaining: lifeSystemService.currentLives,
+    ));
+
+    // Analytics — partie démarrée
+    unawaited(AnalyticsService.instance.logGameStarted(
+      nombreJoueurs: _playerCount,
+      modePagailleActif: _chaosModeEnabled,
+    ));
 
     await LobbyService.saveComposition(
       LobbyComposition(

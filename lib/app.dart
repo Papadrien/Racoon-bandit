@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/navigation/app_router.dart';
+import 'core/services/analytics_service.dart';
 import 'core/services/audio_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_provider.dart';
@@ -58,8 +59,49 @@ class _RaccoonBanditAppState extends State<RaccoonBanditApp>
           ),
           initialRoute: AppRoutes.home,
           onGenerateRoute: AppRouter.generateRoute,
+          // Observateur Analytics pour le suivi automatique des routes
+          navigatorObservers: [
+            _AnalyticsNavigatorObserver(),
+          ],
         );
       },
     );
+  }
+}
+
+/// Observateur de navigation qui logue screen_view à chaque changement de route.
+/// Évite de dupliquer l'appel logScreenView() dans chaque écran.
+class _AnalyticsNavigatorObserver extends NavigatorObserver {
+  static const _routeToScreen = {
+    AppRoutes.home: 'home',
+    AppRoutes.lobby: 'lobby',
+    AppRoutes.game: 'game',
+    AppRoutes.result: 'result',
+    AppRoutes.profiles: 'profiles',
+    AppRoutes.settings: 'settings',
+    AppRoutes.premium: 'premium',
+    AppRoutes.privacyPolicy: 'privacy_policy',
+  };
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _trackRoute(route);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (previousRoute != null) _trackRoute(previousRoute);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    if (newRoute != null) _trackRoute(newRoute);
+  }
+
+  void _trackRoute(Route<dynamic> route) {
+    final routeName = route.settings.name;
+    if (routeName == null) return;
+    final screenName = _routeToScreen[routeName] ?? routeName;
+    AnalyticsService.instance.logScreenView(screenName: screenName);
   }
 }
