@@ -1,50 +1,78 @@
 import 'package:flutter/material.dart';
 
-class AppTheme {
-  static const Color background = Color(0xFF15171C);
-  static const Color surface = Color(0xFF1F2229);
-  static const Color primary = Color(0xFFFFB23F);
-  static const Color accent = Color(0xFFE85D5D);
-  static const Color textPrimary = Color(0xFFF5F1E8);
-  static const Color textMuted = Color(0xFF8C8F98);
+import 'app_theme_provider.dart';
 
-  static ThemeData get dark => ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: background,
-        colorScheme: const ColorScheme.dark(
-          primary: primary,
-          secondary: accent,
-          surface: surface,
+class AppTheme {
+  AppTheme._();
+
+  static const Color primary   = Color(0xFF7C4DFF);
+  static const Color textMuted = Color(0xFF9E9E9E);
+
+  // ── Responsive helpers ────────────────────────────────────────────────────
+
+  /// Padding horizontal standard selon la largeur d'écran.
+  static double horizontalPadding(double screenWidth) {
+    if (screenWidth < 340) return 12.0;
+    if (screenWidth < 360) return 16.0;
+    return 24.0;
+  }
+
+  /// Vrai si l'écran est étroit (< 360 dp).
+  static bool isNarrow(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < 360;
+
+  /// Vrai si l'écran est petit en hauteur (< 640 dp).
+  static bool isShortScreen(BuildContext context) =>
+      MediaQuery.sizeOf(context).height < 640;
+
+  /// Couleur accent courante — change selon le dos équipé.
+  /// Utiliser [AppThemeProvider.instance.accent] pour réagir aux changements.
+  static Color get accent => AppThemeProvider.instance.accent;
+
+  static final ThemeData dark = ThemeData(
+    brightness: Brightness.dark,
+    colorScheme: const ColorScheme.dark(
+      primary: primary,
+      secondary: Color(0xFFFF6D00), // valeur initiale, remplacée dynamiquement
+    ),
+    scaffoldBackgroundColor: const Color(0xFF121212),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 52),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
         ),
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 2,
-            color: textPrimary,
-          ),
-          bodyMedium: TextStyle(color: textPrimary),
-          labelLarge: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            letterSpacing: 1.2,
-          ),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 2,
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primary,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(32),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
-            elevation: 6,
-          ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
         ),
-      );
+        textStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1,
+        ),
+      ),
+    ),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(
+        fontSize: 64,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 4,
+        color: Colors.white,
+      ),
+    ),
+  );
 }

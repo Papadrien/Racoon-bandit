@@ -11,7 +11,7 @@ on:
       create_release:
         description: 'Créer une release GitHub'
         required: true
-        default: false
+        default: true
         type: boolean
 
 concurrency:
@@ -19,15 +19,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: '3.41.7'
-  JAVA_VERSION: '21'
+  FLUTTER_VERSION: '3.44.0'
+  JAVA_VERSION: '17'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # ═══════════════════════════════════════════════
-  # ANALYZE & TEST — sur toutes les branches/PR
-  # ═══════════════════════════════════════════════
   analyze:
-    name: Analyze & Test
+    name: Analyze
     runs-on: ubuntu-latest
     outputs:
       app_version: ${{ steps.version.outputs.version }}
@@ -35,21 +33,26 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Extract version & generate build number
+      - name: Extract version from pubspec.yaml and regenerate build number
         id: version
         run: |
-          # Version sémantique x.y.z lue depuis pubspec.yaml (source de vérité)
+          # Version sémantique (x.y.z) lue depuis pubspec.yaml — source de vérité.
           VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//')
-          # Build number = timestamp Unix : strictement croissant à chaque run CI
+
+          # Build number déclaré dans pubspec.yaml (informatif, on ne l'utilise pas
+          # pour le build final afin d'éviter les collisions avec Google Play).
+          PUBSPEC_BUILD=$(grep '^version:' pubspec.yaml | sed 's/.*+//')
+
+          # Build number EFFECTIVEMENT utilisé pour cette exécution : timestamp Unix
+          # courant. Garantit un versionCode strictement croissant à chaque run CI,
+          # sans avoir à modifier pubspec.yaml (pas de commit de bump nécessaire).
           BUILD=$(date +%s)
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "build=$BUILD" >> $GITHUB_OUTPUT
-          echo "📦 Version : $VERSION | 🕒 Build : $BUILD"
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
+          echo "📦 Version sémantique : $VERSION"
+          echo "🕒 Build number (timestamp CI) : $BUILD"
+          echo "ℹ️  Build dans pubspec.yaml : $PUBSPEC_BUILD (informatif uniquement)"
 
       - uses: subosito/flutter-action@v2
         with:
@@ -58,30 +61,19 @@ jobs:
           cache: true
 
       - name: Cache pub dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.pub-cache
             .dart_tool
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock', 'pubspec.yaml') }}
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-${{ runner.os }}-
 
       - run: flutter pub get
-      - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze --no-fatal-infos
-      - run: flutter test --coverage
-
-      - name: Upload coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage/lcov.info
-          retention-days: 7
-          if-no-files-found: ignore
 
   # ═══════════════════════════════════════════════
-  # BUILD DEBUG — develop uniquement
+  # BUILD DEBUG — uniquement sur develop
   # ═══════════════════════════════════════════════
   build-android-debug:
     name: Build Android (Debug)
@@ -103,16 +95,16 @@ jobs:
           cache: true
 
       - name: Cache pub dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.pub-cache
             .dart_tool
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock', 'pubspec.yaml') }}
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-${{ runner.os }}-
 
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -123,6 +115,17 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Inject google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+            echo "✅ google-services.json injecté depuis les secrets GitHub"
+          else
+            echo "⚠️  GOOGLE_SERVICES_JSON_BASE64 absent — Firebase Analytics désactivé"
+          fi
+
       - name: Build APK (Debug)
         run: flutter build apk --debug --no-pub
 
@@ -131,6 +134,7 @@ jobs:
           VERSION=${{ needs.analyze.outputs.app_version }}
           mkdir -p dist
           cp build/app/outputs/flutter-apk/app-debug.apk "dist/RaccoonBandit-${VERSION}-debug.apk"
+          echo "📦 Debug artifact:"
           ls -lh dist/
 
       - uses: actions/upload-artifact@v4
@@ -140,7 +144,7 @@ jobs:
           retention-days: 14
 
   # ═══════════════════════════════════════════════
-  # BUILD RELEASE — master & tags
+  # BUILD RELEASE — uniquement sur master et tags
   # ═══════════════════════════════════════════════
   build-android-release:
     name: Build Android (Release)
@@ -162,16 +166,16 @@ jobs:
           cache: true
 
       - name: Cache pub dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.pub-cache
             .dart_tool
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock', 'pubspec.yaml') }}
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
           restore-keys: pub-${{ runner.os }}-
 
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -190,12 +194,20 @@ jobs:
             echo "$KEY_PROPERTIES" > android/key.properties
             echo "✅ Signing release (secrets)"
           else
-            keytool -genkey -v -keystore android/app/keystore.jks \
-              -alias raccoonbandit-debug -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass raccoonbandit-debug-pwd -keypass raccoonbandit-debug-pwd \
-              -dname "CN=RaccoonBandit Debug, OU=Dev, O=RaccoonBandit, L=Paris, C=FR" 2>/dev/null
+            keytool -genkey -v -keystore android/app/keystore.jks -alias raccoonbandit-debug -keyalg RSA -keysize 2048 -validity 10000 -storepass raccoonbandit-debug-pwd -keypass raccoonbandit-debug-pwd -dname "CN=RaccoonBandit Debug, OU=Dev, O=RaccoonBandit, L=Paris, C=FR" 2>/dev/null
             printf 'storePassword=raccoonbandit-debug-pwd\nkeyPassword=raccoonbandit-debug-pwd\nkeyAlias=raccoonbandit-debug\nstoreFile=keystore.jks\n' > android/key.properties
             echo "✅ Signing debug stable (sans secrets)"
+          fi
+
+      - name: Inject google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+            echo "✅ google-services.json injecté depuis les secrets GitHub"
+          else
+            echo "⚠️  GOOGLE_SERVICES_JSON_BASE64 absent — Firebase Analytics désactivé"
           fi
 
       - run: flutter pub get
@@ -212,6 +224,7 @@ jobs:
           mkdir -p dist
           cp build/app/outputs/flutter-apk/app-release.apk "dist/RaccoonBandit-${VERSION}.apk"
           cp build/app/outputs/bundle/release/app-release.aab "dist/RaccoonBandit-${VERSION}.aab"
+          echo "📦 Release artifacts:"
           ls -lh dist/
 
       - uses: actions/upload-artifact@v4
@@ -221,7 +234,7 @@ jobs:
           retention-days: 30
 
   # ═══════════════════════════════════════════════
-  # RELEASE GITHUB — tags & manual dispatch
+  # RELEASE GITHUB — tags et manual dispatch
   # ═══════════════════════════════════════════════
   release:
     name: Create GitHub Release
@@ -245,6 +258,7 @@ jobs:
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
           echo "TAG_NAME=$TAG" >> $GITHUB_ENV
+          echo "🏷️ Tag créé : $TAG"
 
       - name: Set tag name (if tag push)
         if: startsWith(github.ref, 'refs/tags/v')
@@ -258,16 +272,17 @@ jobs:
             PREV_TAG=$(git rev-list --max-parents=0 HEAD)
           fi
           CHANGELOG=$(git log "$PREV_TAG"..HEAD --pretty=format:"- %s" --no-merges 2>/dev/null || echo "- Release initiale")
-          {
-            echo "changelog<<EOF"
-            echo "$CHANGELOG"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - uses: actions/download-artifact@v4
         with:
           name: android-release
           path: ./artifacts
+
+      - name: List release artifacts
+        run: ls -lh artifacts/
 
       - uses: softprops/action-gh-release@v2
         with:

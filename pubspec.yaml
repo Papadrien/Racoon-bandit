@@ -10,11 +10,31 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  shared_preferences: ^2.5.4
+  audioplayers: ^6.6.0
+  wakelock_plus: ^1.4.0
+  google_mobile_ads: ^8.0.0
+  # ── Firebase ──────────────────────────────────────────────────────────────
+  firebase_core: ^3.13.1
+  firebase_analytics: ^11.4.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/sounds/
+    - assets/images/cards/
+    - assets/images/raccoon_bandit_hero.png
+    - assets/images/card_front_raccoon.png
+    - assets/images/card_front_trash.png
+    - assets/images/icon_trash.png
+    # Nota : assets/sounds/ inclut automatiquement tous les .mp3 du dossier
+    - assets/images/cards/card_back_purple.png
+    - assets/images/cards/card_back_blue.png
+    - assets/images/cards/card_back_green.png
+    - assets/images/cards/card_back_pink.png
+    - assets/images/cards/card_back_yellow.png
