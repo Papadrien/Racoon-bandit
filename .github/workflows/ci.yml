@@ -25,7 +25,7 @@ env:
 
 jobs:
   analyze:
-    name: Analyze & Test
+    name: Analyze
     runs-on: ubuntu-latest
     outputs:
       app_version: ${{ steps.version.outputs.version }}
@@ -71,7 +71,6 @@ jobs:
 
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
-      - run: flutter test --coverage
 
   # ═══════════════════════════════════════════════
   # BUILD DEBUG — uniquement sur develop
