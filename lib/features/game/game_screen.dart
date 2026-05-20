@@ -706,7 +706,11 @@ class _GameScreenState extends State<GameScreen>
               runSpacing: 1,
               children: List.generate(
                 player.trashCount,
-                (_) => Text('🧊', style: TextStyle(fontSize: emojiFontSize)),
+                (_) => Image.asset(
+                  'assets/images/icon_trash.png',
+                  width: emojiFontSize * 1.4,
+                  height: emojiFontSize * 1.4,
+                ),
               ),
             ),
           ],
@@ -802,11 +806,23 @@ class _GameScreenState extends State<GameScreen>
                       Positioned.fill(
                         child: isBack || backgroundCard
                             ? _buildCardBackWidget()
-                            : ColoredBox(
-                                color: _revealedCard?.color ?? Colors.deepPurple,
-                              ),
+                            : (showFront && _revealedCard?.type == CardType.raccoon)
+                                ? Image.asset(
+                                    'assets/images/card_front_raccoon.png',
+                                    fit: BoxFit.cover,
+                                  )
+                                : (showFront && _revealedCard?.type == CardType.trash)
+                                    ? Image.asset(
+                                        'assets/images/card_front_trash.png',
+                                        fit: BoxFit.cover,
+                                      )
+                                    : ColoredBox(
+                                        color: _revealedCard?.color ?? Colors.deepPurple,
+                                      ),
                       ),
-                      if (!backgroundCard)
+                      if (!backgroundCard &&
+                          !(showFront && (_revealedCard?.type == CardType.raccoon ||
+                              _revealedCard?.type == CardType.trash)))
                         Center(
                           child: Transform(
                             alignment: Alignment.center,

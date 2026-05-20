@@ -63,9 +63,9 @@ class OnboardingSlides {
     ),
     OnboardingSlide(
       emoji: '🧊',
-      title: 'Frigo',
+      title: 'Poubelle sécurisée',
       description:
-          'Le frigo te protège contre un passage du raton laveur.',
+          'La poubelle sécurisée te protège contre un passage du raton laveur.',
       cardColor: Color(0xFF0D47A1),
       accentColor: Color(0xFF42A5F5),
     ),

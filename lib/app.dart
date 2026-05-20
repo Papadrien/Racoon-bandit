@@ -57,7 +57,7 @@ class _RaccoonBanditAppState extends State<RaccoonBanditApp>
               secondary: AppThemeProvider.instance.accent,
             ),
           ),
-          initialRoute: AppRoutes.home,
+          initialRoute: AppRoutes.splash,
           onGenerateRoute: AppRouter.generateRoute,
           // Observateur Analytics pour le suivi automatique des routes
           navigatorObservers: [

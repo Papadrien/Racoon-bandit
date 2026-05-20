@@ -244,13 +244,13 @@ class GameState {
 
       case CardType.trash:
         player.trashCount++;
-        return CardResolution(message: '${player.name} pose une frigo');
+        return CardResolution(message: '${player.name} pose une poubelle sécurisée');
 
       case CardType.raccoon:
         if (player.trashCount > 0) {
           player.trashCount--;
           return CardResolution(
-            message: 'Le Raccoon est bloqué par une frigo !',
+            message: 'Le Raccoon est bloqué par une poubelle sécurisée !',
             targetPlayerId: player.id,
             trashDestroyed: true,
           );

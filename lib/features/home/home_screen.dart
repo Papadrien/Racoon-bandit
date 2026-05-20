@@ -444,7 +444,9 @@ class _HeroImageState extends State<_HeroImage>
         );
       },
       child: SizedBox(
-        height: screenH * 0.65,
+        // +12px de marge basse pour compenser les 6px d'amplitude de
+        // l'animation vers le haut — évite de voir le bas de l'image
+        height: screenH * 0.65 + 12,
         child: Image.asset(
           'assets/images/raccoon_bandit_hero.png',
           fit: BoxFit.contain,
