@@ -13,7 +13,6 @@ dependencies:
   shared_preferences: ^2.5.4
   audioplayers: ^6.6.0
   wakelock_plus: ^1.4.0
-  video_player: ^2.9.2
   google_mobile_ads: ^8.0.0
   # ── Firebase ──────────────────────────────────────────────────────────────
   firebase_core: ^3.13.1
@@ -27,7 +26,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/videos/
     - assets/sounds/
     - assets/images/cards/
     - assets/images/raccoon_bandit_hero.png

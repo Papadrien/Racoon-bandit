@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../features/game/game_screen.dart';
 import '../../features/home/home_screen.dart';
-import '../../features/splash/splash_screen.dart';
 import '../../features/lobby/lobby_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/premium/premium_screen.dart';
@@ -14,7 +13,6 @@ import '../../features/settings/privacy_policy_screen.dart';
 class AppRoutes {
   AppRoutes._();
 
-  static const String splash = '/splash';
   static const String home = '/';
   static const String lobby = '/lobby';
   static const String game = '/game';
@@ -32,8 +30,6 @@ class AppRouter {
 
   static Route<dynamic> generateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
-      case AppRoutes.splash:
-        return _fade(const SplashScreen(), routeSettings);
       case AppRoutes.home:
         return _fade(const HomeScreen(), routeSettings);
       case AppRoutes.lobby:
