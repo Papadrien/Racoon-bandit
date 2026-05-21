@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/player_state.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../widgets/player_avatar.dart';
 
 /// Overlay de sélection de cible pour la carte Bandit.
@@ -124,9 +125,9 @@ class _BanditTargetOverlayState extends State<BanditTargetOverlay>
                 style: TextStyle(fontSize: 36),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Choisir une cible',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.banditChooseTarget,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -135,7 +136,7 @@ class _BanditTargetOverlayState extends State<BanditTargetOverlay>
               ),
               const SizedBox(height: 2),
               Text(
-                'Qui voulez-vous voler ?',
+                AppLocalizations.of(context)!.banditWhoToSteal,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.55),
                   fontSize: 13,
@@ -200,7 +201,7 @@ class _BanditTargetOverlayState extends State<BanditTargetOverlay>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${target.foodCount} nourriture disponible',
+                      AppLocalizations.of(context)!.banditFoodAvailable(target.foodCount),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12,

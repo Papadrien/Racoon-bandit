@@ -17,6 +17,7 @@ import '../../core/services/haptic_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/services/wakelock_service.dart';
 import '../../core/services/stats_service.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/player_avatar.dart';
 import 'widgets/bandit_target_overlay.dart';
 import 'widgets/gameplay_overlay_animation_manager.dart';
@@ -171,6 +172,8 @@ class _GameScreenState extends State<GameScreen>
     NavigationGuard.log(_tag, 'dialog opened — quit confirmation');
     setState(() => _quitDialogOpen = true);
 
+    final l10n = AppLocalizations.of(context)!;
+
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -179,16 +182,16 @@ class _GameScreenState extends State<GameScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: const Text(
-          'Quitter la partie ?',
-          style: TextStyle(
+        title: Text(
+          l10n.gameQuitDialogTitle,
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        content: const Text(
-          'La partie en cours sera perdue.',
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          l10n.gameQuitDialogContent,
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
@@ -196,9 +199,9 @@ class _GameScreenState extends State<GameScreen>
               AudioService.instance.playButtonSound();
               Navigator.of(ctx).pop(false);
             },
-            child: const Text(
-              'Annuler',
-              style: TextStyle(color: Colors.white54),
+            child: Text(
+              l10n.gameQuitCancel,
+              style: const TextStyle(color: Colors.white54),
             ),
           ),
           TextButton(
@@ -209,9 +212,9 @@ class _GameScreenState extends State<GameScreen>
             style: TextButton.styleFrom(
               foregroundColor: Colors.redAccent,
             ),
-            child: const Text(
-              'Quitter',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            child: Text(
+              l10n.gameQuitConfirm,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -848,7 +851,7 @@ class _GameScreenState extends State<GameScreen>
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
-            'Tour de ${_gameState.currentPlayer.name}',
+            AppLocalizations.of(context)!.gameTurnOf(_gameState.currentPlayer.name),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -885,7 +888,7 @@ class _GameScreenState extends State<GameScreen>
           child: Text(
             _gameState.remainingCards == 0
                 ? ''
-                : '${_gameState.remainingCards} carte${_gameState.remainingCards > 1 ? "s" : ""}',
+                : AppLocalizations.of(context)!.gameRemainingCards(_gameState.remainingCards),
             key: ValueKey(_gameState.remainingCards),
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
@@ -926,7 +929,7 @@ class _GameScreenState extends State<GameScreen>
                   }
                 : null,
             icon: const Icon(Icons.exit_to_app, size: 18),
-            label: const Text('Quitter'),
+            label: Text(AppLocalizations.of(context)!.gameQuitConfirm),
             style: TextButton.styleFrom(
               foregroundColor: Colors.white70,
               disabledForegroundColor: Colors.white24,

@@ -12,6 +12,7 @@ import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_theme_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/primary_button.dart';
 import '../onboarding/onboarding_screen.dart';
@@ -120,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen>
     });
 
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     await RewardedAdService.instance.showRewardedLifeAd(
       onRewardEarned: () async {
@@ -133,8 +135,8 @@ class _HomeScreenState extends State<HomeScreen>
         setState(() {});
 
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text('1 vie gagnée !'),
+          SnackBar(
+            content: Text(l10n.lifeEarned),
           ),
         );
       },
@@ -239,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   IconButton(
                                     icon: const Icon(Icons.workspace_premium),
                                     color: AppTheme.accent,
-                                    tooltip: 'Premium',
+                                    tooltip: AppLocalizations.of(context)!.tooltipPremium,
                                     onPressed: () {
                                       AudioService.instance.playButtonSound();
                                       Navigator.pushNamed(
@@ -249,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   IconButton(
                                     icon: const Icon(Icons.settings),
                                     color: AppTheme.textMuted,
-                                    tooltip: 'Paramètres',
+                                    tooltip: AppLocalizations.of(context)!.tooltipSettings,
                                     onPressed: () {
                                       AudioService.instance.playButtonSound();
                                       Navigator.pushNamed(
@@ -338,18 +340,18 @@ class _PlayButtonArea extends StatelessWidget {
             ScaleTransition(
               scale: playButtonScale,
               child: PrimaryButton(
-                label: 'JOUER',
+                label: AppLocalizations.of(context)!.play,
                 onPressed: isLoading ? null : onPlay,
               ),
             ),
           if (noLives) ...[
             const SizedBox(height: 10),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                'Regardez une publicité complète pour récupérer 1 vie.',
+                AppLocalizations.of(context)!.noLivesAdHint,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppTheme.textMuted,
                   fontSize: 13,
                 ),
@@ -457,8 +459,8 @@ class _RewardAdButton extends StatelessWidget {
             : const Icon(Icons.ondemand_video_rounded),
         label: Text(
           isLoading
-              ? 'Chargement de la publicité...'
-              : 'Regarder une publicité',
+              ? AppLocalizations.of(context)!.adLoading
+              : AppLocalizations.of(context)!.watchAdButton,
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.accent,

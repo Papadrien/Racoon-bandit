@@ -20,6 +20,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
+import '../../l10n/app_localizations.dart';
 import 'chaos_mode_tutorial.dart';
 
 class LobbyScreen extends StatefulWidget {
@@ -209,7 +210,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('SALON'),
+          title: Text(AppLocalizations.of(context)!.lobbyTitle),
           leading: const BackButton(),
         ),
         body: SafeArea(
@@ -230,9 +231,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       children: [
                         // ── Sélecteur nombre de joueurs ───────────────────
                         const SizedBox(height: 8),
-                        const Text(
-                          'Nombre de joueurs',
-                          style: TextStyle(
+                        Text(
+                          AppLocalizations.of(context)!.lobbyPlayerCount,
+                          style: const TextStyle(
                             fontSize: 18,
                             color: AppTheme.textMuted,
                           ),
@@ -311,7 +312,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
                         // ── Bouton démarrer ────────────────────────────────
                         PrimaryButton(
-                          label: 'COMMENCER',
+                          label: AppLocalizations.of(context)!.lobbyStart,
                           onPressed: _canStart ? _startGame : null,
                         ),
                         const SizedBox(height: 12),
@@ -371,27 +372,27 @@ class _ChaosModeSection extends StatelessWidget {
       child: Row(
         children: [
           // ── Icône + texte ────────────────────────────────────────────────
-          const Expanded(
+          Expanded(
             child: Row(
               children: [
-                Text('🌀', style: TextStyle(fontSize: 24)),
-                SizedBox(width: 12),
+                const Text('🌀', style: TextStyle(fontSize: 24)),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Mode Pagaille',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.lobbyChaosTitle,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
-                        'Cartes spéciales · plus de chaos !',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.lobbyChaosSubtitle,
+                        style: const TextStyle(
                           color: AppTheme.textMuted,
                           fontSize: 12,
                         ),
@@ -408,7 +409,7 @@ class _ChaosModeSection extends StatelessWidget {
             onPressed: onHelpTap,
             icon: const Icon(Icons.help_outline, size: 20),
             color: AppTheme.textMuted,
-            tooltip: 'Tutoriel Mode Pagaille',
+            tooltip: AppLocalizations.of(context)!.lobbyChaosTooltip,
             padding: const EdgeInsets.all(8),
             constraints: const BoxConstraints(),
           ),
@@ -443,11 +444,17 @@ class _PlayerSlotCard extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _slotLabels = ['Joueur 1', 'Joueur 2', 'Joueur 3', 'Joueur 4'];
+  static List<String> _slotLabels(AppLocalizations l10n) => [
+    l10n.lobbySlot1,
+    l10n.lobbySlot2,
+    l10n.lobbySlot3,
+    l10n.lobbySlot4,
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final label = _slotLabels[slotIndex % _slotLabels.length];
+    final l10n = AppLocalizations.of(context)!;
+    final label = _slotLabels(l10n)[slotIndex % 4];
     final hasProfile = profile != null;
     final color =
         hasProfile ? Color(profile!.colorValue) : AppTheme.textMuted;
@@ -514,7 +521,7 @@ class _PlayerSlotCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        hasProfile ? profile!.name : 'Choisir un profil',
+                        hasProfile ? profile!.name : l10n.lobbyChooseProfile,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -638,9 +645,9 @@ class _CardBackButtonState extends State<_CardBackButton>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'DOS DE CARTES',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.lobbyCardBackLabel,
+                      style: const TextStyle(
                         fontSize: 10,
                         color: AppTheme.textMuted,
                         letterSpacing: 1.5,
@@ -671,7 +678,7 @@ class _CardBackButtonState extends State<_CardBackButton>
                         ),
                       ),
                       child: Text(
-                        '✓ Équipé',
+                        AppLocalizations.of(context)!.lobbyCardBackEquipped,
                         style: TextStyle(
                           fontSize: 10,
                           color: accentColor,
@@ -796,9 +803,9 @@ class _ProfilePickerSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Choisir un profil',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.lobbyChooseProfile,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
@@ -809,13 +816,13 @@ class _ProfilePickerSheet extends StatelessWidget {
               const Divider(color: Colors.white12),
               Expanded(
                 child: profiles.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Aucun profil disponible.\nCréez des profils dans les réglages.',
+                            AppLocalizations.of(context)!.lobbyNoProfiles,
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppTheme.textMuted),
+                            style: const TextStyle(color: AppTheme.textMuted),
                           ),
                         ),
                       )
@@ -881,9 +888,9 @@ class _ProfilePickerSheet extends StatelessWidget {
                                           ),
                                         ),
                                         if (isDisabled)
-                                          const Text(
-                                            'Déjà utilisé',
-                                            style: TextStyle(
+                                          Text(
+                                            AppLocalizations.of(context)!.lobbyProfileAlreadyUsed,
+                                            style: const TextStyle(
                                               fontSize: 11,
                                               color: AppTheme.textMuted,
                                               letterSpacing: 0.5,

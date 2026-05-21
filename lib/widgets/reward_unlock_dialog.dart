@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/models/reward_unlock.dart';
@@ -288,7 +289,7 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                               children: [
                                 Icon(Icons.style_rounded, size: 18),
                                 SizedBox(width: 8),
-                                Text('ESSAYER'),
+                                Text(AppLocalizations.of(context)!.tryButton),
                               ],
                             ),
                           ),
@@ -305,7 +306,7 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                             foregroundColor: AppTheme.textMuted,
                           ),
                           child: const Text(
-                            'Plus tard',
+                            AppLocalizations.of(context)!.laterButton,
                             style: TextStyle(fontSize: 14),
                           ),
                         ),
@@ -389,7 +390,7 @@ class _UnlockBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'NOUVEAU DOS DÉBLOQUÉ',
+            AppLocalizations.of(context)!.newCardBackUnlocked,
             style: TextStyle(
               color: accent,
               fontWeight: FontWeight.w800,

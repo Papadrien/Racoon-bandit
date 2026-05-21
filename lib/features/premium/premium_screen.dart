@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../core/services/audio_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -9,9 +10,10 @@ class PremiumScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PREMIUM'),
+        title: Text(l10n.premiumTitle),
         leading: const BackButton(),
       ),
       body: SafeArea(
@@ -26,24 +28,24 @@ class PremiumScreen extends StatelessWidget {
                 color: AppTheme.accent,
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Raccoon Bandit\nPremium',
+              Text(
+                l10n.premiumHeading,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2,
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Sans publicités • Vies illimitées\nThèmes exclusifs',
+              Text(
+                l10n.premiumSubtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppTheme.textMuted, height: 1.6),
+                style: const TextStyle(color: AppTheme.textMuted, height: 1.6),
               ),
               const Spacer(),
               PrimaryButton(
-                label: 'ACHETER — 2,99 €',
+                label: l10n.premiumBuyButton,
                 // Intégration achat in-app prévue pour la prochaine phase
                 onPressed: () {},
               ),
@@ -52,9 +54,9 @@ class PremiumScreen extends StatelessWidget {
                 onPressed: () {
                   AudioService.instance.playButtonSound();
                 },
-                child: const Text(
-                  'Restaurer les achats',
-                  style: TextStyle(color: AppTheme.textMuted),
+                child: Text(
+                  l10n.premiumRestorePurchases,
+                  style: const TextStyle(color: AppTheme.textMuted),
                 ),
               ),
               const SizedBox(height: 16),

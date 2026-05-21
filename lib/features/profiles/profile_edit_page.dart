@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../core/models/player_profile.dart';
 import '../../core/services/audio_service.dart';
@@ -56,10 +57,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le nom ne peut pas être vide.')),
+        SnackBar(content: Text(l10n.profileEditNameEmpty)),
       );
       return;
     }
@@ -78,14 +80,15 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isNew ? 'NOUVEAU PROFIL' : 'MODIFIER PROFIL'),
+        title: Text(widget.isNew ? l10n.profileEditTitleNew : l10n.profileEditTitleEdit),
         leading: const BackButton(),
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
-            tooltip: 'Enregistrer',
+            tooltip: l10n.profileEditSaveTooltip,
             onPressed: () {
               AudioService.instance.playButtonSound();
               _save();
@@ -106,9 +109,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             // Nom
             TextField(
               controller: _nameCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Nom',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.profileEditNameLabel,
+                border: const OutlineInputBorder(),
                 counterText: '',
               ),
               textCapitalization: TextCapitalization.words,
@@ -117,7 +120,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             const SizedBox(height: 28),
 
             // Sélecteur emoji
-            const _SectionLabel(label: 'Avatar'),
+            _SectionLabel(label: l10n.profileEditSectionAvatar),
             const SizedBox(height: 12),
             GridView.count(
               crossAxisCount: 5,
@@ -156,7 +159,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             const SizedBox(height: 28),
 
             // Sélecteur couleur
-            const _SectionLabel(label: 'Couleur'),
+            _SectionLabel(label: l10n.profileEditSectionColor),
             const SizedBox(height: 12),
             GridView.count(
               crossAxisCount: 4,
@@ -195,7 +198,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 AudioService.instance.playButtonSound();
                 _save();
               },
-              child: Text(widget.isNew ? 'CRÉER' : 'ENREGISTRER'),
+              child: Text(widget.isNew ? l10n.profileEditButtonCreate : l10n.profileEditButtonSave),
             ),
             const SizedBox(height: 16),
           ],

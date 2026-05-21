@@ -4,6 +4,7 @@ import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'onboarding_slide.dart';
 
 /// Écran d'onboarding — affiché uniquement au premier lancement.
@@ -74,7 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   child: TextButton(
                     onPressed: _isLast ? null : _complete,
                     child: Text(
-                      'Passer',
+                      AppLocalizations.of(context)!.onboardingSkip,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 14,
@@ -271,7 +272,7 @@ class _NavigationButtons extends StatelessWidget {
           shadowColor: AppTheme.primary.withValues(alpha: 0.4),
         ),
         child: Text(
-          isLast ? 'C\'est parti !' : 'Suivant',
+          isLast ? AppLocalizations.of(context)!.onboardingStart : AppLocalizations.of(context)!.onboardingNext,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

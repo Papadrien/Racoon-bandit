@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../core/models/player_profile.dart';
 import '../../core/services/audio_service.dart';
@@ -47,27 +48,28 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
   }
 
   Future<void> _deleteProfile(PlayerProfile profile) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer le profil ?'),
-        content: Text('Supprimer "${profile.name}" définitivement ?'),
+        title: Text(l10n.profileDeleteTitle),
+        content: Text(l10n.profileDeleteContent(profile.name)),
         actions: [
           TextButton(
             onPressed: () {
               AudioService.instance.playButtonSound();
               Navigator.pop(ctx, false);
             },
-            child: const Text('Annuler'),
+            child: Text(l10n.profileDeleteCancel),
           ),
           TextButton(
             onPressed: () {
               AudioService.instance.playButtonSound();
               Navigator.pop(ctx, true);
             },
-            child: const Text(
-              'Supprimer',
-              style: TextStyle(color: Colors.redAccent),
+            child: Text(
+              l10n.profileDeleteConfirm,
+              style: const TextStyle(color: Colors.redAccent),
             ),
           ),
         ],
@@ -81,18 +83,19 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PROFILS'),
+        title: Text(l10n.profilesTitle),
         leading: const BackButton(),
       ),
       body: SafeArea(
         minimum: const EdgeInsets.symmetric(horizontal: 4),
         child: _profiles.isEmpty
-            ? const Center(
+            ? Center(
                 child: Text(
-                  'Aucun profil',
-                  style: TextStyle(color: AppTheme.textMuted),
+                  l10n.profilesEmpty,
+                  style: const TextStyle(color: AppTheme.textMuted),
                 ),
               )
             : ListView.separated(
@@ -149,7 +152,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
           _addProfile();
         },
         backgroundColor: AppTheme.primary,
-        tooltip: 'Ajouter un profil',
+        tooltip: l10n.profilesAddTooltip,
         child: const Icon(Icons.add),
       ),
     );

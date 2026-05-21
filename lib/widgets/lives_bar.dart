@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../core/theme/app_theme.dart';
 
@@ -99,11 +100,12 @@ class _AdButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return TextButton.icon(
       onPressed: onPressed,
       icon: Icon(Icons.smart_display, size: 16, color: AppTheme.accent),
       label: Text(
-        'Pub +1',
+        l10n.livesAdButton,
         style: TextStyle(
           fontSize: 11,
           color: AppTheme.accent,

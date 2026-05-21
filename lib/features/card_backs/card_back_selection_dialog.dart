@@ -221,7 +221,7 @@ class _SheetHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'DOS DE CARTES',
+                  AppLocalizations.of(context)!.cardBacksTitle,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
@@ -230,7 +230,7 @@ class _SheetHeader extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '$totalGames partie${totalGames > 1 ? 's' : ''} jouée${totalGames > 1 ? 's' : ''}',
+                  AppLocalizations.of(context)!.gamesPlayed(totalGames),
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.white.withValues(alpha: 0.42),
@@ -529,7 +529,7 @@ class _CardPreview extends StatelessWidget {
                   Icon(Icons.check_rounded, color: Colors.white, size: 10),
                   SizedBox(width: 3),
                   Text(
-                    'ÉQUIPÉ',
+                    AppLocalizations.of(context)!.equipped,
                     style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w800,
@@ -658,7 +658,7 @@ class _CardFooter extends StatelessWidget {
           if (!isUnlocked && !config.unlockedByDefault) ...[
             const SizedBox(height: 2),
             Text(
-              '${config.requiredGames} parties',
+              AppLocalizations.of(context)!.requiredGames(config.requiredGames),
               style: TextStyle(
                 fontSize: 9,
                 color: Colors.white.withValues(alpha: 0.22),
@@ -669,7 +669,7 @@ class _CardFooter extends StatelessWidget {
           if (isUnlocked && !isEquipped) ...[
             const SizedBox(height: 4),
             Text(
-              'Appuyer pour équiper',
+              AppLocalizations.of(context)!.tapToEquip,
               style: TextStyle(
                 fontSize: 9,
                 color: color.withValues(alpha: 0.60),
