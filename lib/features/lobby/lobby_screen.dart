@@ -14,6 +14,7 @@ import '../../core/services/lobby_service.dart';
 import '../../core/services/player_profiles_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
+import '../../core/constants/app_assets.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
 import '../../widgets/player_avatar.dart';
@@ -536,10 +537,10 @@ class _PlayerSlotCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _CardBackButton
+// _CardBackButton — aperçu visuel du dos sélectionné avec animation idle
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CardBackButton extends StatelessWidget {
+class _CardBackButton extends StatefulWidget {
   final String selectedId;
   final VoidCallback onTap;
 
@@ -549,32 +550,205 @@ class _CardBackButton extends StatelessWidget {
   });
 
   @override
+  State<_CardBackButton> createState() => _CardBackButtonState();
+}
+
+class _CardBackButtonState extends State<_CardBackButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _idleCtrl;
+  late Animation<double> _floatAnim;
+  bool _pressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _idleCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+    _floatAnim = Tween<double>(begin: -2.5, end: 2.5).animate(
+      CurvedAnimation(parent: _idleCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _idleCtrl.dispose();
+    super.dispose();
+  }
+
+  CardBackConfig get _config {
+    try {
+      return ProgressionService.cardBacks
+          .firstWhere((c) => c.id == widget.selectedId);
+    } catch (_) {
+      return ProgressionService.cardBacks.first;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          AudioService.instance.playButtonSound();
-          onTap();
-        },
-        icon: const Icon(Icons.style_outlined, size: 18),
-        label: Text(
-          'Dos de cartes · $selectedId'.toUpperCase(),
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppTheme.textMuted,
-          side: const BorderSide(color: Colors.white12, width: 1.5),
-          minimumSize: const Size(double.infinity, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          textStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1,
+    final config = _config;
+    final accentColor = config.themeColor;
+    final cardBackId = widget.selectedId;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        AudioService.instance.playButtonSound();
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: accentColor.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: accentColor.withValues(alpha: 0.30),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+          child: Row(
+            children: [
+              // ── Mini carte inclinée avec animation idle ────────────────
+              _AnimatedCardPreview(
+                assetPath: AppAssets.cardBackAsset(cardBackId),
+                accentColor: accentColor,
+                floatAnim: _floatAnim,
+              ),
+              const SizedBox(width: 16),
+
+              // ── Textes ─────────────────────────────────────────────────
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'DOS DE CARTES',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.textMuted,
+                        letterSpacing: 1.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      config.name,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Badge "Équipé"
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: accentColor.withValues(alpha: 0.35),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        '✓ Équipé',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: accentColor,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Chevron ────────────────────────────────────────────────
+              Icon(
+                Icons.chevron_right,
+                color: accentColor.withValues(alpha: 0.5),
+                size: 22,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Mini carte inclinée avec animation de flottement
+class _AnimatedCardPreview extends StatelessWidget {
+  final String assetPath;
+  final Color accentColor;
+  final Animation<double> floatAnim;
+
+  const _AnimatedCardPreview({
+    required this.assetPath,
+    required this.accentColor,
+    required this.floatAnim,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: floatAnim,
+      builder: (_, child) {
+        return Transform.translate(
+          offset: Offset(0, floatAnim.value),
+          child: Transform.rotate(
+            angle: -0.12 + floatAnim.value * 0.006,
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        width: 52,
+        height: 74,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(7),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 6,
+              offset: const Offset(2, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(7),
+          child: Image.asset(
+            assetPath,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: accentColor.withValues(alpha: 0.3),
+              child: Icon(Icons.style, color: accentColor, size: 28),
+            ),
           ),
         ),
       ),
