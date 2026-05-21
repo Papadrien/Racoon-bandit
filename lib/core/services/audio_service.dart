@@ -93,7 +93,7 @@ class AudioService {
   static const _toPreload = [
     SoundEffect.piocheCarte,
     SoundEffect.gainNourriture,
-    SoundEffect.bandit,
+    SoundEffect.pince,
     SoundEffect.raccoon,
     SoundEffect.frigo,
     SoundEffect.fridgeBlock,
@@ -152,7 +152,7 @@ class AudioService {
   // ── Méthodes nommées (pour lisibilité dans les écrans) ────────────────────
 
   void playCardSound()    => playSfx(SoundEffect.piocheCarte);
-  void playBanditSound()  => playSfx(SoundEffect.bandit);
+  void playPinceSound()  => playSfx(SoundEffect.pince);
   void playRaccoonSound() => playSfx(SoundEffect.raccoon);
   void playRewardSound()  => playSfx(SoundEffect.popupRecompense);
   void playButtonSound()  => playSfx(SoundEffect.button);

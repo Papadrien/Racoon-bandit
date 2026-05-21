@@ -235,7 +235,7 @@ class GameState {
         );
 
       case CardType.pince:
-        sessionStats.banditCardsPlayed++;
+        sessionStats.pinceCardsPlayed++;
         final validTargets = pinceValidTargets();
 
         if (validTargets.isEmpty) {
