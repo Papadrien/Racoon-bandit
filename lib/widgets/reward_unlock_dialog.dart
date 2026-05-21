@@ -305,7 +305,7 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                           style: TextButton.styleFrom(
                             foregroundColor: AppTheme.textMuted,
                           ),
-                          child: const Text(
+                          child: Text(
                             AppLocalizations.of(context)!.laterButton,
                             style: TextStyle(fontSize: 14),
                           ),

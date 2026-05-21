@@ -1,3 +1,4 @@
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
