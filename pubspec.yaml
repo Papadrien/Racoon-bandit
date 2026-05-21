@@ -35,6 +35,8 @@ flutter:
     - assets/images/raccoon_bandit_hero.png
     - assets/images/card_front_raccoon.png
     - assets/images/card_front_trash.png
+    - assets/images/card_front_food.png
+    - assets/images/card_front_pince.png
     - assets/images/icon_trash.png
     # Nota : assets/sounds/ inclut automatiquement tous les .mp3 du dossier
     - assets/images/cards/card_back_purple.png

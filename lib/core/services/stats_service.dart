@@ -27,7 +27,7 @@ class StatsService {
     current.totalCardsPlayed += state.sessionStats.cardsPlayed;
     current.totalFoodGained += state.sessionStats.foodGained;
     current.totalFoodStolen += state.sessionStats.foodStolen;
-    current.totalBanditCardsPlayed += state.sessionStats.banditCardsPlayed;
+    current.totalPinceCardsPlayed += state.sessionStats.pinceCardsPlayed;
     current.totalRaccoonCardsPlayed += state.sessionStats.raccoonCardsPlayed;
     await save();
   }

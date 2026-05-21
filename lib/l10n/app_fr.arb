@@ -178,16 +178,16 @@
       }
     }
   },
-  "banditChooseTarget": "Choisir une cible",
-  "@banditChooseTarget": {
+  "pinceChooseTarget": "Choisir une cible",
+  "@pinceChooseTarget": {
     "description": "Titre overlay sélection cible bandit"
   },
-  "banditWhoToSteal": "Qui voulez-vous voler ?",
-  "@banditWhoToSteal": {
+  "pinceWhoToSteal": "Qui voulez-vous voler ?",
+  "@pinceWhoToSteal": {
     "description": "Sous-titre overlay sélection cible bandit"
   },
-  "banditFoodAvailable": "{count, plural, one{{count} nourriture disponible} other{{count} nourritures disponibles}}",
-  "@banditFoodAvailable": {
+  "pinceFoodAvailable": "{count, plural, one{{count} nourriture disponible} other{{count} nourritures disponibles}}",
+  "@pinceFoodAvailable": {
     "description": "Nourriture disponible sur la cible bandit",
     "placeholders": {
       "count": {
@@ -220,8 +220,8 @@
   "@resultFoodStolen": {
     "description": "Stat : nourriture volée"
   },
-  "resultBanditCards": "Bandits joués",
-  "@resultBanditCards": {
+  "resultPinceCards": "Pinces jouées",
+  "@resultPinceCards": {
     "description": "Stat : cartes bandit jouées"
   },
   "resultRaccoonCards": "Raccoons joués",
@@ -430,8 +430,8 @@
   "onboardingStart": "C'est parti !",
   "onboardingFoodTitle": "Nourriture",
   "onboardingFoodDesc": "Ramasse le maximum de nourriture sans te les faire voler.",
-  "onboardingBanditTitle": "Bandit",
-  "onboardingBanditDesc": "Le bandit te permet de voler une nourriture à un autre joueur.",
+  "onboardingPinceTitle": "Pince",
+  "onboardingPinceDesc": "La pince te permet de voler une nourriture à un autre joueur.",
   "onboardingRaccoonTitle": "Raton laveur",
   "onboardingRaccoonDesc": "Le raton laveur vole toute ta nourriture. Fais attention.",
   "onboardingTrashTitle": "Poubelle sécurisée",

@@ -2,7 +2,7 @@ enum CardType {
   food,
   raccoon,
   trash,
-  bandit,
+  pince,
   banquet,
   babyRaccoon,
   vacuum,

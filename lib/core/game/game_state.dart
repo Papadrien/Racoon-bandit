@@ -56,7 +56,7 @@ class GameState {
 
   // ─── Détection cibles Bandit ──────────────────────────────────────────────
 
-  List<PlayerState> banditValidTargets() {
+  List<PlayerState> pinceValidTargets() {
     final active = players[currentPlayerIndex];
     return players
         .where((p) => p.id != active.id && p.foodCount > 0)
@@ -125,11 +125,11 @@ class GameState {
         );
 
       default:
-        return resolveBandit(target);
+        return resolvePince(target);
     }
   }
 
-  CardResolution resolveBandit(PlayerState target) {
+  CardResolution resolvePince(PlayerState target) {
     final playerIdx = _resolvedPlayerIndex ?? currentPlayerIndex;
     final player = players[playerIdx];
 
@@ -191,7 +191,7 @@ class GameState {
         );
 
       case CardType.babyRaccoon:
-        final validTargets = banditValidTargets();
+        final validTargets = pinceValidTargets();
 
         if (validTargets.isEmpty) {
           return const CardResolution(
@@ -234,9 +234,9 @@ class GameState {
           foodStolen: stolenTotal > 0,
         );
 
-      case CardType.bandit:
+      case CardType.pince:
         sessionStats.banditCardsPlayed++;
-        final validTargets = banditValidTargets();
+        final validTargets = pinceValidTargets();
 
         if (validTargets.isEmpty) {
           return const CardResolution(
@@ -259,7 +259,7 @@ class GameState {
         return const CardResolution(
           message: '',
           needsTargetSelection: true,
-          pendingTargetCardType: CardType.bandit,
+          pendingTargetCardType: CardType.pince,
         );
     }
   }

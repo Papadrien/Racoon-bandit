@@ -13,8 +13,8 @@ enum SoundEffect {
   /// Gain de nourriture (carte food jouée avec succès)
   gainNourriture,
 
-  /// Bandit attaque un joueur
-  bandit,
+  /// Pince attaque un joueur
+  pince,
 
   /// Raton laveur vole de la nourriture
   raccoon,
@@ -71,7 +71,7 @@ class AudioService {
   static const _sounds = <SoundEffect, String>{
     SoundEffect.piocheCarte:    'sounds/pioche_carte.mp3',
     SoundEffect.gainNourriture: 'sounds/gain_nourriture.mp3',
-    SoundEffect.bandit:         'sounds/bandit.mp3',
+    SoundEffect.pince:         'sounds/bandit.mp3',
     SoundEffect.raccoon:        'sounds/raccoon.mp3',
     SoundEffect.frigo:          'sounds/fridge_block.mp3',
     SoundEffect.fridgeBlock:    'sounds/frigo.mp3',

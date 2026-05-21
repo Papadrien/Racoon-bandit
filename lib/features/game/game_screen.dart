@@ -19,7 +19,7 @@ import '../../core/services/wakelock_service.dart';
 import '../../core/services/stats_service.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/player_avatar.dart';
-import 'widgets/bandit_target_overlay.dart';
+import 'widgets/pince_target_overlay.dart';
 import 'widgets/gameplay_overlay_animation_manager.dart';
 
 class GameScreen extends StatefulWidget {
@@ -51,8 +51,8 @@ class _GameScreenState extends State<GameScreen>
   final GlobalKey _rootStackKey = GlobalKey();
   int? _lastResolvedPlayerId;
 
-  bool _showingBanditOverlay = false;
-  List<PlayerState> _banditTargets = [];
+  bool _showingPinceOverlay = false;
+  List<PlayerState> _pinceTargets = [];
   bool _quitDialogOpen = false;
 
   late final AnimationController _flipController;
@@ -69,7 +69,7 @@ class _GameScreenState extends State<GameScreen>
   bool get _isCriticalAnimationRunning =>
       _flipController.isAnimating ||
       _slideController.isAnimating ||
-      _showingBanditOverlay;
+      _showingPinceOverlay;
 
   bool _navigationInProgress = false;
 
@@ -146,9 +146,9 @@ class _GameScreenState extends State<GameScreen>
     }
 
     _isAnimating = false;
-    _showingBanditOverlay = false;
-    _banditTargets = [];
-    _pendingBanditCallback = null;
+    _showingPinceOverlay = false;
+    _pinceTargets = [];
+    _pendingPinceCallback = null;
     _revealedCard = null;
     _effectText = '';
     _resultScreenOpened = false;
@@ -169,9 +169,9 @@ class _GameScreenState extends State<GameScreen>
     }
     _flipController.stop();
     _slideController.stop();
-    _showingBanditOverlay = false;
-    _banditTargets = [];
-    _pendingBanditCallback = null;
+    _showingPinceOverlay = false;
+    _pinceTargets = [];
+    _pendingPinceCallback = null;
     _quitDialogOpen = false;
   }
 
@@ -301,7 +301,7 @@ class _GameScreenState extends State<GameScreen>
   // ── Game logic ─────────────────────────────────────────────────────────────
 
   Future<void> _drawCard() async {
-    if (_isAnimating || _showingBanditOverlay || _gameState.isGameOver) return;
+    if (_isAnimating || _showingPinceOverlay || _gameState.isGameOver) return;
 
     HapticService.trigger(HapticType.light);
     AudioService.instance.playSfx(SoundEffect.piocheCarte);
@@ -328,7 +328,7 @@ class _GameScreenState extends State<GameScreen>
     _playCardFeedback(card, result);
 
     if (result.needsTargetSelection) {
-      await _handleTargetSelection(card, result.pendingTargetCardType ?? CardType.bandit);
+      await _handleTargetSelection(card, result.pendingTargetCardType ?? CardType.pince);
       return;
     }
 
@@ -344,11 +344,11 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Future<void> _handleTargetSelection(GameCard? card, CardType targetCardType) async {
-    final targets = _gameState.banditValidTargets();
+    final targets = _gameState.pinceValidTargets();
 
     setState(() {
-      _banditTargets = targets;
-      _showingBanditOverlay = true;
+      _pinceTargets = targets;
+      _showingPinceOverlay = true;
     });
 
     final completer = Completer<PlayerState>();
@@ -358,30 +358,30 @@ class _GameScreenState extends State<GameScreen>
     }
 
     setState(() {
-      _pendingBanditCallback = onChosen;
+      _pendingPinceCallback = onChosen;
     });
 
     final target = await completer.future;
 
     if (!mounted || _disposed) return;
 
-    final resolution = targetCardType == CardType.bandit
-        ? _gameState.resolveBandit(target)
+    final resolution = targetCardType == CardType.pince
+        ? _gameState.resolvePince(target)
         : _gameState.resolveTargetedSpecial(targetCardType, target);
 
     setState(() {
-      _showingBanditOverlay = false;
-      _banditTargets = [];
-      _pendingBanditCallback = null;
+      _showingPinceOverlay = false;
+      _pinceTargets = [];
+      _pendingPinceCallback = null;
       _effectText = resolution.message;
     });
 
     // Son bandit joué uniquement en cas de vol effectif
     if (resolution.foodStolen) {
-      AudioService.instance.playSfx(SoundEffect.bandit);
+      AudioService.instance.playSfx(SoundEffect.pince);
     }
 
-    _playBanditStealAnimation(
+    _playPinceStealAnimation(
       thiefId: _lastResolvedPlayerId,
       targetId: target.id,
     );
@@ -389,7 +389,7 @@ class _GameScreenState extends State<GameScreen>
     await _finishCardAnimation();
   }
 
-  void _playBanditStealAnimation({
+  void _playPinceStealAnimation({
     required int? thiefId,
     required int targetId,
   }) {
@@ -460,7 +460,7 @@ class _GameScreenState extends State<GameScreen>
     }
   }
 
-  void Function(PlayerState)? _pendingBanditCallback;
+  void Function(PlayerState)? _pendingPinceCallback;
 
   Offset _widgetCenter(GlobalKey key, {double? verticalBias}) {
     final ctx = key.currentContext;
@@ -554,9 +554,9 @@ class _GameScreenState extends State<GameScreen>
           _overlayCoordinator.playRaccoonDevour(playerCenter: playerCenter, cardCenter: start, foodCount: foodCountBeforeDraw);
         }
         return;
-      case CardType.bandit:
+      case CardType.pince:
         if (result.targetPlayerId != null) {
-          _playBanditStealAnimation(thiefId: currentPlayerId, targetId: result.targetPlayerId!);
+          _playPinceStealAnimation(thiefId: currentPlayerId, targetId: result.targetPlayerId!);
         }
         return;
       case CardType.banquet:
@@ -599,10 +599,10 @@ class _GameScreenState extends State<GameScreen>
           AudioService.instance.playSfx(SoundEffect.raccoon);
         }
         return;
-      case CardType.bandit:
+      case CardType.pince:
         HapticService.trigger(HapticType.medium);
         if (!result.needsTargetSelection && result.foodStolen) {
-          AudioService.instance.playSfx(SoundEffect.bandit);
+          AudioService.instance.playSfx(SoundEffect.pince);
         }
         return;
       case CardType.food:
@@ -828,13 +828,22 @@ class _GameScreenState extends State<GameScreen>
                                         'assets/images/card_front_trash.png',
                                         fit: BoxFit.cover,
                                       )
-                                    : ColoredBox(
-                                        color: _revealedCard?.color ?? Colors.deepPurple,
-                                      ),
+                                    : (showFront && _revealedCard?.type == CardType.food)
+                                        ? Image.asset(
+                                            'assets/images/card_front_food.png',
+                                            fit: BoxFit.cover,
+                                          )
+                                        : (showFront && _revealedCard?.type == CardType.pince)
+                                            ? Image.asset(
+                                                'assets/images/card_front_pince.png',
+                                                fit: BoxFit.cover,
+                                              )
+                                            : ColoredBox(
+                                                color: _revealedCard?.color ?? Colors.deepPurple,
+                                              ),
                       ),
                       if (!backgroundCard &&
-                          !(showFront && (_revealedCard?.type == CardType.raccoon ||
-                              _revealedCard?.type == CardType.trash)))
+                          !(showFront && (_revealedCard?.type == CardType.raccoon || _revealedCard?.type == CardType.trash || _revealedCard?.type == CardType.food || _revealedCard?.type == CardType.pince)))
                         Center(
                           child: Transform(
                             alignment: Alignment.center,
@@ -939,7 +948,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _buildGameplayControlsBar() {
-    final bool quitEnabled = !_isAnimating && !_showingBanditOverlay;
+    final bool quitEnabled = !_isAnimating && !_showingPinceOverlay;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1028,11 +1037,11 @@ class _GameScreenState extends State<GameScreen>
                   ),
 
                   // ── Bandit target overlay ─────────────────────────────────
-                  if (_showingBanditOverlay && _pendingBanditCallback != null)
+                  if (_showingPinceOverlay && _pendingPinceCallback != null)
                     Positioned.fill(
-                      child: BanditTargetOverlay(
-                        targets: _banditTargets,
-                        onTargetSelected: _pendingBanditCallback!,
+                      child: PinceTargetOverlay(
+                        targets: _pinceTargets,
+                        onTargetSelected: _pendingPinceCallback!,
                       ),
                     ),
                 ],

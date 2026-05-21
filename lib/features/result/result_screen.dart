@@ -219,9 +219,9 @@ class _ResultScreenState extends State<ResultScreen>
                                             '${gameState.sessionStats.foodStolen}',
                                       ),
                                       _StatLine(
-                                        label: l10n.resultBanditCards,
+                                        label: l10n.resultPinceCards,
                                         value:
-                                            '${gameState.sessionStats.banditCardsPlayed}',
+                                            '${gameState.sessionStats.pinceCardsPlayed}',
                                       ),
                                       _StatLine(
                                         label: l10n.resultRaccoonCards,

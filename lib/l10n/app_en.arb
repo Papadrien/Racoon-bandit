@@ -178,16 +178,16 @@
       }
     }
   },
-  "banditChooseTarget": "Choose a target",
-  "@banditChooseTarget": {
+  "pinceChooseTarget": "Choose a target",
+  "@pinceChooseTarget": {
     "description": "Bandit target selection overlay title"
   },
-  "banditWhoToSteal": "Who do you want to steal from?",
-  "@banditWhoToSteal": {
+  "pinceWhoToSteal": "Who do you want to steal from?",
+  "@pinceWhoToSteal": {
     "description": "Bandit target selection overlay subtitle"
   },
-  "banditFoodAvailable": "{count, plural, one{{count} food available} other{{count} food available}}",
-  "@banditFoodAvailable": {
+  "pinceFoodAvailable": "{count, plural, one{{count} food available} other{{count} food available}}",
+  "@pinceFoodAvailable": {
     "description": "Food available on bandit target",
     "placeholders": {
       "count": {
@@ -220,8 +220,8 @@
   "@resultFoodStolen": {
     "description": "Stat: food stolen"
   },
-  "resultBanditCards": "Bandits played",
-  "@resultBanditCards": {
+  "resultPinceCards": "Pinces played",
+  "@resultPinceCards": {
     "description": "Stat: bandit cards played"
   },
   "resultRaccoonCards": "Raccoons played",
@@ -430,8 +430,8 @@
   "onboardingStart": "Let's go!",
   "onboardingFoodTitle": "Food",
   "onboardingFoodDesc": "Collect as much food as possible without getting it stolen.",
-  "onboardingBanditTitle": "Bandit",
-  "onboardingBanditDesc": "The bandit lets you steal food from another player.",
+  "onboardingPinceTitle": "Pince",
+  "onboardingPinceDesc": "The pince lets you steal food from another player.",
   "onboardingRaccoonTitle": "Raccoon",
   "onboardingRaccoonDesc": "The raccoon steals all your food. Be careful.",
   "onboardingTrashTitle": "Secure Bin",

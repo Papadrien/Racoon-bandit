@@ -47,8 +47,8 @@ class OnboardingSlides {
     ),
     OnboardingSlide(
       emoji: '🥷',
-      title: (context) => AppLocalizations.of(context)!.onboardingBanditTitle,
-      description: (context) => AppLocalizations.of(context)!.onboardingBanditDesc,
+      title: (context) => AppLocalizations.of(context)!.onboardingPinceTitle,
+      description: (context) => AppLocalizations.of(context)!.onboardingPinceDesc,
       cardColor: Color(0xFF1A237E),
       accentColor: Color(0xFF7C4DFF),
     ),
