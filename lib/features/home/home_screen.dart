@@ -198,10 +198,12 @@ class _HomeScreenState extends State<HomeScreen>
         body: Stack(
           children: [
             // ── Hero image ancrée en bas avec animation idle ─────────────
+            // bottom: -6 pour que le bas de l'image dépasse légèrement
+            // et évite toute séparation visible entre l'image et le bord.
             const Positioned(
               left: 0,
               right: 0,
-              bottom: 0,
+              bottom: -6,
               child: _HeroImage(),
             ),
 

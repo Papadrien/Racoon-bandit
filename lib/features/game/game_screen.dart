@@ -57,6 +57,10 @@ class _GameScreenState extends State<GameScreen>
 
   late final AnimationController _flipController;
   late final AnimationController _slideController;
+  // Animation d'apparition subtile (remontée + fade) quand une carte arrive
+  late final AnimationController _appearController;
+  late final Animation<double> _appearOffset;
+  late final Animation<double> _appearOpacity;
 
   bool _resultScreenOpened = false;
 
@@ -88,6 +92,19 @@ class _GameScreenState extends State<GameScreen>
       vsync: this,
       duration: const Duration(milliseconds: 275),
     );
+    // Animation d'apparition de carte : 180ms, très rapide et premium
+    _appearController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    );
+    _appearOffset = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _appearController, curve: Curves.easeOut),
+    );
+    _appearOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _appearController, curve: Curves.easeOut),
+    );
+    // Initialiser à 1 (carte visible) — on jouera l'animation à chaque pioche
+    _appearController.value = 1.0;
   }
 
   @override
@@ -96,6 +113,7 @@ class _GameScreenState extends State<GameScreen>
     unawaited(WakelockService.disable());
     _flipController.dispose();
     _slideController.dispose();
+    _appearController.dispose();
     // Vide la liste avant dispose pour éviter listeners dangling
     _animationsNotifier.value = [];
     _animationsNotifier.dispose();
@@ -302,6 +320,9 @@ class _GameScreenState extends State<GameScreen>
     setState(() {
       _revealedCard = card;
     });
+
+    // Animation d'apparition subtile : la carte remonte légèrement du paquet
+    unawaited(_appearController.forward(from: 0));
 
     await _flipController.forward(from: 0);
     _playCardFeedback(card, result);
@@ -756,7 +777,7 @@ class _GameScreenState extends State<GameScreen>
     return GestureDetector(
       onTap: backgroundCard || deckExhausted ? null : _drawCard,
       child: AnimatedBuilder(
-        animation: Listenable.merge([_flipController, _slideController]),
+        animation: Listenable.merge([_flipController, _slideController, _appearController]),
         builder: (context, child) {
           final flip = _flipController.value;
           final slide = _slideController.value;
@@ -770,12 +791,17 @@ class _GameScreenState extends State<GameScreen>
               angle > math.pi / 2 - 0.08 &&
               angle < math.pi / 2 + 0.08;
 
+          // Animation d'apparition : légère remontée depuis le paquet
+          // Appliquée uniquement à la carte principale (pas backgroundCard)
+          final appearDy = backgroundCard ? 0.0 : _appearOffset.value * 10.0;
+          final appearAlpha = backgroundCard ? 1.0 : _appearOpacity.value;
+
           return Opacity(
-            opacity: nearEdge ? 0.0 : 1.0,
+            opacity: nearEdge ? 0.0 : appearAlpha,
             child: Transform.translate(
             offset: backgroundCard
                 ? const Offset(0, 0)
-                : Offset(0, slide * 600),
+                : Offset(0, slide * 600 + appearDy),
             child: Transform(
               alignment: Alignment.center,
               transform: Matrix4.identity()

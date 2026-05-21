@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fond noir -->
+    <item>
+        <color android:color="#000000"/>
+    </item>
+    <!-- Logo centré -->
+    <item>
+        <bitmap
+            android:src="@drawable/splash_logo"
+            android:gravity="center"
+            android:tileMode="disabled"/>
+    </item>
+</layer-list>
