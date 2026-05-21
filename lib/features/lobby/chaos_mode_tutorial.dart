@@ -278,7 +278,7 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
               ),
               SizedBox(height: screenHeight < 650 ? 16 : 24),
               Text(
-                slide.title,
+                slide.title(context),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: titleSize,
@@ -289,7 +289,7 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                slide.description,
+                slide.description(context),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: descSize,
