@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:opacity="opaque">
     <!-- Fond noir -->
-    <item>
-        <color android:color="#000000"/>
-    </item>
-    <!-- Logo centré -->
-    <item>
+    <item android:drawable="@android:color/black" />
+    <!-- Logo centré avec inset pour contrôler la taille affichée -->
+    <item
+        android:gravity="center"
+        android:width="280dp"
+        android:height="280dp">
         <bitmap
             android:src="@drawable/splash_logo"
             android:gravity="center"
-            android:tileMode="disabled"/>
+            android:tileMode="disabled" />
     </item>
 </layer-list>
