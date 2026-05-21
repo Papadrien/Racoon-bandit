@@ -15,6 +15,7 @@ import '../../core/services/player_profiles_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/constants/app_assets.dart';
+import '../../core/models/card_back_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
 import '../../widgets/player_avatar.dart';
@@ -229,7 +230,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       children: [
                         // ── Sélecteur nombre de joueurs ───────────────────
                         const SizedBox(height: 8),
-                        Text(
+                        const Text(
                           'Nombre de joueurs',
                           style: TextStyle(
                             fontSize: 18,
@@ -370,16 +371,16 @@ class _ChaosModeSection extends StatelessWidget {
       child: Row(
         children: [
           // ── Icône + texte ────────────────────────────────────────────────
-          Expanded(
+          const Expanded(
             child: Row(
               children: [
-                const Text('🌀', style: TextStyle(fontSize: 24)),
-                const SizedBox(width: 12),
+                Text('🌀', style: TextStyle(fontSize: 24)),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Mode Pagaille',
                         style: TextStyle(
                           fontSize: 15,
@@ -387,7 +388,7 @@ class _ChaosModeSection extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         'Cartes spéciales · plus de chaos !',
                         style: TextStyle(
@@ -419,7 +420,7 @@ class _ChaosModeSection extends StatelessWidget {
               AudioService.instance.playButtonSound();
               onToggle(val);
             },
-            activeColor: const Color(0xFF7C4DFF),
+            activeThumbColor: const Color(0xFF7C4DFF),
           ),
         ],
       ),
@@ -637,7 +638,7 @@ class _CardBackButtonState extends State<_CardBackButton>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    const Text(
                       'DOS DE CARTES',
                       style: TextStyle(
                         fontSize: 10,
@@ -649,7 +650,7 @@ class _CardBackButtonState extends State<_CardBackButton>
                     const SizedBox(height: 3),
                     Text(
                       config.name,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -745,7 +746,7 @@ class _AnimatedCardPreview extends StatelessWidget {
           child: Image.asset(
             assetPath,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (context, error, stackTrace) => Container(
               color: accentColor.withValues(alpha: 0.3),
               child: Icon(Icons.style, color: accentColor, size: 28),
             ),

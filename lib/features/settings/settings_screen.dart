@@ -138,7 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             // ── Section Debug (debug uniquement) ─────────────────────────
             if (kDebugMode) ...[
-              _SectionLabel(label: 'Debug', color: Colors.orange),
+              const _SectionLabel(label: 'Debug', color: Colors.orange),
               _SettingsCard(
                 borderColor: Colors.orange.withValues(alpha: 0.3),
                 children: [
