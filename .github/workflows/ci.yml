@@ -70,6 +70,9 @@ jobs:
           restore-keys: pub-${{ runner.os }}-
 
       - run: flutter pub get
+
+      - name: Generate localization files
+        run: flutter gen-l10n
       - run: flutter analyze --no-fatal-infos
 
   # ═══════════════════════════════════════════════
@@ -115,6 +118,9 @@ jobs:
 
       - run: flutter pub get
 
+
+      - name: Generate localization files
+        run: flutter gen-l10n
       - name: Inject google-services.json
         env:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
@@ -212,6 +218,9 @@ jobs:
 
       - run: flutter pub get
 
+
+      - name: Generate localization files
+        run: flutter gen-l10n
       - name: Build APK
         run: flutter build apk --release --no-pub --build-name=${{ needs.analyze.outputs.app_version }} --build-number=${{ needs.analyze.outputs.app_build }}
 
