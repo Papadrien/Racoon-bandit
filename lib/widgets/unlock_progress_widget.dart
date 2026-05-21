@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../core/models/card_back_config.dart';
 import '../core/services/progression_service.dart';

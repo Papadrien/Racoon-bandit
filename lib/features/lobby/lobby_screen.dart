@@ -20,7 +20,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
-import '../../l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import 'chaos_mode_tutorial.dart';
 
 class LobbyScreen extends StatefulWidget {

@@ -12,7 +12,7 @@ import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_theme_provider.dart';
-import '../../l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/primary_button.dart';
 import '../onboarding/onboarding_screen.dart';

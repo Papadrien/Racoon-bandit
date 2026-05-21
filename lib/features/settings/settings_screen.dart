@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../core/navigation/app_router.dart';
 import '../../core/models/reward_unlock.dart';

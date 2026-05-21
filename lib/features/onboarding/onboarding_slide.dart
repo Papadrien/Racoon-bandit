@@ -1,4 +1,4 @@
-import '../../l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 /// Modèle d'une slide d'onboarding.

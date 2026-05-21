@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/theme/app_theme.dart';
-import '../../l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../onboarding/onboarding_slide.dart';
 
 /// Slides du tutoriel Mode Pagaille — construites à partir des traductions.
@@ -15,36 +15,36 @@ class ChaosTutorialSlides {
   static List<OnboardingSlide> build(AppLocalizations l10n) => [
         OnboardingSlide(
           emoji: '🌀',
-          title: l10n.chaosSlide1Title,
-          description: l10n.chaosSlide1Desc,
+          title: (_) => l10n.chaosSlide1Title,
+          description: (_) => l10n.chaosSlide1Desc,
           cardColor: const Color(0xFF2A1F3D),
           accentColor: const Color(0xFFCE93D8),
         ),
         OnboardingSlide(
           emoji: '🍎',
-          title: l10n.chaosSlide2Title,
-          description: l10n.chaosSlide2Desc,
+          title: (_) => l10n.chaosSlide2Title,
+          description: (_) => l10n.chaosSlide2Desc,
           cardColor: const Color(0xFF1B3A1B),
           accentColor: const Color(0xFF81C784),
         ),
         OnboardingSlide(
           emoji: '🦝',
-          title: l10n.chaosSlide3Title,
-          description: l10n.chaosSlide3Desc,
+          title: (_) => l10n.chaosSlide3Title,
+          description: (_) => l10n.chaosSlide3Desc,
           cardColor: const Color(0xFF37474F),
           accentColor: const Color(0xFF90A4AE),
         ),
         OnboardingSlide(
           emoji: '🌀',
-          title: l10n.chaosSlide4Title,
-          description: l10n.chaosSlide4Desc,
+          title: (_) => l10n.chaosSlide4Title,
+          description: (_) => l10n.chaosSlide4Desc,
           cardColor: const Color(0xFF1A0D2E),
           accentColor: const Color(0xFF7C4DFF),
         ),
         OnboardingSlide(
           emoji: '🎲',
-          title: l10n.chaosSlide5Title,
-          description: l10n.chaosSlide5Desc,
+          title: (_) => l10n.chaosSlide5Title,
+          description: (_) => l10n.chaosSlide5Desc,
           cardColor: const Color(0xFF1A1A2E),
           accentColor: const Color(0xFFFF9800),
         ),

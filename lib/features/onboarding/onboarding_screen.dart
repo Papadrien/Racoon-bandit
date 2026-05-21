@@ -4,7 +4,7 @@ import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/theme/app_theme.dart';
-import '../../l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import 'onboarding_slide.dart';
 
 /// Écran d'onboarding — affiché uniquement au premier lancement.
@@ -177,7 +177,7 @@ class _SlideCard extends StatelessWidget {
                 SizedBox(height: screenHeight < 650 ? 20 : 28),
                 // Titre
                 Text(
-                  slide.title,
+                  slide.title(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: titleSize,
@@ -189,7 +189,7 @@ class _SlideCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 // Description
                 Text(
-                  slide.description,
+                  slide.description(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: descSize,

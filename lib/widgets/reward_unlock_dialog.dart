@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import '../l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/models/reward_unlock.dart';
@@ -284,7 +284,7 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                                 letterSpacing: 1.5,
                               ),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.style_rounded, size: 18),

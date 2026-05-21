@@ -17,7 +17,7 @@ import '../../core/services/haptic_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/services/wakelock_service.dart';
 import '../../core/services/stats_service.dart';
-import '../../l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/player_avatar.dart';
 import 'widgets/bandit_target_overlay.dart';
 import 'widgets/gameplay_overlay_animation_manager.dart';

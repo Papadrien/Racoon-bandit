@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../core/game/game_state.dart';
 import '../../core/models/result_screen_args.dart';

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/player_state.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/services/haptic_service.dart';
-import '../../../l10n/app_localizations.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../../widgets/player_avatar.dart';
 
 /// Overlay de sélection de cible pour la carte Bandit.

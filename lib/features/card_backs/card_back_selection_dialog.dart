@@ -220,7 +220,7 @@ class _SheetHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   AppLocalizations.of(context)!.cardBacksTitle,
                   style: TextStyle(
                     fontSize: 15,
@@ -523,7 +523,7 @@ class _CardPreview extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.check_rounded, color: Colors.white, size: 10),
