@@ -13,7 +13,6 @@ import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/audio_service.dart';
-import '../../core/services/game_save_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/services/wakelock_service.dart';
@@ -118,24 +117,13 @@ class _GameScreenState extends State<GameScreen>
       _gameState = args;
       NavigationGuard.log(_tag, 'init — nouvelle partie, ${_gameState.players.length} joueurs');
     } else {
-      final save = GameSaveService.current;
-      if (save != null) {
-        _gameState = GameState.fromSave(save);
-        NavigationGuard.log(
-          _tag,
-          'init — reprise depuis sauvegarde, '
-          'joueur: ${_gameState.currentPlayerIndex}, '
-          'deck: ${_gameState.remainingCards} cartes',
-        );
-      } else {
-        NavigationGuard.log(_tag, 'init — pas de sauvegarde, redirection home');
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.home,
-          (route) => false,
-        );
-        return;
-      }
+      NavigationGuard.log(_tag, 'init — pas de GameState, redirection home');
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.home,
+        (route) => false,
+      );
+      return;
     }
 
     _isAnimating = false;
@@ -151,15 +139,6 @@ class _GameScreenState extends State<GameScreen>
 
     _initialized = true;
     unawaited(WakelockService.enable());
-  }
-
-  // ── Sauvegarde automatique ─────────────────────────────────────────────────
-
-  void _autoSave() {
-    if (_gameState.isGameOver) return;
-    if (_showingBanditOverlay) return;
-    if (_disposed) return;
-    unawaited(GameSaveService.save(_gameState.toSave()));
   }
 
   // ── Nettoyage overlays avant navigation ────────────────────────────────────
@@ -264,7 +243,6 @@ class _GameScreenState extends State<GameScreen>
 
     _cleanupBeforeNavigation();
 
-    await GameSaveService.clear();
     if (!mounted) {
       _navigationInProgress = false;
       return;
@@ -336,8 +314,6 @@ class _GameScreenState extends State<GameScreen>
       _effectText = result.message;
     });
 
-    _autoSave();
-
     final bool isRaccoonEffect =
         card?.type == CardType.raccoon && !result.trashDestroyed && foodCountBeforeDraw > 0;
     await _finishCardAnimation(extraDelay: isRaccoonEffect ? 600 : 0);
@@ -386,7 +362,6 @@ class _GameScreenState extends State<GameScreen>
       targetId: target.id,
     );
 
-    _autoSave();
     await _finishCardAnimation();
   }
 
@@ -444,7 +419,6 @@ class _GameScreenState extends State<GameScreen>
         dureePartieEstimee: _gameState.sessionStats.cardsPlayed * 8,
       ));
 
-      await GameSaveService.clear();
       HapticService.trigger(HapticType.heavy);
       AudioService.instance.playSfx(SoundEffect.popupRecompense);
 

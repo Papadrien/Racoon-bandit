@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
-import '../../core/services/game_save_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
@@ -40,8 +39,6 @@ class _HomeScreenState extends State<HomeScreen>
   late final AnimationController _playButtonPressController;
   late final Animation<double> _playButtonScale;
 
-  bool get _hasSavedGame => GameSaveService.hasSavedGame;
-
   @override
   void initState() {
     super.initState();
@@ -73,12 +70,8 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
-      GameSaveService.load().then((_) {
-        if (mounted) {
-          _lifeSystemService.updateLivesFromTime().then((_) {
-            if (mounted) setState(() {});
-          });
-        }
+      _lifeSystemService.updateLivesFromTime().then((_) {
+        if (mounted) setState(() {});
       });
     }
   }
@@ -159,18 +152,6 @@ class _HomeScreenState extends State<HomeScreen>
         _isRewardLoading = false;
       });
     }
-  }
-
-  Future<void> _resumeGame() async {
-    await GameSaveService.load();
-    if (!mounted) return;
-
-    if (!GameSaveService.hasSavedGame) {
-      setState(() {});
-      return;
-    }
-
-    Navigator.pushNamed(context, AppRoutes.game);
   }
 
   @override
@@ -300,13 +281,11 @@ class _HomeScreenState extends State<HomeScreen>
                 top: false,
                 maintainBottomViewPadding: true,
                 child: _PlayButtonArea(
-                  hasSavedGame: _hasSavedGame,
                   noLives: noLives,
                   isLoading: _isLoading,
                   isRewardLoading: _isRewardLoading,
                   playButtonScale: _playButtonScale,
                   onPlay: _startGame,
-                  onResume: _resumeGame,
                   onWatchAd: _watchAdForLife,
                 ),
               ),
@@ -323,23 +302,19 @@ class _HomeScreenState extends State<HomeScreen>
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PlayButtonArea extends StatelessWidget {
-  final bool hasSavedGame;
   final bool noLives;
   final bool isLoading;
   final bool isRewardLoading;
   final Animation<double> playButtonScale;
   final VoidCallback onPlay;
-  final VoidCallback onResume;
   final VoidCallback onWatchAd;
 
   const _PlayButtonArea({
-    required this.hasSavedGame,
     required this.noLives,
     required this.isLoading,
     required this.isRewardLoading,
     required this.playButtonScale,
     required this.onPlay,
-    required this.onResume,
     required this.onWatchAd,
   });
 
@@ -354,10 +329,6 @@ class _PlayButtonArea extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (hasSavedGame) ...[
-            _ResumeButton(onPressed: onResume),
-            const SizedBox(height: 12),
-          ],
           if (noLives)
             _RewardAdButton(
               isLoading: isRewardLoading,
@@ -494,36 +465,6 @@ class _RewardAdButton extends StatelessWidget {
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 52),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ResumeButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _ResumeButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          AudioService.instance.playButtonSound();
-          onPressed();
-        },
-        icon: const Icon(Icons.play_arrow_rounded),
-        label: const Text('Reprendre la partie'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppTheme.accent,
-          side: BorderSide(color: AppTheme.accent),
-          minimumSize: const Size(double.infinity, 48),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),

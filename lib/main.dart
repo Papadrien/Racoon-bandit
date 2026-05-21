@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'app.dart';
 import 'core/services/analytics_service.dart';
 import 'core/services/audio_service.dart';
-import 'core/services/game_save_service.dart';
 import 'core/services/lobby_service.dart';
 import 'core/services/onboarding_service.dart';
 import 'core/services/player_profiles_service.dart';
@@ -29,7 +28,6 @@ void main() async {
   await SettingsService.load();
   await PlayerProfilesService.load();
   await LobbyService.load();
-  await GameSaveService.load();
   await ProgressionService.load();
   await StatsService.load();
   await OnboardingService.load();
