@@ -15,11 +15,10 @@
     <style name="LaunchTheme" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#000000</item>
         <!-- Icône vide pour éviter le cercle Android 12+ -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_transparent</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
         <item name="windowSplashScreenIconBackgroundColor">#00000000</item>
         <!-- Logo affiché en branding (bas d'écran, sans clip) -->
-        <item name="android:windowSplashScreenBrandingImage">@drawable/splash_logo</item>
-        <item name="postSplashScreenTheme">@style/NormalTheme</item>
+                <item name="postSplashScreenTheme">@style/NormalTheme</item>
     </style>
     <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
         <item name="android:windowBackground">@android:color/black</item>

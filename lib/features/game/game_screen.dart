@@ -856,12 +856,12 @@ class _GameScreenState extends State<GameScreen>
                   border: (!backgroundCard && showFront && _revealedCard != null)
                       ? Border.all(
                           color: Colors.white,
-                          width: 5.5,
+                          width: 8.0,
                         )
                       : null,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(_cardRadius - 5.5),
+                  borderRadius: BorderRadius.circular(_cardRadius - 8.0),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -872,21 +872,29 @@ class _GameScreenState extends State<GameScreen>
                                 ? Image.asset(
                                     'assets/images/card_front_raccoon.png',
                                     fit: BoxFit.cover,
+                                    gaplessPlayback: true,
+                                    filterQuality: FilterQuality.high,
                                   )
                                 : (showFront && _revealedCard?.type == CardType.trash)
                                     ? Image.asset(
                                         'assets/images/card_front_trash.png',
                                         fit: BoxFit.cover,
+                                        gaplessPlayback: true,
+                                        filterQuality: FilterQuality.high,
                                       )
                                     : (showFront && _revealedCard?.type == CardType.food)
                                         ? Image.asset(
                                             'assets/images/card_front_food.png',
                                             fit: BoxFit.cover,
+                                            gaplessPlayback: true,
+                                            filterQuality: FilterQuality.high,
                                           )
                                         : (showFront && _revealedCard?.type == CardType.pince)
                                             ? Image.asset(
                                                 'assets/images/card_front_pince.png',
                                                 fit: BoxFit.cover,
+                                                gaplessPlayback: true,
+                                                filterQuality: FilterQuality.high,
                                               )
                                             : ColoredBox(
                                                 color: _revealedCard?.color ?? Colors.deepPurple,
