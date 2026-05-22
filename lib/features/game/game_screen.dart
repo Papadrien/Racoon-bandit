@@ -807,11 +807,18 @@ class _GameScreenState extends State<GameScreen>
               transform: Matrix4.identity()
                 ..setEntry(3, 2, 0.001)
                 ..rotateY(backgroundCard ? 0 : angle),
-              child: SizedBox(
+              child: Container(
                 width: _cardWidth,
                 height: _cardHeight,
-                child: ClipRRect(
+                decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(_cardRadius),
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 3,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(_cardRadius - 3),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
