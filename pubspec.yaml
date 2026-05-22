@@ -32,6 +32,7 @@ flutter:
   assets:
     - assets/sounds/
     - assets/images/cards/
+    - assets/images/splash_logo.png
     - assets/images/raccoon_bandit_hero.png
     - assets/images/card_front_raccoon.png
     - assets/images/card_front_trash.png

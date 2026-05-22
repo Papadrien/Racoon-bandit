@@ -9,10 +9,12 @@ import '../../features/result/result_screen.dart';
 import '../../features/profiles/profiles_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/settings/privacy_policy_screen.dart';
+import '../../features/splash/splash_screen.dart';
 
 class AppRoutes {
   AppRoutes._();
 
+  static const String splash = '/splash';
   static const String home = '/';
   static const String lobby = '/lobby';
   static const String game = '/game';
@@ -30,6 +32,8 @@ class AppRouter {
 
   static Route<dynamic> generateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
+      case AppRoutes.splash:
+        return _fade(const SplashScreen(), routeSettings);
       case AppRoutes.home:
         return _fade(const HomeScreen(), routeSettings);
       case AppRoutes.lobby:
