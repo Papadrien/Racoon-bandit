@@ -602,7 +602,10 @@ class _GameScreenState extends State<GameScreen>
         });
         return;
       case CardType.babyRaccoon:
-        if (result.targetPlayerId != null) {
+        if (_gameState.chaosMode) {
+          // Mode pagaille : le joueur actif perd 2 nourritures
+          _overlayCoordinator.playRaccoonDevour(playerCenter: playerCenter, cardCenter: start, foodCount: 2);
+        } else if (result.targetPlayerId != null) {
           final targetCenter = _playerFoodCenter(result.targetPlayerId!);
           _overlayCoordinator.playRaccoonDevour(playerCenter: targetCenter, cardCenter: start, foodCount: 2);
         }
@@ -784,8 +787,8 @@ class _GameScreenState extends State<GameScreen>
       4: [
         <String, double>{'top': topOffset, 'left': hMargin},
         <String, double>{'top': topOffset, 'right': hMargin},
-        <String, double>{'bottom': bottomOffset, 'left': hMargin},
         <String, double>{'bottom': bottomOffset, 'right': hMargin},
+        <String, double>{'bottom': bottomOffset, 'left': hMargin},
       ],
     };
 
@@ -885,7 +888,7 @@ class _GameScreenState extends State<GameScreen>
                                               ),
                       ),
                       if (!backgroundCard &&
-                          !(showFront && (_revealedCard?.type == CardType.raccoon || _revealedCard?.type == CardType.trash || _revealedCard?.type == CardType.food || _revealedCard?.type == CardType.pince)))
+                          !(showFront && (_revealedCard?.type == CardType.raccoon || _revealedCard?.type == CardType.trash || _revealedCard?.type == CardType.food || _revealedCard?.type == CardType.pince || _revealedCard?.type == CardType.vacuum)))
                         Center(
                           child: Transform(
                             alignment: Alignment.center,

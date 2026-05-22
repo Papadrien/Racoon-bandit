@@ -191,6 +191,23 @@ class GameState {
         );
 
       case CardType.babyRaccoon:
+        // En mode pagaille : le joueur actif perd 2 nourritures
+        if (chaosMode) {
+          final removed = _removeFood(player, 2);
+          if (remainingDeck.isEmpty) {
+            _markGameOver();
+          } else {
+            _advance();
+          }
+          return CardResolution(
+            message: removed > 0
+                ? '${player.name} perd $removed nourriture${removed > 1 ? 's' : ''}'
+                : 'Aucune nourriture à retirer',
+            targetPlayerId: player.id,
+            foodStolen: removed > 0,
+          );
+        }
+
         final validTargets = pinceValidTargets();
 
         if (validTargets.isEmpty) {
