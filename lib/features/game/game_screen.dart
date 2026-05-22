@@ -332,6 +332,25 @@ class _GameScreenState extends State<GameScreen>
       _displayPlayerName = currentPlayerNameSnapshot;
     });
 
+    // Précache ciblé : s'assurer que l'image de la face avant est en mémoire
+    // AVANT de démarrer le flip, pour éviter tout flash ou délai à mi-animation.
+    if (card != null) {
+      final String? assetPath = switch (card.type) {
+        CardType.raccoon     => 'assets/images/card_front_raccoon.png',
+        CardType.trash       => 'assets/images/card_front_trash.png',
+        CardType.food        => 'assets/images/card_front_food.png',
+        CardType.pince       => 'assets/images/card_front_pince.png',
+        CardType.banquet     => null, // pas d'image dédiée
+        CardType.babyRaccoon => null,
+        CardType.vacuum      => null,
+      };
+      if (assetPath != null) {
+        // Attendre que l'image soit décodée et en cache avant le flip.
+        // Si déjà en cache (cas normal), cela retourne quasi instantanément.
+        await precacheImage(AssetImage(assetPath), context);
+      }
+    }
+
     // Animation d'apparition subtile : la carte remonte légèrement du paquet
     unawaited(_appearController.forward(from: 0));
 
@@ -836,13 +855,13 @@ class _GameScreenState extends State<GameScreen>
                   // Contour uniquement sur la face avant — le dos n'a pas de contour
                   border: (!backgroundCard && showFront && _revealedCard != null)
                       ? Border.all(
-                          color: Colors.white.withValues(alpha: 0.35),
-                          width: 3.5,
+                          color: Colors.white,
+                          width: 5.5,
                         )
                       : null,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(_cardRadius - 3),
+                  borderRadius: BorderRadius.circular(_cardRadius - 5.5),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
