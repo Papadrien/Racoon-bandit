@@ -64,6 +64,14 @@ class _GameScreenState extends State<GameScreen>
   late final Animation<double> _appearOffset;
   late final Animation<double> _appearOpacity;
 
+  static const Map<CardType, AssetImage> _cardFaceProviders = {
+    CardType.raccoon: AssetImage('assets/images/card_front_raccoon.png'),
+    CardType.trash: AssetImage('assets/images/card_front_trash.png'),
+    CardType.food: AssetImage('assets/images/card_front_food.png'),
+    CardType.pince: AssetImage('assets/images/card_front_pince.png'),
+    CardType.vacuum: AssetImage('assets/images/card_front_pince.png'),
+  };
+
   bool _resultScreenOpened = false;
 
   // ── Navigation guards ──────────────────────────────────────────────────────
@@ -332,23 +340,10 @@ class _GameScreenState extends State<GameScreen>
       _displayPlayerName = currentPlayerNameSnapshot;
     });
 
-    // Précache ciblé : s'assurer que l'image de la face avant est en mémoire
-    // AVANT de démarrer le flip, pour éviter tout flash ou délai à mi-animation.
-    if (card != null) {
-      final String? assetPath = switch (card.type) {
-        CardType.raccoon     => 'assets/images/card_front_raccoon.png',
-        CardType.trash       => 'assets/images/card_front_trash.png',
-        CardType.food        => 'assets/images/card_front_food.png',
-        CardType.pince       => 'assets/images/card_front_pince.png',
-        CardType.banquet     => null, // pas d'image dédiée
-        CardType.babyRaccoon => null,
-        CardType.vacuum      => null,
-      };
-      if (assetPath != null) {
-        // Attendre que l'image soit décodée et en cache avant le flip.
-        // Si déjà en cache (cas normal), cela retourne quasi instantanément.
-        await precacheImage(AssetImage(assetPath), context);
-      }
+    // Précharger agressivement les faces avant avant le flip
+    // afin d'éviter tout délai visible pendant la rotation.
+    if (card != null && _cardFaceProviders.containsKey(card.type)) {
+      await precacheImage(_cardFaceProviders[card.type]!, context);
     }
 
     // Animation d'apparition subtile : la carte remonte légèrement du paquet
@@ -856,12 +851,12 @@ class _GameScreenState extends State<GameScreen>
                   border: (!backgroundCard && showFront && _revealedCard != null)
                       ? Border.all(
                           color: Colors.white,
-                          width: 8.0,
+                          width: 7.0,
                         )
                       : null,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(_cardRadius - 8.0),
+                  borderRadius: BorderRadius.circular(_cardRadius - 7.0),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -869,33 +864,13 @@ class _GameScreenState extends State<GameScreen>
                         child: isBack || backgroundCard
                             ? _buildCardBackWidget()
                             : (showFront && _revealedCard?.type == CardType.raccoon)
-                                ? Image.asset(
-                                    'assets/images/card_front_raccoon.png',
-                                    fit: BoxFit.cover,
-                                    gaplessPlayback: true,
-                                    filterQuality: FilterQuality.high,
-                                  )
+                                ? Image(image: _cardFaceProviders[CardType.raccoon]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
                                 : (showFront && _revealedCard?.type == CardType.trash)
-                                    ? Image.asset(
-                                        'assets/images/card_front_trash.png',
-                                        fit: BoxFit.cover,
-                                        gaplessPlayback: true,
-                                        filterQuality: FilterQuality.high,
-                                      )
+                                    ? Image(image: _cardFaceProviders[CardType.trash]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
                                     : (showFront && _revealedCard?.type == CardType.food)
-                                        ? Image.asset(
-                                            'assets/images/card_front_food.png',
-                                            fit: BoxFit.cover,
-                                            gaplessPlayback: true,
-                                            filterQuality: FilterQuality.high,
-                                          )
-                                        : (showFront && _revealedCard?.type == CardType.pince)
-                                            ? Image.asset(
-                                                'assets/images/card_front_pince.png',
-                                                fit: BoxFit.cover,
-                                                gaplessPlayback: true,
-                                                filterQuality: FilterQuality.high,
-                                              )
+                                        ? Image(image: _cardFaceProviders[CardType.food]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
+                                        : ((showFront && _revealedCard?.type == CardType.pince) || (showFront && _revealedCard?.type == CardType.vacuum))
+                                            ? Image(image: _cardFaceProviders[_revealedCard!.type]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
                                             : ColoredBox(
                                                 color: _revealedCard?.color ?? Colors.deepPurple,
                                               ),
