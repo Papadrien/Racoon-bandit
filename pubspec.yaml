@@ -38,6 +38,7 @@ flutter:
     - assets/images/card_front_food.png
     - assets/images/card_front_pince.png
     - assets/images/icon_trash.png
+    - assets/images/icon_food.png
     # Nota : assets/sounds/ inclut automatiquement tous les .mp3 du dossier
     - assets/images/cards/card_back_purple.png
     - assets/images/cards/card_back_blue.png

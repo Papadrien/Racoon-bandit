@@ -123,6 +123,11 @@ class _GameScreenState extends State<GameScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Précache les faces des cartes pour éviter le délai lors du retournement.
+    precacheImage(const AssetImage('assets/images/card_front_raccoon.png'), context);
+    precacheImage(const AssetImage('assets/images/card_front_trash.png'), context);
+    precacheImage(const AssetImage('assets/images/card_front_food.png'), context);
+    precacheImage(const AssetImage('assets/images/card_front_pince.png'), context);
     if (!_initialized) {
       _restoreOrInitGame();
     }
@@ -812,10 +817,6 @@ class _GameScreenState extends State<GameScreen>
                 height: _cardHeight,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(_cardRadius),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 3,
-                  ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(_cardRadius - 3),
