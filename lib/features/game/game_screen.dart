@@ -69,7 +69,7 @@ class _GameScreenState extends State<GameScreen>
     CardType.trash: AssetImage('assets/images/card_front_trash.png'),
     CardType.food: AssetImage('assets/images/card_front_food.png'),
     CardType.pince: AssetImage('assets/images/card_front_pince.png'),
-    CardType.vacuum: AssetImage('assets/images/card_front_pince.png'),
+    CardType.vacuum: AssetImage('assets/images/card_front_vacuum.png'),
   };
 
   bool _resultScreenOpened = false;
@@ -138,6 +138,7 @@ class _GameScreenState extends State<GameScreen>
     precacheImage(const AssetImage('assets/images/card_front_trash.png'), context);
     precacheImage(const AssetImage('assets/images/card_front_food.png'), context);
     precacheImage(const AssetImage('assets/images/card_front_pince.png'), context);
+    precacheImage(const AssetImage('assets/images/card_front_vacuum.png'), context);
     if (!_initialized) {
       _restoreOrInitGame();
     }
@@ -346,9 +347,6 @@ class _GameScreenState extends State<GameScreen>
       await precacheImage(_cardFaceProviders[card.type]!, context);
     }
 
-    // Animation d'apparition subtile : la carte remonte légèrement du paquet
-    unawaited(_appearController.forward(from: 0));
-
     await _flipController.forward(from: 0);
     _playCardFeedback(card, result);
 
@@ -447,6 +445,12 @@ class _GameScreenState extends State<GameScreen>
     _flipController.reset();
     _slideController.reset();
 
+    // Animation d'apparition : la nouvelle carte remonte légèrement du paquet
+    // quand elle devient disponible pour la prochaine pioche.
+    if (!_gameState.isGameOver) {
+      unawaited(_appearController.forward(from: 0));
+    }
+
     if (_gameState.isGameOver && mounted && !_resultScreenOpened) {
       _resultScreenOpened = true;
       _navigationInProgress = true;
@@ -470,7 +474,11 @@ class _GameScreenState extends State<GameScreen>
       ));
 
       HapticService.trigger(HapticType.heavy);
-      AudioService.instance.playSfx(SoundEffect.popupRecompense);
+      // Son joué ici uniquement s'il n'y a pas de popup de déblocage.
+      // Si des dos sont débloqués, c'est la popup qui joue le son.
+      if (newUnlocks.isEmpty) {
+        AudioService.instance.playSfx(SoundEffect.popupRecompense);
+      }
 
       if (!mounted || _disposed) return;
 
@@ -826,10 +834,11 @@ class _GameScreenState extends State<GameScreen>
               angle > math.pi / 2 - 0.08 &&
               angle < math.pi / 2 + 0.08;
 
-          // Animation d'apparition : légère remontée depuis le paquet
-          // Appliquée uniquement à la carte principale (pas backgroundCard)
-          final appearDy = backgroundCard ? 0.0 : _appearOffset.value * 10.0;
-          final appearAlpha = backgroundCard ? 1.0 : _appearOpacity.value;
+          // Animation d'apparition : légère remontée depuis le paquet.
+          // Appliquée uniquement à la carte principale au repos (pas pendant le flip).
+          final isFlipping = flip > 0.0;
+          final appearDy = (backgroundCard || isFlipping) ? 0.0 : _appearOffset.value * 10.0;
+          final appearAlpha = (backgroundCard || isFlipping) ? 1.0 : _appearOpacity.value;
 
           return Opacity(
             opacity: nearEdge ? 0.0 : appearAlpha,
