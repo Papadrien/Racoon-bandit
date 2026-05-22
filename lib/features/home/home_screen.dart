@@ -503,7 +503,7 @@ class _Logo extends StatelessWidget {
                   ),
             ),
             Text(
-              'PINCE',
+              'BANDIT',
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     color: AppTheme.accent,
                     fontSize: fontSize,

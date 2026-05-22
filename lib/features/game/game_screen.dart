@@ -837,7 +837,7 @@ class _GameScreenState extends State<GameScreen>
                   border: (!backgroundCard && showFront && _revealedCard != null)
                       ? Border.all(
                           color: Colors.white.withValues(alpha: 0.35),
-                          width: 1.5,
+                          width: 3.5,
                         )
                       : null,
                 ),

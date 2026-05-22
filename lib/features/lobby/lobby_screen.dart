@@ -299,21 +299,21 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
                         const Spacer(),
 
-                        // ── Section Mode Pagaille ──────────────────────────
+                        // ── Bouton démarrer ────────────────────────────────
                         const SizedBox(height: 20),
+                        PrimaryButton(
+                          label: AppLocalizations.of(context)!.lobbyStart,
+                          onPressed: _canStart ? _startGame : null,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // ── Section Mode Pagaille ──────────────────────────
                         _ChaosModeSection(
                           enabled: _chaosModeEnabled,
                           onToggle: (value) {
                             setState(() => _chaosModeEnabled = value);
                           },
                           onHelpTap: _openChaosTutorial,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // ── Bouton démarrer ────────────────────────────────
-                        PrimaryButton(
-                          label: AppLocalizations.of(context)!.lobbyStart,
-                          onPressed: _canStart ? _startGame : null,
                         ),
                         const SizedBox(height: 12),
 

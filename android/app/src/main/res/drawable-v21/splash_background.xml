@@ -3,11 +3,8 @@
     android:opacity="opaque">
     <!-- Fond noir -->
     <item android:drawable="@android:color/black" />
-    <!-- Logo centré avec inset pour contrôler la taille affichée -->
-    <item
-        android:gravity="center"
-        android:width="560dp"
-        android:height="560dp">
+    <!-- Logo centré, taille naturelle -->
+    <item android:gravity="center">
         <bitmap
             android:src="@drawable/splash_logo"
             android:gravity="center"
