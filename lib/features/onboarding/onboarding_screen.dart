@@ -169,11 +169,22 @@ class _SlideCard extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Emoji
-                Text(
-                  slide.emoji,
-                  style: TextStyle(fontSize: emojiSize),
-                ),
+                // Illustration carte — image réelle ou emoji fallback
+                if (slide.cardImageAsset != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      slide.cardImageAsset!,
+                      width: emojiSize * 1.4,
+                      height: emojiSize * 2.0,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                else
+                  Text(
+                    slide.emoji,
+                    style: TextStyle(fontSize: emojiSize),
+                  ),
                 SizedBox(height: screenHeight < 650 ? 20 : 28),
                 // Titre
                 Text(

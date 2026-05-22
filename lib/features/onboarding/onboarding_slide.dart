@@ -13,10 +13,15 @@ class OnboardingSlide {
     required this.description,
     required this.cardColor,
     this.accentColor = const Color(0xFF7C4DFF),
+    this.cardImageAsset,
   });
 
-  /// Emoji illustrant la slide (grand, visible d'un coup d'œil).
+  /// Emoji illustrant la slide (fallback si pas d'image).
   final String emoji;
+
+  /// Chemin asset de l'image de la face avant de la carte (optionnel).
+  /// Si renseigné, remplace l'emoji dans l'affichage onboarding.
+  final String? cardImageAsset;
 
   /// Titre court de la slide.
   final String Function(BuildContext context) title;
@@ -40,6 +45,7 @@ class OnboardingSlides {
   static final List<OnboardingSlide> all = [
     OnboardingSlide(
       emoji: '🍎',
+      cardImageAsset: 'assets/images/card_front_food.png',
       title: (context) => AppLocalizations.of(context)!.onboardingFoodTitle,
       description: (context) => AppLocalizations.of(context)!.onboardingFoodDesc,
       cardColor: Color(0xFF1B5E20),
@@ -47,6 +53,7 @@ class OnboardingSlides {
     ),
     OnboardingSlide(
       emoji: '🥷',
+      cardImageAsset: 'assets/images/card_front_pince.png',
       title: (context) => AppLocalizations.of(context)!.onboardingPinceTitle,
       description: (context) => AppLocalizations.of(context)!.onboardingPinceDesc,
       cardColor: Color(0xFF1A237E),
@@ -54,6 +61,7 @@ class OnboardingSlides {
     ),
     OnboardingSlide(
       emoji: '🦝',
+      cardImageAsset: 'assets/images/card_front_raccoon.png',
       title: (context) => AppLocalizations.of(context)!.onboardingRaccoonTitle,
       description: (context) => AppLocalizations.of(context)!.onboardingRaccoonDesc,
       cardColor: Color(0xFF37474F),
@@ -61,6 +69,7 @@ class OnboardingSlides {
     ),
     OnboardingSlide(
       emoji: '🧊',
+      cardImageAsset: 'assets/images/card_front_trash.png',
       title: (context) => AppLocalizations.of(context)!.onboardingTrashTitle,
       description: (context) => AppLocalizations.of(context)!.onboardingTrashDesc,
       cardColor: Color(0xFF0D47A1),

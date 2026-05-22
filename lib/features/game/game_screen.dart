@@ -50,6 +50,8 @@ class _GameScreenState extends State<GameScreen>
   final Map<int, GlobalKey> _fridgeZoneKeys = {};
   final GlobalKey _rootStackKey = GlobalKey();
   int? _lastResolvedPlayerId;
+  // Nom du joueur affiché pendant l'animation (pour ne pas sauter visuellement)
+  String? _displayPlayerName;
 
   bool _showingPinceOverlay = false;
   List<PlayerState> _pinceTargets = [];
@@ -161,6 +163,7 @@ class _GameScreenState extends State<GameScreen>
     _lastResolvedPlayerId = null;
     _navigationInProgress = false;
 
+    _displayPlayerName = null;
     _initialized = true;
     unawaited(WakelockService.enable());
   }
@@ -317,6 +320,8 @@ class _GameScreenState extends State<GameScreen>
     });
 
     _lastResolvedPlayerId = _gameState.currentPlayer.id;
+    // Capturer le nom avant l'avancée du tour pour l'afficher pendant l'animation
+    final String currentPlayerNameSnapshot = _gameState.currentPlayer.name;
     final foodCountBeforeDraw = _gameState.currentPlayer.foodCount;
 
     final result = _gameState.drawCard();
@@ -324,6 +329,7 @@ class _GameScreenState extends State<GameScreen>
 
     setState(() {
       _revealedCard = card;
+      _displayPlayerName = currentPlayerNameSnapshot;
     });
 
     // Animation d'apparition subtile : la carte remonte légèrement du paquet
@@ -421,6 +427,7 @@ class _GameScreenState extends State<GameScreen>
     setState(() {
       _revealedCard = null;
       _isAnimating = false;
+      _displayPlayerName = null;
     });
 
     _flipController.reset();
@@ -641,7 +648,11 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _buildPlayerCard(int index, {double maxWidth = 150}) {
     final player = _gameState.players[index];
-    final active = index == _gameState.currentPlayerIndex;
+    // Durant l'animation, on maintient la mise en évidence du joueur qui joue
+    final animatingPlayerId = _displayPlayerName != null ? _lastResolvedPlayerId : null;
+    final active = animatingPlayerId != null
+        ? player.id == animatingPlayerId
+        : index == _gameState.currentPlayerIndex;
 
     _playerKeys.putIfAbsent(player.id, GlobalKey.new);
     _foodZoneKeys.putIfAbsent(player.id, GlobalKey.new);
@@ -698,7 +709,12 @@ class _GameScreenState extends State<GameScreen>
               runSpacing: 1,
               children: List.generate(
                 player.foodCount,
-                (_) => Text('🍎', style: TextStyle(fontSize: emojiFontSize)),
+                (_) => Image.asset(
+                  'assets/images/icon_food.png',
+                  width: emojiFontSize * 1.4,
+                  height: emojiFontSize * 1.4,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             const SizedBox(height: 2),
@@ -817,6 +833,13 @@ class _GameScreenState extends State<GameScreen>
                 height: _cardHeight,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(_cardRadius),
+                  // Contour uniquement sur la face avant — le dos n'a pas de contour
+                  border: (!backgroundCard && showFront && _revealedCard != null)
+                      ? Border.all(
+                          color: Colors.white.withValues(alpha: 0.35),
+                          width: 1.5,
+                        )
+                      : null,
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(_cardRadius - 3),
@@ -894,7 +917,9 @@ class _GameScreenState extends State<GameScreen>
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
-            AppLocalizations.of(context)!.gameTurnOf(_gameState.currentPlayer.name),
+            AppLocalizations.of(context)!.gameTurnOf(
+              _displayPlayerName ?? _gameState.currentPlayer.name,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
