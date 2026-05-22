@@ -54,6 +54,7 @@ class RewardedAdService {
   Future<bool> showRewardedLifeAd({
     required VoidCallback onRewardEarned,
     required ValueChanged<String> onError,
+    VoidCallback? onLoading,
   }) async {
     if (_isShowing) {
       onError('Une publicité est déjà en cours.');
@@ -61,8 +62,8 @@ class RewardedAdService {
     }
 
     if (_rewardedInterstitialAd == null) {
-      preloadAd();
-      onError('Préparation de la publicité...');
+      if (!_isLoading) preloadAd();
+      onLoading?.call();
       return false;
     }
 

@@ -72,18 +72,24 @@ class _HomeScreenState extends State<HomeScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
       _lifeSystemService.updateLivesFromTime().then((_) {
-        if (mounted) setState(() {});
+        if (mounted) {
+          _ensureAdPreloaded();
+          setState(() {});
+        }
       });
     }
   }
 
   Future<void> _initializeLives() async {
     await _lifeSystemService.load();
-    await RewardedAdService.instance.preloadAd();
+    _ensureAdPreloaded();
 
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       await _lifeSystemService.updateLivesFromTime();
-      if (mounted) setState(() {});
+      if (mounted) {
+        _ensureAdPreloaded();
+        setState(() {});
+      }
     });
 
     if (mounted) {
@@ -92,6 +98,14 @@ class _HomeScreenState extends State<HomeScreen>
         // Déclencher l'onboarding au bon moment : après chargement, avant UI
         _showOnboarding = OnboardingService.shouldShowOnboarding;
       });
+    }
+  }
+
+  /// Déclenche le preload de la pub uniquement si le bouton est visible.
+  /// Sans effet si déjà chargée ou en cours de chargement.
+  void _ensureAdPreloaded() {
+    if (_lifeSystemService.currentLives < LifeSystemService.maxLives) {
+      RewardedAdService.instance.preloadAd();
     }
   }
 
@@ -138,6 +152,12 @@ class _HomeScreenState extends State<HomeScreen>
           SnackBar(
             content: Text(l10n.lifeEarned),
           ),
+        );
+      },
+      onLoading: () {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Publicité en cours de chargement…')),
         );
       },
       onError: (message) {
