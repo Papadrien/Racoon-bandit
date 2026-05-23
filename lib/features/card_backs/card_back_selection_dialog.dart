@@ -223,7 +223,7 @@ class _SheetHeader extends StatelessWidget {
               children: [
                 Text(
                   AppLocalizations.of(context)!.cardBacksTitle,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 2.5,
@@ -527,11 +527,11 @@ class _CardPreview extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_rounded, color: Colors.white, size: 10),
-                  SizedBox(width: 3),
+                  const Icon(Icons.check_rounded, color: Colors.white, size: 10),
+                  const SizedBox(width: 3),
                   Text(
                     AppLocalizations.of(context)!.equipped,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.8,

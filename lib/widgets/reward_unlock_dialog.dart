@@ -287,8 +287,8 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.style_rounded, size: 18),
-                                SizedBox(width: 8),
+                                const Icon(Icons.style_rounded, size: 18),
+                                const SizedBox(width: 8),
                                 Text(AppLocalizations.of(context)!.tryButton),
                               ],
                             ),
@@ -307,7 +307,7 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                           ),
                           child: Text(
                             AppLocalizations.of(context)!.laterButton,
-                            style: TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 14),
                           ),
                         ),
                       ],

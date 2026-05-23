@@ -126,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _watchAdForLife() async {
-    if (_isRewardLoading || RewardedAdService.instance.isBusy) {
+    if (_isRewardLoading) {
       return;
     }
 
