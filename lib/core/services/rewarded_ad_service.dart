@@ -56,17 +56,19 @@ class RewardedAdService {
     required VoidCallback onRewardEarned,
     required ValueChanged<String> onError,
   }) async {
-    if (_isShowing) {
-      onError('Une erreur est survenue, veuillez réessayer.');
-      return false;
+    if (_isShowing) return false;
+
+    // Si pas prête et pas en chargement, lancer le chargement maintenant
+    if (_rewardedInterstitialAd == null && !_isLoading) {
+      await preloadAd();
     }
 
-    // Si le chargement est en cours, on attend qu'il se termine
+    // Si en chargement (lancé maintenant ou déjà en cours), attendre la fin
     if (_rewardedInterstitialAd == null && _isLoading) {
       await _loadCompleter?.future;
     }
 
-    // Toujours pas prête (échec réseau ou pas encore lancé)
+    // Toujours pas prête = vrai échec réseau
     if (_rewardedInterstitialAd == null) {
       preloadAd();
       onError('Une erreur est survenue, veuillez réessayer.');
