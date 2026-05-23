@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'analytics_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -8,12 +10,12 @@ class RewardedAdService {
   static final RewardedAdService instance = RewardedAdService._();
 
   RewardedInterstitialAd? _rewardedInterstitialAd;
+  Completer<bool>? _loadCompleter;
 
   bool _isLoading = false;
   bool _isShowing = false;
   bool _hasRewardBeenGranted = false;
 
-  bool get isBusy => _isLoading || _isShowing;
   bool get isAdReady => _rewardedInterstitialAd != null;
 
   static Future<void> initialize() async {
@@ -21,11 +23,10 @@ class RewardedAdService {
   }
 
   Future<void> preloadAd() async {
-    if (_rewardedInterstitialAd != null || _isLoading) {
-      return;
-    }
+    if (_rewardedInterstitialAd != null || _isLoading) return;
 
     _isLoading = true;
+    _loadCompleter = Completer<bool>();
 
     await RewardedInterstitialAd.load(
       adUnitId: _adUnitId,
@@ -35,16 +36,16 @@ class RewardedAdService {
           _rewardedInterstitialAd?.dispose();
           _rewardedInterstitialAd = ad;
           _isLoading = false;
-          // Analytics
+          _loadCompleter?.complete(true);
+          _loadCompleter = null;
           AnalyticsService.instance.logRewardedAdLoaded();
         },
         onAdFailedToLoad: (error) {
-          if (kDebugMode) {
-            print('[Ads] Failed to preload ad: ${error.message}');
-          }
+          if (kDebugMode) print('[Ads] Failed to preload: ${error.message}');
           _rewardedInterstitialAd = null;
           _isLoading = false;
-          // Analytics
+          _loadCompleter?.complete(false);
+          _loadCompleter = null;
           AnalyticsService.instance.logRewardedAdFailed(reason: error.message);
         },
       ),
@@ -54,16 +55,21 @@ class RewardedAdService {
   Future<bool> showRewardedLifeAd({
     required VoidCallback onRewardEarned,
     required ValueChanged<String> onError,
-    VoidCallback? onLoading,
   }) async {
     if (_isShowing) {
-      onError('Une publicité est déjà en cours.');
+      onError('Une erreur est survenue, veuillez réessayer.');
       return false;
     }
 
+    // Si le chargement est en cours, on attend qu'il se termine
+    if (_rewardedInterstitialAd == null && _isLoading) {
+      await _loadCompleter?.future;
+    }
+
+    // Toujours pas prête (échec réseau ou pas encore lancé)
     if (_rewardedInterstitialAd == null) {
-      if (!_isLoading) preloadAd();
-      onLoading?.call();
+      preloadAd();
+      onError('Une erreur est survenue, veuillez réessayer.');
       return false;
     }
 
@@ -77,29 +83,22 @@ class RewardedAdService {
           ad.dispose();
           _resetState();
           preloadAd();
-
-          if (!_hasRewardBeenGranted) {
-            onError('La publicité doit être regardée entièrement.');
-          }
+          // Pas de message si l'utilisateur ferme sans regarder entièrement
         },
         onAdFailedToShowFullScreenContent: (ad, error) {
           ad.dispose();
           _resetState();
           preloadAd();
-          onError('Impossible d\'afficher la publicité.');
+          onError('Une erreur est survenue, veuillez réessayer.');
         },
       );
 
-      // Analytics — pub affichée
       AnalyticsService.instance.logRewardedAdShown();
 
       await _rewardedInterstitialAd!.show(
         onUserEarnedReward: (_, reward) {
-          if (_hasRewardBeenGranted) {
-            return;
-          }
+          if (_hasRewardBeenGranted) return;
           _hasRewardBeenGranted = true;
-          // Analytics — récompense obtenue
           AnalyticsService.instance.logRewardedAdRewarded();
           onRewardEarned();
         },
@@ -107,13 +106,10 @@ class RewardedAdService {
 
       return true;
     } catch (e) {
-      if (kDebugMode) {
-        print('[Ads] Unexpected error: $e');
-      }
-
+      if (kDebugMode) print('[Ads] Unexpected error: $e');
       _resetState();
       preloadAd();
-      onError('Une erreur est survenue avec la publicité.');
+      onError('Une erreur est survenue, veuillez réessayer.');
       return false;
     }
   }
@@ -129,7 +125,6 @@ class RewardedAdService {
     if (defaultTargetPlatform == TargetPlatform.android) {
       return 'ca-app-pub-3940256099942544/5354046379';
     }
-
     return 'ca-app-pub-3940256099942544/6978759866';
   }
 }

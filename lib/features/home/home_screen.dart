@@ -149,23 +149,12 @@ class _HomeScreenState extends State<HomeScreen>
         setState(() {});
 
         messenger.showSnackBar(
-          SnackBar(
-            content: Text(l10n.lifeEarned),
-          ),
-        );
-      },
-      onLoading: () {
-        if (!mounted) return;
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Publicité en cours de chargement…')),
+          SnackBar(content: Text(l10n.lifeEarned)),
         );
       },
       onError: (message) {
         if (!mounted) return;
-
-        messenger.showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        messenger.showSnackBar(SnackBar(content: Text(message)));
       },
     );
 
