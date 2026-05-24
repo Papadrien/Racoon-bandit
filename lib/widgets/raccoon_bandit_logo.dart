@@ -4,16 +4,18 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 
-/// Logo « RACCOON / BANDIT » rendu entièrement en Flutter.
-///
-/// Effet sticker cartoon :
-///   • Police Righteous personnalisée
-///   • Contour blanc épais autour du MOT entier (pas lettre par lettre)
-///   • Arc smile sur les deux mots (lettres du centre plus hautes)
-///   • Légère inclinaison de chaque lettre
-///   • Ombre portée douce
-class RaccoonBanditLogo extends StatelessWidget {
+/// Logo « RACCOON / BANDIT » — contour net via Picture → toImage → dilate.
+class RaccoonBanditLogo extends StatefulWidget {
   const RaccoonBanditLogo({super.key});
+
+  @override
+  State<RaccoonBanditLogo> createState() => _RaccoonBanditLogoState();
+}
+
+class _RaccoonBanditLogoState extends State<RaccoonBanditLogo> {
+  ui.Image? _raccoonImg;
+  ui.Image? _banditImg;
+  Size? _lastSize;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,13 @@ class RaccoonBanditLogo extends StatelessWidget {
       builder: (context, constraints) {
         final w = constraints.maxWidth;
         final h = w * 0.50 * heightScale;
+        final sz = Size(w, h);
+
+        // Regénère les images si la taille change
+        if (_lastSize != sz) {
+          _lastSize = sz;
+          _buildImages(sz);
+        }
 
         return SizedBox(
           width: w,
@@ -32,11 +41,121 @@ class RaccoonBanditLogo extends StatelessWidget {
             painter: _LogoPainter(
               primaryColor: AppTheme.primary,
               accentColor: AppTheme.accent,
+              raccoonImg: _raccoonImg,
+              banditImg: _banditImg,
             ),
           ),
         );
       },
     );
+  }
+
+  Future<void> _buildImages(Size size) async {
+    final r = await _renderWordToImage(
+      word: 'RACCOON',
+      fillColor: AppTheme.primary,
+      size: size,
+      yFraction: 0.33,
+      arcCurve: 0.55,
+      fontSizeFraction: 0.170,
+    );
+    final b = await _renderWordToImage(
+      word: 'BANDIT',
+      fillColor: AppTheme.accent,
+      size: size,
+      yFraction: 0.67,
+      arcCurve: 0.55,
+      fontSizeFraction: 0.190,
+    );
+    if (mounted) {
+      setState(() {
+        _raccoonImg = r;
+        _banditImg = b;
+      });
+    }
+  }
+
+  /// Rend un mot dans une ui.Image de la taille du canvas.
+  static Future<ui.Image> _renderWordToImage({
+    required String word,
+    required Color fillColor,
+    required Size size,
+    required double yFraction,
+    required double arcCurve,
+    required double fontSizeFraction,
+  }) async {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    _paintWord(
+      canvas: canvas,
+      size: size,
+      word: word,
+      fillColor: fillColor,
+      yFraction: yFraction,
+      arcCurve: arcCurve,
+      fontSizeFraction: fontSizeFraction,
+    );
+    final picture = recorder.endRecording();
+    return picture.toImage(size.width.ceil(), size.height.ceil());
+  }
+
+  // ── Logique de dessin d'un mot (positions + arc) ──────────────────────────
+
+  static void _paintWord({
+    required Canvas canvas,
+    required Size size,
+    required String word,
+    required Color fillColor,
+    required double yFraction,
+    required double arcCurve,
+    required double fontSizeFraction,
+  }) {
+    final fontSize = size.width * fontSizeFraction;
+    final chars = word.split('');
+
+    final style = TextStyle(
+      fontFamily: 'Righteous',
+      fontSize: fontSize,
+      fontWeight: FontWeight.bold,
+      letterSpacing: fontSize * 0.04,
+      color: fillColor,
+    );
+
+    final painters = <TextPainter>[];
+    for (final ch in chars) {
+      painters.add(
+        TextPainter(
+          text: TextSpan(text: ch, style: style),
+          textDirection: TextDirection.ltr,
+        )..layout(),
+      );
+    }
+
+    final totalW = painters.fold(0.0, (s, tp) => s + tp.size.width);
+    final mid = totalW / 2;
+    final yCenter = size.height * yFraction;
+
+    double wordX = 0;
+    double canvasX = (size.width - totalW) / 2;
+
+    for (int i = 0; i < chars.length; i++) {
+      final tp = painters[i];
+      final cw = tp.size.width;
+      final chH = tp.size.height;
+
+      final t = mid > 0 ? (wordX + cw / 2 - mid) / mid : 0.0;
+      final arcY = -arcCurve * (1.0 - t * t) * fontSize * 0.22;
+      final tilt = arcCurve * t * 0.09;
+
+      canvas.save();
+      canvas.translate(canvasX + cw / 2, yCenter + arcY);
+      canvas.rotate(tilt);
+      tp.paint(canvas, Offset(-cw / 2, -chH * 0.60));
+      canvas.restore();
+
+      wordX += cw;
+      canvasX += cw;
+    }
   }
 }
 
@@ -46,219 +165,67 @@ class _LogoPainter extends CustomPainter {
   const _LogoPainter({
     required this.primaryColor,
     required this.accentColor,
+    required this.raccoonImg,
+    required this.banditImg,
   });
 
   final Color primaryColor;
   final Color accentColor;
+  final ui.Image? raccoonImg;
+  final ui.Image? banditImg;
 
   @override
   void paint(Canvas canvas, Size size) {
-    // RACCOON — violet, smile
-    _drawWord(
-      canvas: canvas,
-      size: size,
-      word: 'RACCOON',
-      fillColor: primaryColor,
-      yFraction: 0.33,
-      arcCurve: 0.55,
-      fontSizeFraction: 0.170,
-    );
+    if (raccoonImg == null || banditImg == null) return;
 
-    // BANDIT — orange, très proche de RACCOON
-    _drawWord(
-      canvas: canvas,
-      size: size,
-      word: 'BANDIT',
-      fillColor: accentColor,
-      yFraction: 0.67,
-      arcCurve: 0.55,
-      fontSizeFraction: 0.190,
-    );
+    _drawWithOutline(canvas, size, raccoonImg!);
+    _drawWithOutline(canvas, size, banditImg!);
   }
 
-  // ── Dessin d'un mot avec contour global ──────────────────────────────────
+  void _drawWithOutline(Canvas canvas, Size size, ui.Image img) {
+    final outlineR = size.width * 0.012; // rayon du contour net
 
-  void _drawWord({
-    required Canvas canvas,
-    required Size size,
-    required String word,
-    required Color fillColor,
-    required double yFraction,
-    required double arcCurve,   // positif = smile (centre plus haut)
-    required double fontSizeFraction,
-  }) {
-    final fontSize = size.width * fontSizeFraction;
-    final outlineWidth = fontSize * 0.10; // contour plus fin qu'avant
-    final chars = word.split('');
+    final rect = Offset.zero & size;
 
-    final fillStyle = TextStyle(
-      fontFamily: 'Righteous',
-      fontSize: fontSize,
-      fontWeight: FontWeight.bold,
-      letterSpacing: fontSize * 0.04, // conserve l'espacement actuel
-      color: fillColor,
+    // 1. Ombre portée
+    canvas.saveLayer(rect, Paint());
+    canvas.drawImage(
+      img,
+      Offset.zero,
+      Paint()
+        ..colorFilter = const ColorFilter.mode(Color(0x55000000), BlendMode.srcIn)
+        ..imageFilter = ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
     );
-
-    // ── Mesure des caractères ─────────────────────────────────────────────
-
-    final fillPainters = <TextPainter>[];
-    for (final ch in chars) {
-      fillPainters.add(
-        TextPainter(
-          text: TextSpan(text: ch, style: fillStyle),
-          textDirection: TextDirection.ltr,
-        )..layout(),
-      );
-    }
-
-    final totalW = fillPainters.fold(0.0, (s, tp) => s + tp.size.width);
-    final mid = totalW / 2;
-    final yCenter = size.height * yFraction;
-
-    // ── Calcul des positions arc ──────────────────────────────────────────
-
-    // Pour chaque lettre : position canvas, arcY, tilt
-    final positions = <({double cx, double cy, double tilt, double cw, double chH})>[];
-
-    double wordX = 0;
-    double canvasX = (size.width - totalW) / 2;
-
-    for (int i = 0; i < chars.length; i++) {
-      final tp = fillPainters[i];
-      final cw = tp.size.width;
-      final chH = tp.size.height;
-
-      final charCenterInWord = wordX + cw / 2;
-      final t = mid > 0 ? (charCenterInWord - mid) / mid : 0.0;
-
-      // Smile : centre monte (arcY négatif quand t ≈ 0)
-      // parabole inversée : arcY = -curve * (1 - t²) * amplitude
-      final arcY = -arcCurve * (1.0 - t * t) * fontSize * 0.22;
-
-      // Inclinaison tangente
-      final tilt = arcCurve * t * 0.09;
-
-      positions.add((
-        cx: canvasX + cw / 2,
-        cy: yCenter + arcY,
-        tilt: tilt,
-        cw: cw,
-        chH: chH,
-      ));
-
-      wordX += cw;
-      canvasX += cw;
-    }
-
-    // ── 1. Ombre portée douce ─────────────────────────────────────────────
-
-    final shadowStyle = TextStyle(
-      fontFamily: 'Righteous',
-      fontSize: fontSize,
-      fontWeight: FontWeight.bold,
-      letterSpacing: fontSize * 0.04,
-      foreground: Paint()
-        ..style = PaintingStyle.fill
-        ..color = const Color(0x55000000)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    canvas.restore();
+    // décalage ombre — on refait avec translate
+    canvas.save();
+    canvas.translate(3, 7);
+    canvas.saveLayer(rect, Paint());
+    canvas.drawImage(
+      img,
+      Offset.zero,
+      Paint()
+        ..colorFilter = const ColorFilter.mode(Color(0x44000000), BlendMode.srcIn)
+        ..imageFilter = ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
     );
-
-    for (int i = 0; i < chars.length; i++) {
-      final ch = chars[i];
-      final p = positions[i];
-      canvas.save();
-      canvas.translate(p.cx + 3, p.cy + 8);
-      canvas.rotate(p.tilt);
-      final dx = -p.cw / 2;
-      final dy = -p.chH * 0.60;
-      TextPainter(
-        text: TextSpan(text: ch, style: shadowStyle),
-        textDirection: TextDirection.ltr,
-      )
-        ..layout()
-        ..paint(canvas, Offset(dx, dy));
-      canvas.restore();
-    }
-
-    // ── 2. Contour blanc global via ImageFilter.dilate ────────────────────
-    //
-    // On enregistre les lettres dans un Picture, puis on le redessine
-    // avec un ColorFilter blanc + ImageFilter.dilate pour obtenir
-    // un halo autour du mot entier (pas lettre par lettre).
-
-    final recorder = ui.PictureRecorder();
-    final offCanvas = Canvas(recorder);
-
-    for (int i = 0; i < chars.length; i++) {
-      final ch = chars[i];
-      final p = positions[i];
-      offCanvas.save();
-      offCanvas.translate(p.cx, p.cy);
-      offCanvas.rotate(p.tilt);
-      final dx = -p.cw / 2;
-      final dy = -p.chH * 0.60;
-      TextPainter(
-        text: TextSpan(
-          text: ch,
-          style: TextStyle(
-            fontFamily: 'Righteous',
-            fontSize: fontSize,
-            fontWeight: FontWeight.bold,
-            letterSpacing: fontSize * 0.04,
-            color: Colors.black,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )
-        ..layout()
-        ..paint(offCanvas, Offset(dx, dy));
-      offCanvas.restore();
-    }
-
-    final picture = recorder.endRecording();
-
-    // Bounds du layer (légèrement agrandi pour le halo)
-    final halo = outlineWidth + 4;
-    final layerRect = Rect.fromLTWH(
-      -halo,
-      -halo,
-      size.width + halo * 2,
-      size.height + halo * 2,
-    );
-
-    // Dessiner le halo blanc : dilate pour épaissir, blur léger pour arrondir
-    final haloPaint = Paint()
-      ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-      ..imageFilter = ui.ImageFilter.compose(
-        outer: ui.ImageFilter.blur(sigmaX: outlineWidth * 0.6, sigmaY: outlineWidth * 0.6),
-        inner: ui.ImageFilter.dilate(
-          radiusX: outlineWidth * 0.7,
-          radiusY: outlineWidth * 0.7,
-        ),
-      );
-
-    canvas.saveLayer(layerRect, haloPaint);
-    canvas.drawPicture(picture);
+    canvas.restore();
     canvas.restore();
 
-    // ── 3. Lettres colorées ───────────────────────────────────────────────
+    // 2. Contour blanc net via dilate sur le bitmap
+    canvas.saveLayer(rect,
+      Paint()
+        ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
+        ..imageFilter = ui.ImageFilter.dilate(radiusX: outlineR, radiusY: outlineR),
+    );
+    canvas.drawImage(img, Offset.zero, Paint());
+    canvas.restore();
 
-    for (int i = 0; i < chars.length; i++) {
-      final p = positions[i];
-      final tp = fillPainters[i];
-      canvas.save();
-      canvas.translate(p.cx, p.cy);
-      canvas.rotate(p.tilt);
-      final dx = -p.cw / 2;
-      final dy = -p.chH * 0.60;
-      tp.paint(canvas, Offset(dx, dy));
-      canvas.restore();
-    }
+    // 3. Lettres colorées par-dessus
+    canvas.drawImage(img, Offset.zero, Paint());
   }
-
-  // ── Repaint ───────────────────────────────────────────────────────────────
 
   @override
   bool shouldRepaint(covariant _LogoPainter old) =>
+      old.raccoonImg != raccoonImg || old.banditImg != banditImg ||
       old.primaryColor != primaryColor || old.accentColor != accentColor;
 }
