@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
+import '../../core/services/haptic_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
@@ -14,7 +15,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_theme_provider.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/lives_indicator.dart';
-import '../../widgets/primary_button.dart';
 import '../../widgets/raccoon_bandit_logo.dart';
 import '../onboarding/onboarding_screen.dart';
 
@@ -351,7 +351,7 @@ class _PlayButtonArea extends StatelessWidget {
           else
             ScaleTransition(
               scale: playButtonScale,
-              child: PrimaryButton(
+              child: _StickerPlayButton(
                 label: AppLocalizations.of(context)!.play,
                 onPressed: isLoading ? null : onPlay,
               ),
@@ -489,3 +489,183 @@ class _RewardAdButton extends StatelessWidget {
 }
 
 // _Logo remplacé par RaccoonBanditLogo (lib/widgets/raccoon_bandit_logo.dart)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bouton Jouer style sticker (image 2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _StickerPlayButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+
+  const _StickerPlayButton({required this.label, required this.onPressed});
+
+  static const _orange = Color(0xFFE16713);
+  static const _orangeDark = Color(0xFFC05510);
+  static const _foldSize = 18.0;
+  static const _height = 56.0;
+  static const _radius = 16.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+
+    return GestureDetector(
+      onTap: enabled
+          ? () {
+              HapticService.trigger(HapticType.selection);
+              AudioService.instance.playSfx(SoundEffect.button);
+              onPressed!();
+            }
+          : null,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // ── Ombre portée ──────────────────────────────────────────────────
+          Positioned(
+            left: 4,
+            top: 4,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              height: _height,
+              decoration: BoxDecoration(
+                color: _orangeDark.withOpacity(0.55),
+                borderRadius: BorderRadius.circular(_radius),
+              ),
+            ),
+          ),
+
+          // ── Corps principal du bouton ──────────────────────────────────────
+          CustomPaint(
+            painter: _FoldPainter(
+              color: enabled ? _orange : _orange.withOpacity(0.5),
+              darkColor: _orangeDark,
+              foldSize: _foldSize,
+              radius: _radius,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: _height,
+              child: Center(
+                child: Text(
+                  label.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Sparkles (traits décoratifs haut-gauche) ──────────────────────
+          Positioned(
+            top: -4,
+            left: 10,
+            child: _Sparkles(color: _orange),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── CustomPainter : rectangle arrondi + coin replié bas-droit ────────────────
+
+class _FoldPainter extends CustomPainter {
+  final Color color;
+  final Color darkColor;
+  final double foldSize;
+  final double radius;
+
+  const _FoldPainter({
+    required this.color,
+    required this.darkColor,
+    required this.foldSize,
+    required this.radius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final f = foldSize;
+    final r = radius;
+    final paint = Paint()..color = color;
+
+    // Chemin principal : rectangle arrondi avec coin bas-droit découpé
+    final path = Path()
+      ..moveTo(r, 0)
+      ..lineTo(size.width - r, 0)
+      ..arcToPoint(Offset(size.width, r),
+          radius: Radius.circular(r), clockwise: true)
+      ..lineTo(size.width, size.height - f)
+      ..lineTo(size.width - f, size.height)
+      ..lineTo(r, size.height)
+      ..arcToPoint(Offset(0, size.height - r),
+          radius: Radius.circular(r), clockwise: false)
+      ..lineTo(0, r)
+      ..arcToPoint(Offset(r, 0),
+          radius: Radius.circular(r), clockwise: true)
+      ..close();
+
+    canvas.drawPath(path, paint);
+
+    // Triangle du pli (coin replié, teinte sombre)
+    final foldPaint = Paint()..color = darkColor.withOpacity(0.75);
+    final foldPath = Path()
+      ..moveTo(size.width - f, size.height)
+      ..lineTo(size.width, size.height - f)
+      ..lineTo(size.width, size.height)
+      ..close();
+
+    canvas.drawPath(foldPath, foldPaint);
+  }
+
+  @override
+  bool shouldRepaint(_FoldPainter old) =>
+      old.color != color || old.foldSize != foldSize;
+}
+
+// ── Petits traits décoratifs (sparkles) ─────────────────────────────────────
+
+class _Sparkles extends StatelessWidget {
+  final Color color;
+  const _Sparkles({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Tick(color: color, angle: -0.5),
+        const SizedBox(width: 3),
+        _Tick(color: color, angle: 0.0),
+        const SizedBox(width: 3),
+        _Tick(color: color, angle: 0.5),
+      ],
+    );
+  }
+}
+
+class _Tick extends StatelessWidget {
+  final Color color;
+  final double angle;
+  const _Tick({required this.color, required this.angle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: angle,
+      child: Container(
+        width: 3,
+        height: 10,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+  }
+}
