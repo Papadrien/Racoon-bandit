@@ -208,14 +208,12 @@ class _HomeScreenState extends State<HomeScreen>
       child: Scaffold(
         body: Stack(
           children: [
-            // ── Hero image ancrée en bas avec animation idle ─────────────
-            // bottom: -6 pour que le bas de l'image dépasse légèrement
-            // et évite toute séparation visible entre l'image et le bord.
-            const Positioned(
-              left: 0,
-              right: 0,
-              bottom: -6,
-              child: _HeroImage(),
+            // ── Hero image centrée verticalement entre logo et bouton ──
+            const Positioned.fill(
+              child: Align(
+                alignment: Alignment.center,
+                child: _HeroImage(),
+              ),
             ),
 
             // ── Top bar (SafeArea) ────────────────────────────────────────
@@ -425,67 +423,77 @@ class _HeroImageState extends State<_HeroImage> {
 
 /// Peint l'image avec :
 /// 1. Une ombre ovale douce centrée sous les pieds
-/// 2. Un contour blanc lisse (dilatation alpha via MaskFilter.blur)
+/// 2. Un contour blanc lisse via saveLayer + dilatation blur
 /// 3. L'image originale par-dessus
 class _StickerPainter extends CustomPainter {
   final ui.Image image;
-  static const double _outlineWidth = 10.0;
+  static const double _outlineWidth = 12.0;
 
   const _StickerPainter({required this.image});
 
-  @override
-  void paint(Canvas canvas, Size size) {
+  Rect _fitRect(Size size) {
     final imgW = image.width.toDouble();
     final imgH = image.height.toDouble();
-
-    // Calcul du rect de destination (BoxFit.contain centré)
-    final scale = (size.width / imgW).clamp(0.0, size.height / imgH);
+    final scaleX = size.width / imgW;
+    final scaleY = size.height / imgH;
+    final scale = scaleX < scaleY ? scaleX : scaleY;
     final dstW = imgW * scale;
     final dstH = imgH * scale;
-    final dstRect = Rect.fromLTWH(
+    return Rect.fromLTWH(
       (size.width - dstW) / 2,
       (size.height - dstH) / 2,
       dstW,
       dstH,
     );
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final imgW = image.width.toDouble();
+    final imgH = image.height.toDouble();
+    final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
+    final dstRect = _fitRect(size);
 
     // ── 1. Ombre ovale centrée sous les pieds ─────────────────────────────
     final shadowRect = Rect.fromCenter(
-      center: Offset(size.width / 2, dstRect.bottom - 4),
-      width: dstW * 0.55,
-      height: dstH * 0.06,
+      center: Offset(size.width / 2, dstRect.bottom - 2),
+      width: dstRect.width * 0.5,
+      height: dstRect.height * 0.05,
     );
-    final shadowPaint = Paint()
-      ..color = const Color(0x55000000)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-    canvas.drawOval(shadowRect, shadowPaint);
+    canvas.drawOval(
+      shadowRect,
+      Paint()
+        ..color = const Color(0x55000000)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
+    );
 
-    // ── 2. Contour blanc : image teintée blanc + MaskFilter dilatation ────
-    // On peint l'image dans un layer isolé avec un ColorFilter blanc,
-    // puis un MaskFilter.blur pour l'étaler, ce qui donne un contour lisse.
-    final outlinePaint = Paint()
-      ..colorFilter = const ColorFilter.matrix(<double>[
-        0, 0, 0, 0, 255, // R toujours 255
-        0, 0, 0, 0, 255, // G toujours 255
-        0, 0, 0, 0, 255, // B toujours 255
-        0, 0, 0, 1, 0,   // A inchangé
-      ])
-      ..maskFilter = MaskFilter.blur(BlurStyle.solid, _outlineWidth * 0.6);
+    // ── 2. Contour blanc via saveLayer ────────────────────────────────────
+    // Technique : on ouvre un layer, on dessine l'image blanche avec un
+    // MaskFilter.blur(solid) qui dilate vers l'extérieur, puis on redessine
+    // l'image originale par-dessus dans le même layer. saveLayer garantit
+    // que le blur ne dépasse pas le layer et reste uniforme.
+    final layerBounds = dstRect.inflate(_outlineWidth * 2);
+    canvas.saveLayer(layerBounds, Paint());
 
+    // 2a. Image entièrement blanche, dilatée
     canvas.drawImageRect(
       image,
-      Rect.fromLTWH(0, 0, imgW, imgH),
+      srcRect,
       dstRect,
-      outlinePaint,
+      Paint()
+        ..colorFilter = const ColorFilter.matrix(<double>[
+          0, 0, 0, 0, 255,
+          0, 0, 0, 0, 255,
+          0, 0, 0, 0, 255,
+          0, 0, 0, 20, 0,  // alpha amplifié pour remplir le blur
+        ])
+        ..maskFilter = MaskFilter.blur(BlurStyle.solid, _outlineWidth),
     );
 
-    // ── 3. Image originale ────────────────────────────────────────────────
-    canvas.drawImageRect(
-      image,
-      Rect.fromLTWH(0, 0, imgW, imgH),
-      dstRect,
-      Paint(),
-    );
+    // 2b. Image originale par-dessus dans le layer
+    canvas.drawImageRect(image, srcRect, dstRect, Paint());
+
+    canvas.restore();
   }
 
   @override
@@ -552,10 +560,10 @@ class _StickerPlayButton extends StatelessWidget {
 
   static const _orange     = Color(0xFFE16713);
   static const _orangeDark = Color(0xFFB84D0A);
-  static const _foldSize   = 22.0;
-  static const _height     = 62.0;
-  static const _radius     = 18.0;
-  static const _border     = 5.0;  // épaisseur contour blanc
+  static const _foldSize   = 20.0;
+  static const _height     = 60.0;
+  static const _radius     = 16.0;
+  static const _border     = 4.0;  // épaisseur contour blanc
 
   @override
   Widget build(BuildContext context) {
@@ -692,7 +700,7 @@ class _StickerBorderPainter extends CustomPainter {
   bool shouldRepaint(_StickerBorderPainter old) => false;
 }
 
-// ── Corps du bouton : fond orange dégradé + reflet + coin replié ──────────────
+// ── Corps du bouton : fond orange dégradé + reflet pill + coin replié ───────────
 
 class _ButtonBodyPainter extends CustomPainter {
   final Color color;
@@ -707,13 +715,10 @@ class _ButtonBodyPainter extends CustomPainter {
     required this.radius,
   });
 
-  @override
-  void paint(Canvas canvas, Size size) {
+  Path _buildPath(Size size) {
     final f = foldSize;
     final r = radius;
-
-    // Silhouette principale avec coin replié
-    final path = Path()
+    return Path()
       ..moveTo(r, 0)
       ..lineTo(size.width - r, 0)
       ..arcToPoint(Offset(size.width, r),
@@ -727,75 +732,76 @@ class _ButtonBodyPainter extends CustomPainter {
       ..arcToPoint(Offset(r, 0),
           radius: Radius.circular(r), clockwise: true)
       ..close();
+  }
 
-    // Dégradé vertical orange clair → orange foncé
-    final gradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        Color.lerp(color, Colors.white, 0.18)!,
-        color,
-        darkColor,
-      ],
-      stops: const [0.0, 0.5, 1.0],
-    );
+  @override
+  void paint(Canvas canvas, Size size) {
+    final f = foldSize;
+    final path = _buildPath(size);
 
+    // ── Fond dégradé orange ───────────────────────────────────────────────
     canvas.drawPath(
       path,
       Paint()
-        ..shader = gradient.createShader(
-          Rect.fromLTWH(0, 0, size.width, size.height),
-        ),
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(color, Colors.white, 0.15)!,
+            color,
+            darkColor,
+          ],
+          stops: const [0.0, 0.55, 1.0],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
     );
 
-    // Reflet brillant en haut (ellipse blanche semi-transparente)
+    // ── Reflet pill en haut (style bouton jeu) ────────────────────────────
+    // Ellipse horizontale blanche dans le tiers supérieur, clippée au path
     canvas.save();
     canvas.clipPath(path);
-    final highlightPaint = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(0, -1.2),
-        radius: 0.8,
-        colors: [
-          Colors.white.withOpacity(0.35),
-          Colors.white.withOpacity(0.0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height * 0.55));
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.width, size.height * 0.55),
-      highlightPaint,
+
+    final highlightW = size.width * 0.55;
+    final highlightH = size.height * 0.28;
+    final highlightRect = Rect.fromCenter(
+      center: Offset(size.width / 2, size.height * 0.2),
+      width: highlightW,
+      height: highlightH,
     );
+    canvas.drawOval(
+      highlightRect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.white.withOpacity(0.45),
+            Colors.white.withOpacity(0.0),
+          ],
+        ).createShader(highlightRect),
+    );
+
+    // ── Ombre intérieure basse (relief 3D) ───────────────────────────────
+    canvas.drawRect(
+      Rect.fromLTWH(0, size.height * 0.6, size.width, size.height * 0.4),
+      Paint()
+        ..color = darkColor.withOpacity(0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+
     canvas.restore();
 
-    // Bordure intérieure sombre en bas (relief)
-    canvas.save();
-    canvas.clipPath(path);
-    final innerShadow = Paint()
-      ..color = darkColor.withOpacity(0.45)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawRect(
-      Rect.fromLTWH(0, size.height * 0.65, size.width, size.height * 0.35),
-      innerShadow,
-    );
-    canvas.restore();
-
-    // Triangle du coin replié — couleur crème (face dessous du papier)
-    final foldPaint = Paint()..color = const Color(0xFFF5E6C8);
+    // ── Coin replié bas-droit — crème + ligne de pliure ───────────────────
     final foldPath = Path()
       ..moveTo(size.width - f, size.height)
       ..lineTo(size.width, size.height - f)
       ..lineTo(size.width, size.height)
       ..close();
-    canvas.drawPath(foldPath, foldPaint);
-
-    // Ligne de pliure subtile
-    final creasePaint = Paint()
-      ..color = Colors.black.withOpacity(0.12)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
+    canvas.drawPath(foldPath, Paint()..color = const Color(0xFFF2DFB8));
     canvas.drawLine(
       Offset(size.width - f, size.height),
       Offset(size.width, size.height - f),
-      creasePaint,
+      Paint()
+        ..color = Colors.black.withOpacity(0.15)
+        ..strokeWidth = 1.0
+        ..style = PaintingStyle.stroke,
     );
   }
 
