@@ -47,3 +47,9 @@ flutter:
     - assets/images/cards/card_back_green.png
     - assets/images/cards/card_back_pink.png
     - assets/images/cards/card_back_yellow.png
+    - assets/fonts/
+
+  fonts:
+    - family: Righteous
+      fonts:
+        - asset: assets/fonts/Righteous-Regular.ttf

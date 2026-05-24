@@ -15,6 +15,7 @@ import '../../core/theme/app_theme_provider.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/raccoon_bandit_logo.dart';
 import '../onboarding/onboarding_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -277,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                         // ── Titre ────────────────────────────────────────
                         const SizedBox(height: 12),
-                        const _Logo(),
+                        const RaccoonBanditLogo(),
                       ],
                     ),
                   );
@@ -487,40 +488,4 @@ class _RewardAdButton extends StatelessWidget {
   }
 }
 
-class _Logo extends StatelessWidget {
-  const _Logo();
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenH = MediaQuery.sizeOf(context).height;
-        final scale = (constraints.maxWidth / 360).clamp(0.72, 1.0);
-        final baseFontSize =
-            (Theme.of(context).textTheme.displayLarge?.fontSize ?? 48);
-        // Réduction supplémentaire sur petits écrans en hauteur
-        final heightScale = screenH < 600 ? 0.85 : 1.0;
-        final fontSize = baseFontSize * scale * heightScale;
-
-        return Column(
-          children: [
-            Text(
-              'RACCOON',
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: AppTheme.primary,
-                    fontSize: fontSize,
-                  ),
-            ),
-            Text(
-              'BANDIT',
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: AppTheme.accent,
-                    fontSize: fontSize,
-                  ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
+// _Logo remplacé par RaccoonBanditLogo (lib/widgets/raccoon_bandit_logo.dart)
