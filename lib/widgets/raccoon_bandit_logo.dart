@@ -233,12 +233,28 @@ class _LogoPainter extends CustomPainter {
     canvas.restore(); // saveLayer
     canvas.restore(); // translate
 
-    // 2. Contour blanc net via dilate sur le bitmap physique
+    // 2. Contour blanc arrondi et net :
+    //    dilate (épaissit) → blur léger (arrondit les coins) → threshold (re-solidifie)
+    //
+    //    Le ColorMatrix threshold : alpha = clamp(alpha * 10 - 1, 0, 1)
+    //    Tout pixel avec alpha > ~0.1 devient opaque → bord net, angles arrondis.
+    const thresholdMatrix = ColorFilter.matrix(<double>[
+      // R    G    B    A   +
+         0,   0,   0,   0, 255, // R → blanc
+         0,   0,   0,   0, 255, // G → blanc
+         0,   0,   0,   0, 255, // B → blanc
+         0,   0,   0,  18,  -1, // A : ×18 − 1 (seuil ~6% alpha)
+    ]);
+
     canvas.saveLayer(
       logicalRect,
       Paint()
-        ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-        ..imageFilter = ui.ImageFilter.dilate(radiusX: outlineR, radiusY: outlineR),
+        ..colorFilter = thresholdMatrix
+        ..imageFilter = ui.ImageFilter.compose(
+          // d'abord dilate, puis blur pour arrondir
+          outer: ui.ImageFilter.blur(sigmaX: outlineR * 0.55, sigmaY: outlineR * 0.55),
+          inner: ui.ImageFilter.dilate(radiusX: outlineR * 0.7, radiusY: outlineR * 0.7),
+        ),
     );
     canvas.transform(sd);
     canvas.drawImage(img, Offset.zero, Paint());
