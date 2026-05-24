@@ -53,24 +53,24 @@ class _LogoPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // RACCOON — violet, smile (lettres du centre plus hautes → arcCurve positif)
+    // RACCOON — violet, smile
     _drawWord(
       canvas: canvas,
       size: size,
       word: 'RACCOON',
       fillColor: primaryColor,
-      yFraction: 0.30,
-      arcCurve: 0.55,        // positif = smile (centre monte)
+      yFraction: 0.33,
+      arcCurve: 0.55,
       fontSizeFraction: 0.170,
     );
 
-    // BANDIT — orange, smile également, plus proche de RACCOON
+    // BANDIT — orange, très proche de RACCOON
     _drawWord(
       canvas: canvas,
       size: size,
       word: 'BANDIT',
       fillColor: accentColor,
-      yFraction: 0.72,
+      yFraction: 0.67,
       arcCurve: 0.55,
       fontSizeFraction: 0.190,
     );
@@ -88,12 +88,14 @@ class _LogoPainter extends CustomPainter {
     required double fontSizeFraction,
   }) {
     final fontSize = size.width * fontSizeFraction;
-    final outlineWidth = fontSize * 0.18; // épaisseur contour global
+    final outlineWidth = fontSize * 0.10; // contour plus fin qu'avant
     final chars = word.split('');
 
     final fillStyle = TextStyle(
       fontFamily: 'Righteous',
       fontSize: fontSize,
+      fontWeight: FontWeight.bold,
+      letterSpacing: fontSize * 0.04, // conserve l'espacement actuel
       color: fillColor,
     );
 
@@ -153,6 +155,8 @@ class _LogoPainter extends CustomPainter {
     final shadowStyle = TextStyle(
       fontFamily: 'Righteous',
       fontSize: fontSize,
+      fontWeight: FontWeight.bold,
+      letterSpacing: fontSize * 0.04,
       foreground: Paint()
         ..style = PaintingStyle.fill
         ..color = const Color(0x55000000)
@@ -199,7 +203,9 @@ class _LogoPainter extends CustomPainter {
           style: TextStyle(
             fontFamily: 'Righteous',
             fontSize: fontSize,
-            color: Colors.black, // couleur neutre, sera remplacée
+            fontWeight: FontWeight.bold,
+            letterSpacing: fontSize * 0.04,
+            color: Colors.black,
           ),
         ),
         textDirection: TextDirection.ltr,
@@ -220,12 +226,15 @@ class _LogoPainter extends CustomPainter {
       size.height + halo * 2,
     );
 
-    // Dessiner le halo blanc
+    // Dessiner le halo blanc : dilate pour épaissir, blur léger pour arrondir
     final haloPaint = Paint()
       ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-      ..imageFilter = ui.ImageFilter.dilate(
-        radiusX: outlineWidth,
-        radiusY: outlineWidth,
+      ..imageFilter = ui.ImageFilter.compose(
+        outer: ui.ImageFilter.blur(sigmaX: outlineWidth * 0.6, sigmaY: outlineWidth * 0.6),
+        inner: ui.ImageFilter.dilate(
+          radiusX: outlineWidth * 0.7,
+          radiusY: outlineWidth * 0.7,
+        ),
       );
 
     canvas.saveLayer(layerRect, haloPaint);
