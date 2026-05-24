@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
@@ -147,7 +146,7 @@ class _LogoPainter extends CustomPainter {
       final ch = chars[i];
       final tp = fillPainters[i];
       final cw = tp.size.width;
-      final ch_h = tp.size.height;
+      final chH = tp.size.height;
 
       // t ∈ [-1, 1] : position du centre de la lettre dans le mot
       final charCenterInWord = wordX + cw / 2;
@@ -165,7 +164,7 @@ class _LogoPainter extends CustomPainter {
 
       // Offset pour centrer la glyphe sur l'origine du canvas sauvegardé
       final dx = -cw / 2;
-      final dy = -ch_h * 0.60; // ~centre optique pour les capitales
+      final dy = -chH * 0.60; // ~centre optique pour les capitales
 
       // 1. Ombre (légèrement décalée, floutée)
       TextPainter(
