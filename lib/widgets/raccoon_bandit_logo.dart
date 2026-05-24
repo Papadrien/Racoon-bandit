@@ -214,7 +214,7 @@ class _LogoPainter extends CustomPainter {
 
   void _drawWithOutline(Canvas canvas, Size size, ui.Image img) {
     // Le contour en pixels physiques — épais pour couvrir les interstices
-    final outlineR = size.width * dpr * 0.032;
+    final outlineR = size.width * dpr * 0.022;
     final logicalRect = Offset.zero & size;
     final sd = _scaleDown();
 
@@ -236,14 +236,13 @@ class _LogoPainter extends CustomPainter {
     // 2. Contour blanc arrondi et net :
     //    dilate (épaissit) → blur léger (arrondit les coins) → threshold (re-solidifie)
     //
-    //    Le ColorMatrix threshold : alpha = clamp(alpha * 10 - 1, 0, 1)
-    //    Tout pixel avec alpha > ~0.1 devient opaque → bord net, angles arrondis.
+    //    ColorMatrix threshold : alpha × 12 − 0.5 → seuil ~4%, bord plus lisse
     const thresholdMatrix = ColorFilter.matrix(<double>[
       // R    G    B    A   +
-         0,   0,   0,   0, 255, // R → blanc
-         0,   0,   0,   0, 255, // G → blanc
-         0,   0,   0,   0, 255, // B → blanc
-         0,   0,   0,  18,  -1, // A : ×18 − 1 (seuil ~6% alpha)
+         0,   0,   0,   0, 255,
+         0,   0,   0,   0, 255,
+         0,   0,   0,   0, 255,
+         0,   0,   0,  12,  -1,
     ]);
 
     canvas.saveLayer(
@@ -251,9 +250,8 @@ class _LogoPainter extends CustomPainter {
       Paint()
         ..colorFilter = thresholdMatrix
         ..imageFilter = ui.ImageFilter.compose(
-          // d'abord dilate, puis blur pour arrondir
-          outer: ui.ImageFilter.blur(sigmaX: outlineR * 0.55, sigmaY: outlineR * 0.55),
-          inner: ui.ImageFilter.dilate(radiusX: outlineR * 0.7, radiusY: outlineR * 0.7),
+          outer: ui.ImageFilter.blur(sigmaX: outlineR * 0.7, sigmaY: outlineR * 0.7),
+          inner: ui.ImageFilter.dilate(radiusX: outlineR * 0.55, radiusY: outlineR * 0.55),
         ),
     );
     canvas.transform(sd);
