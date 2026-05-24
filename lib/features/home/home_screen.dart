@@ -334,7 +334,7 @@ class _PlayButtonArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < 360;
-    final hPad = isNarrow ? 16.0 : 32.0;
+    final hPad = isNarrow ? 8.0 : 16.0;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: hPad),
@@ -468,12 +468,9 @@ class _StickerPainter extends CustomPainter {
     );
 
     // ── 2. Contour blanc via saveLayer ────────────────────────────────────
-    // Technique : on ouvre un layer, on dessine l'image blanche avec un
-    // MaskFilter.blur(solid) qui dilate vers l'extérieur, puis on redessine
-    // l'image originale par-dessus dans le même layer. saveLayer garantit
-    // que le blur ne dépasse pas le layer et reste uniforme.
-    final layerBounds = dstRect.inflate(_outlineWidth * 2);
-    canvas.saveLayer(layerBounds, Paint());
+    // On utilise les bounds complets du canvas pour éviter tout artefact
+    // de bord visible lié au clipping du layer.
+    canvas.saveLayer(Offset.zero & size, Paint());
 
     // 2a. Image entièrement blanche, dilatée
     canvas.drawImageRect(
@@ -560,10 +557,10 @@ class _StickerPlayButton extends StatelessWidget {
 
   static const _orange     = Color(0xFFE16713);
   static const _orangeDark = Color(0xFFB84D0A);
-  static const _foldSize   = 20.0;
-  static const _height     = 60.0;
-  static const _radius     = 16.0;
-  static const _border     = 4.0;  // épaisseur contour blanc
+  static const _foldSize   = 22.0;
+  static const _height     = 68.0;
+  static const _radius     = 18.0;
+  static const _border     = 5.0;  // épaisseur contour blanc
 
   @override
   Widget build(BuildContext context) {
@@ -631,12 +628,12 @@ class _StickerPlayButton extends StatelessWidget {
                     label.toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 4,
                       shadows: [
                         Shadow(
-                          color: Color(0x55000000),
+                          color: Color(0x66000000),
                           offset: Offset(0, 2),
                           blurRadius: 4,
                         ),
@@ -646,13 +643,6 @@ class _StickerPlayButton extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-
-          // ── Sparkles haut-gauche ──────────────────────────────────────────
-          Positioned(
-            top: -2,
-            left: 6,
-            child: _Sparkles(color: _orange),
           ),
         ],
       ),
@@ -684,7 +674,8 @@ class _StickerBorderPainter extends CustomPainter {
       ..arcToPoint(Offset(size.width, r),
           radius: Radius.circular(r), clockwise: true)
       ..lineTo(size.width, size.height - f)
-      ..lineTo(size.width - f, size.height)
+      ..quadraticBezierTo(
+          size.width, size.height, size.width - f, size.height)
       ..lineTo(r, size.height)
       ..arcToPoint(Offset(0, size.height - r),
           radius: Radius.circular(r), clockwise: false)
@@ -724,7 +715,8 @@ class _ButtonBodyPainter extends CustomPainter {
       ..arcToPoint(Offset(size.width, r),
           radius: Radius.circular(r), clockwise: true)
       ..lineTo(size.width, size.height - f)
-      ..lineTo(size.width - f, size.height)
+      ..quadraticBezierTo(
+          size.width, size.height, size.width - f, size.height)
       ..lineTo(r, size.height)
       ..arcToPoint(Offset(0, size.height - r),
           radius: Radius.circular(r), clockwise: false)
@@ -789,12 +781,15 @@ class _ButtonBodyPainter extends CustomPainter {
     canvas.restore();
 
     // ── Coin replié bas-droit — crème + ligne de pliure ───────────────────
+    // Le coin suit la courbe quadratique : triangle entre les deux extrémités
     final foldPath = Path()
       ..moveTo(size.width - f, size.height)
-      ..lineTo(size.width, size.height - f)
+      ..quadraticBezierTo(
+          size.width, size.height, size.width, size.height - f)
       ..lineTo(size.width, size.height)
       ..close();
     canvas.drawPath(foldPath, Paint()..color = const Color(0xFFF2DFB8));
+    // Ligne de pliure
     canvas.drawLine(
       Offset(size.width - f, size.height),
       Offset(size.width, size.height - f),
@@ -810,50 +805,3 @@ class _ButtonBodyPainter extends CustomPainter {
       old.color != color || old.foldSize != foldSize;
 }
 
-// ── Sparkles ──────────────────────────────────────────────────────────────────
-
-class _Sparkles extends StatelessWidget {
-  final Color color;
-  const _Sparkles({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    // Reproduction fidèle des 3 traits de l'image : éventail vers le haut-gauche
-    return SizedBox(
-      width: 24,
-      height: 28,
-      child: CustomPaint(painter: _SparklesPainter(color: color)),
-    );
-  }
-}
-
-class _SparklesPainter extends CustomPainter {
-  final Color color;
-  const _SparklesPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 3.5
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    final cx = size.width * 0.75;
-    final cy = size.height * 0.85;
-
-    // 3 traits rayonnants (gauche, centre, droite)
-    final lines = [
-      [Offset(cx, cy), Offset(cx - 14, cy - 20)],
-      [Offset(cx, cy), Offset(cx - 2,  cy - 24)],
-      [Offset(cx, cy), Offset(cx + 10, cy - 18)],
-    ];
-
-    for (final l in lines) {
-      canvas.drawLine(l[0], l[1], paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_SparklesPainter old) => old.color != color;
-}
