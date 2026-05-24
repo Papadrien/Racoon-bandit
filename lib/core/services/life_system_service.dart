@@ -1,28 +1,57 @@
-import 'dart:async';
+import 'dart:convert';
 
 import 'analytics_service.dart';
-
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LifeSystemService {
   static const int maxLives = 3;
   static const Duration rechargeDuration = Duration(minutes: 15);
 
-  static const _livesKey = 'current_lives';
-  static const _timestampKey = 'last_life_recharge_timestamp';
+  // Clé unique JSON — sauvegarde atomique lives + timestamp
+  static const _stateKey = 'life_system_state_v2';
+  // Anciennes clés (migration)
+  static const _legacyLivesKey = 'current_lives';
+  static const _legacyTimestampKey = 'last_life_recharge_timestamp';
 
   int currentLives = maxLives;
   DateTime? lastLifeRechargeTimestamp;
 
+  bool _isUpdating = false;
+
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
 
-    currentLives = prefs.getInt(_livesKey) ?? maxLives;
+    final stateJson = prefs.getString(_stateKey);
+    if (stateJson != null) {
+      try {
+        final state = jsonDecode(stateJson) as Map<String, dynamic>;
+        currentLives = (state['lives'] as int? ?? maxLives).clamp(0, maxLives);
+        final ts = state['timestamp'] as int?;
+        lastLifeRechargeTimestamp =
+            ts != null ? DateTime.fromMillisecondsSinceEpoch(ts) : null;
+      } catch (e) {
+        if (kDebugMode) debugPrint('[LifeSystem] Erreur parsing état: $e');
+        currentLives = maxLives;
+        lastLifeRechargeTimestamp = null;
+      }
+    } else {
+      // Migration depuis les anciennes clés séparées
+      currentLives =
+          (prefs.getInt(_legacyLivesKey) ?? maxLives).clamp(0, maxLives);
+      final ts = prefs.getInt(_legacyTimestampKey);
+      lastLifeRechargeTimestamp =
+          ts != null ? DateTime.fromMillisecondsSinceEpoch(ts) : null;
+    }
 
-    final timestamp = prefs.getInt(_timestampKey);
-
-    if (timestamp != null) {
-      lastLifeRechargeTimestamp = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    // Timestamp dans le futur (changement d'horloge) → réinitialiser à maintenant
+    final now = DateTime.now();
+    if (lastLifeRechargeTimestamp != null &&
+        lastLifeRechargeTimestamp!.isAfter(now)) {
+      if (kDebugMode) {
+        debugPrint('[LifeSystem] Timestamp dans le futur détecté, réinitialisation');
+      }
+      lastLifeRechargeTimestamp = now;
     }
 
     await updateLivesFromTime();
@@ -31,25 +60,16 @@ class LifeSystemService {
   Future<void> consumeLife() async {
     await updateLivesFromTime();
 
-    if (currentLives <= 0) {
-      return;
-    }
+    if (currentLives <= 0) return;
 
     currentLives--;
-
     lastLifeRechargeTimestamp ??= DateTime.now();
-
-    // Note : l'appel Analytics de consumeLife est aussi fait dans lobby_screen
-    // au moment du démarrage de partie (contexte riche avec nb joueurs).
-    // Ici on logue la consommation pure pour d'autres éventuels points futurs.
 
     await _save();
   }
 
   Future<void> restoreLife() async {
-    if (currentLives >= maxLives) {
-      return;
-    }
+    if (currentLives >= maxLives) return;
 
     currentLives++;
 
@@ -57,8 +77,6 @@ class LifeSystemService {
       lastLifeRechargeTimestamp = null;
     }
 
-    // Analytics — vie restaurée (source = timer, la source 'ad' est loguée
-    // via logRewardedAdRewarded dans rewarded_ad_service)
     AnalyticsService.instance.logLifeRestored(
       livesAfter: currentLives,
       source: 'timer',
@@ -68,30 +86,40 @@ class LifeSystemService {
   }
 
   Future<void> updateLivesFromTime() async {
-    if (currentLives >= maxLives || lastLifeRechargeTimestamp == null) {
-      return;
+    if (_isUpdating) return;
+    if (currentLives >= maxLives || lastLifeRechargeTimestamp == null) return;
+
+    _isUpdating = true;
+    try {
+      final now = DateTime.now();
+      final elapsed = now.difference(lastLifeRechargeTimestamp!);
+
+      // Elapsed négatif = horloge modifiée, on reset le timestamp
+      if (elapsed.isNegative) {
+        lastLifeRechargeTimestamp = now;
+        await _save();
+        return;
+      }
+
+      final restoredLives =
+          elapsed.inSeconds ~/ rechargeDuration.inSeconds;
+
+      if (restoredLives <= 0) return;
+
+      currentLives = (currentLives + restoredLives).clamp(0, maxLives);
+
+      if (currentLives >= maxLives) {
+        lastLifeRechargeTimestamp = null;
+      } else {
+        lastLifeRechargeTimestamp = lastLifeRechargeTimestamp!.add(
+          Duration(seconds: restoredLives * rechargeDuration.inSeconds),
+        );
+      }
+
+      await _save();
+    } finally {
+      _isUpdating = false;
     }
-
-    final now = DateTime.now();
-    final elapsed = now.difference(lastLifeRechargeTimestamp!);
-
-    final restoredLives = elapsed.inSeconds ~/ rechargeDuration.inSeconds;
-
-    if (restoredLives <= 0) {
-      return;
-    }
-
-    currentLives = (currentLives + restoredLives).clamp(0, maxLives);
-
-    if (currentLives >= maxLives) {
-      lastLifeRechargeTimestamp = null;
-    } else {
-      lastLifeRechargeTimestamp = lastLifeRechargeTimestamp!.add(
-        Duration(seconds: restoredLives * rechargeDuration.inSeconds),
-      );
-    }
-
-    await _save();
   }
 
   Duration getRemainingRechargeDuration() {
@@ -99,30 +127,22 @@ class LifeSystemService {
       return Duration.zero;
     }
 
-    final nextRecharge =
-        lastLifeRechargeTimestamp!.add(rechargeDuration);
-
+    final nextRecharge = lastLifeRechargeTimestamp!.add(rechargeDuration);
     final remaining = nextRecharge.difference(DateTime.now());
 
-    if (remaining.isNegative) {
-      return Duration.zero;
-    }
-
-    return remaining;
+    return remaining.isNegative ? Duration.zero : remaining;
   }
 
   Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    await prefs.setInt(_livesKey, currentLives);
-
-    if (lastLifeRechargeTimestamp != null) {
-      await prefs.setInt(
-        _timestampKey,
-        lastLifeRechargeTimestamp!.millisecondsSinceEpoch,
-      );
-    } else {
-      await prefs.remove(_timestampKey);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final state = jsonEncode({
+        'lives': currentLives,
+        'timestamp': lastLifeRechargeTimestamp?.millisecondsSinceEpoch,
+      });
+      await prefs.setString(_stateKey, state);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[LifeSystem] Erreur sauvegarde: $e');
     }
   }
 }

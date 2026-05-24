@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/models/reward_unlock.dart';
@@ -283,12 +284,12 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                                 letterSpacing: 1.5,
                               ),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.style_rounded, size: 18),
-                                SizedBox(width: 8),
-                                Text('ESSAYER'),
+                                const Icon(Icons.style_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                Text(AppLocalizations.of(context)!.tryButton),
                               ],
                             ),
                           ),
@@ -304,9 +305,9 @@ class _RewardUnlockDialogState extends State<RewardUnlockDialog>
                           style: TextButton.styleFrom(
                             foregroundColor: AppTheme.textMuted,
                           ),
-                          child: const Text(
-                            'Plus tard',
-                            style: TextStyle(fontSize: 14),
+                          child: Text(
+                            AppLocalizations.of(context)!.laterButton,
+                            style: const TextStyle(fontSize: 14),
                           ),
                         ),
                       ],
@@ -389,7 +390,7 @@ class _UnlockBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'NOUVEAU DOS DÉBLOQUÉ',
+            AppLocalizations.of(context)!.newCardBackUnlocked,
             style: TextStyle(
               color: accent,
               fontWeight: FontWeight.w800,

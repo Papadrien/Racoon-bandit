@@ -4,6 +4,7 @@ import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/theme/app_theme.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import 'onboarding_slide.dart';
 
 /// Écran d'onboarding — affiché uniquement au premier lancement.
@@ -74,7 +75,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   child: TextButton(
                     onPressed: _isLast ? null : _complete,
                     child: Text(
-                      'Passer',
+                      AppLocalizations.of(context)!.onboardingSkip,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 14,
@@ -168,15 +169,26 @@ class _SlideCard extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Emoji
-                Text(
-                  slide.emoji,
-                  style: TextStyle(fontSize: emojiSize),
-                ),
+                // Illustration carte — image réelle ou emoji fallback
+                if (slide.cardImageAsset != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      slide.cardImageAsset!,
+                      width: emojiSize * 1.4,
+                      height: emojiSize * 2.0,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                else
+                  Text(
+                    slide.emoji,
+                    style: TextStyle(fontSize: emojiSize),
+                  ),
                 SizedBox(height: screenHeight < 650 ? 20 : 28),
                 // Titre
                 Text(
-                  slide.title,
+                  slide.title(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: titleSize,
@@ -188,7 +200,7 @@ class _SlideCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 // Description
                 Text(
-                  slide.description,
+                  slide.description(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: descSize,
@@ -271,7 +283,7 @@ class _NavigationButtons extends StatelessWidget {
           shadowColor: AppTheme.primary.withValues(alpha: 0.4),
         ),
         child: Text(
-          isLast ? 'C\'est parti !' : 'Suivant',
+          isLast ? AppLocalizations.of(context)!.onboardingStart : AppLocalizations.of(context)!.onboardingNext,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

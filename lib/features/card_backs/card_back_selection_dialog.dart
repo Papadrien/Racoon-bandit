@@ -1,3 +1,4 @@
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
@@ -220,9 +221,9 @@ class _SheetHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'DOS DE CARTES',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.cardBacksTitle,
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 2.5,
@@ -230,7 +231,7 @@ class _SheetHeader extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '$totalGames partie${totalGames > 1 ? 's' : ''} jouée${totalGames > 1 ? 's' : ''}',
+                  AppLocalizations.of(context)!.gamesPlayed(totalGames),
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.white.withValues(alpha: 0.42),
@@ -523,14 +524,14 @@ class _CardPreview extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_rounded, color: Colors.white, size: 10),
-                  SizedBox(width: 3),
+                  const Icon(Icons.check_rounded, color: Colors.white, size: 10),
+                  const SizedBox(width: 3),
                   Text(
-                    'ÉQUIPÉ',
-                    style: TextStyle(
+                    AppLocalizations.of(context)!.equipped,
+                    style: const TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.8,
@@ -658,7 +659,7 @@ class _CardFooter extends StatelessWidget {
           if (!isUnlocked && !config.unlockedByDefault) ...[
             const SizedBox(height: 2),
             Text(
-              '${config.requiredGames} parties',
+              AppLocalizations.of(context)!.requiredGames(config.requiredGames),
               style: TextStyle(
                 fontSize: 9,
                 color: Colors.white.withValues(alpha: 0.22),
@@ -669,7 +670,7 @@ class _CardFooter extends StatelessWidget {
           if (isUnlocked && !isEquipped) ...[
             const SizedBox(height: 4),
             Text(
-              'Appuyer pour équiper',
+              AppLocalizations.of(context)!.tapToEquip,
               style: TextStyle(
                 fontSize: 9,
                 color: color.withValues(alpha: 0.60),

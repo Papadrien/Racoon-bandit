@@ -1,3 +1,4 @@
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 /// Modèle d'une slide d'onboarding.
@@ -12,16 +13,21 @@ class OnboardingSlide {
     required this.description,
     required this.cardColor,
     this.accentColor = const Color(0xFF7C4DFF),
+    this.cardImageAsset,
   });
 
-  /// Emoji illustrant la slide (grand, visible d'un coup d'œil).
+  /// Emoji illustrant la slide (fallback si pas d'image).
   final String emoji;
 
+  /// Chemin asset de l'image de la face avant de la carte (optionnel).
+  /// Si renseigné, remplace l'emoji dans l'affichage onboarding.
+  final String? cardImageAsset;
+
   /// Titre court de la slide.
-  final String title;
+  final String Function(BuildContext context) title;
 
   /// Description courte — max 2 lignes.
-  final String description;
+  final String Function(BuildContext context) description;
 
   /// Couleur de fond de la card.
   final Color cardColor;
@@ -36,38 +42,38 @@ class OnboardingSlide {
 class OnboardingSlides {
   OnboardingSlides._();
 
-  static const List<OnboardingSlide> all = [
+  static final List<OnboardingSlide> all = [
     OnboardingSlide(
       emoji: '🍎',
-      title: 'Nourriture',
-      description:
-          'Ramasse le maximum de nourriture sans te les faire voler.',
-      cardColor: Color(0xFF1B5E20),
-      accentColor: Color(0xFF66BB6A),
+      cardImageAsset: 'assets/images/card_front_food.png',
+      title: (context) => AppLocalizations.of(context)!.onboardingFoodTitle,
+      description: (context) => AppLocalizations.of(context)!.onboardingFoodDesc,
+      cardColor: const Color(0xFF1B5E20),
+      accentColor: const Color(0xFF66BB6A),
     ),
     OnboardingSlide(
       emoji: '🥷',
-      title: 'Bandit',
-      description:
-          'Le bandit te permet de voler une nourriture à un autre joueur.',
-      cardColor: Color(0xFF1A237E),
-      accentColor: Color(0xFF7C4DFF),
+      cardImageAsset: 'assets/images/card_front_pince.png',
+      title: (context) => AppLocalizations.of(context)!.onboardingPinceTitle,
+      description: (context) => AppLocalizations.of(context)!.onboardingPinceDesc,
+      cardColor: const Color(0xFF1A237E),
+      accentColor: const Color(0xFF7C4DFF),
     ),
     OnboardingSlide(
       emoji: '🦝',
-      title: 'Raton laveur',
-      description:
-          'Le raton laveur vole toute ta nourriture. Fais attention.',
-      cardColor: Color(0xFF37474F),
-      accentColor: Color(0xFF90A4AE),
+      cardImageAsset: 'assets/images/card_front_raccoon.png',
+      title: (context) => AppLocalizations.of(context)!.onboardingRaccoonTitle,
+      description: (context) => AppLocalizations.of(context)!.onboardingRaccoonDesc,
+      cardColor: const Color(0xFF37474F),
+      accentColor: const Color(0xFF90A4AE),
     ),
     OnboardingSlide(
       emoji: '🧊',
-      title: 'Poubelle sécurisée',
-      description:
-          'La poubelle sécurisée te protège contre un passage du raton laveur.',
-      cardColor: Color(0xFF0D47A1),
-      accentColor: Color(0xFF42A5F5),
+      cardImageAsset: 'assets/images/card_front_trash.png',
+      title: (context) => AppLocalizations.of(context)!.onboardingTrashTitle,
+      description: (context) => AppLocalizations.of(context)!.onboardingTrashDesc,
+      cardColor: const Color(0xFF0D47A1),
+      accentColor: const Color(0xFF42A5F5),
     ),
   ];
 }

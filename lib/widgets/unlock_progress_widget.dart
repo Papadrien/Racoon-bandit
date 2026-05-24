@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../core/models/card_back_config.dart';
 import '../core/services/progression_service.dart';
@@ -105,7 +106,7 @@ class _UnlockProgressWidgetState extends State<UnlockProgressWidget>
                       size: 14, color: accent.withValues(alpha: 0.8)),
                   const SizedBox(width: 5),
                   Text(
-                    'Prochain déblocage',
+                    AppLocalizations.of(context)!.unlockProgressNext,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -358,7 +359,7 @@ class _CardBackPreview extends StatelessWidget {
         ),
         if (targetGames != null)
           Text(
-            'parties',
+            AppLocalizations.of(context)!.requiredGames(2).split(' ').last,
             style: TextStyle(
               fontSize: 8,
               color: Colors.white.withValues(alpha: 0.3),
@@ -366,7 +367,7 @@ class _CardBackPreview extends StatelessWidget {
           )
         else
           Text(
-            config.requiredGames == 0 ? 'Défaut' : '${config.requiredGames} parties',
+            config.requiredGames == 0 ? AppLocalizations.of(context)!.defaultLabel : AppLocalizations.of(context)!.requiredGames(config.requiredGames),
             style: TextStyle(
               fontSize: 8,
               color: Colors.white.withValues(alpha: 0.3),

@@ -2,7 +2,6 @@ import '../models/card_type.dart';
 import '../models/game_card.dart';
 import '../models/game_session_stats.dart';
 import '../models/player_state.dart';
-import '../models/saved_game.dart';
 import 'deck.dart';
 
 class CardResolution {
@@ -49,86 +48,6 @@ class GameState {
         revealedCard = null,
         isGameOver = false;
 
-  /// Constructeur de restauration depuis une [SavedGame].
-  GameState.fromSave(SavedGame save)
-      : currentPlayerIndex = save.currentPlayerIndex,
-        revealedCard = null,
-        isGameOver = false,
-        chaosMode = save.chaosMode,
-        players = save.players
-            .map(
-              (s) => PlayerState(
-                id: s.id,
-                name: s.name,
-                profileId: s.profileId,
-                emoji: s.emoji,
-                colorValue: s.colorValue,
-                foodCount: s.foodCount,
-                trashCount: s.trashCount,
-              ),
-            )
-            .toList(),
-        remainingDeck = _rebuildDeck(save.remainingDeckTypes);
-
-  static List<GameCard> _rebuildDeck(List<String> typeNames) {
-    int id = 0;
-    return typeNames.map((name) {
-      final type = CardType.values.firstWhere(
-        (t) => t.name == name,
-        orElse: () => CardType.food,
-      );
-      return GameCard(
-        id: id++,
-        type: type,
-        name: _cardName(type),
-        description: _cardDescription(type),
-      );
-    }).toList();
-  }
-
-  static String _cardName(CardType type) => switch (type) {
-        CardType.food => 'Nourriture',
-        CardType.raccoon => 'Raton',
-        CardType.trash => 'Poubelle',
-        CardType.bandit => 'Bandit',
-        CardType.banquet => 'Banquet',
-        CardType.babyRaccoon => 'Bébé Raton',
-        CardType.vacuum => 'Aspirateur',
-      };
-
-  static String _cardDescription(CardType type) => switch (type) {
-        CardType.food => '+1 nourriture',
-        CardType.raccoon => 'Mange toute la nourriture',
-        CardType.trash => 'Protège votre nourriture',
-        CardType.bandit => 'Vole un autre joueur',
-        CardType.banquet => '+2 nourritures',
-        CardType.babyRaccoon => 'Retire 2 nourritures à un joueur',
-        CardType.vacuum => 'Vole 1 nourriture à chaque joueur',
-      };
-
-  // ── Sérialisation ─────────────────────────────────────────────────────────
-
-  SavedGame toSave() => SavedGame(
-        version: SavedGame.schemaVersion,
-        savedAt: DateTime.now(),
-        players: players
-            .map(
-              (p) => SavedPlayerState(
-                id: p.id,
-                name: p.name,
-                profileId: p.profileId,
-                emoji: p.emoji,
-                colorValue: p.colorValue,
-                foodCount: p.foodCount,
-                trashCount: p.trashCount,
-              ),
-            )
-            .toList(),
-        currentPlayerIndex: currentPlayerIndex,
-        remainingDeckTypes: remainingDeck.map((c) => c.type.name).toList(),
-        chaosMode: chaosMode,
-      );
-
   // ── Accesseurs ────────────────────────────────────────────────────────────
 
   PlayerState get currentPlayer => players[currentPlayerIndex];
@@ -137,7 +56,7 @@ class GameState {
 
   // ─── Détection cibles Bandit ──────────────────────────────────────────────
 
-  List<PlayerState> banditValidTargets() {
+  List<PlayerState> pinceValidTargets() {
     final active = players[currentPlayerIndex];
     return players
         .where((p) => p.id != active.id && p.foodCount > 0)
@@ -206,11 +125,11 @@ class GameState {
         );
 
       default:
-        return resolveBandit(target);
+        return resolvePince(target);
     }
   }
 
-  CardResolution resolveBandit(PlayerState target) {
+  CardResolution resolvePince(PlayerState target) {
     final playerIdx = _resolvedPlayerIndex ?? currentPlayerIndex;
     final player = players[playerIdx];
 
@@ -272,7 +191,24 @@ class GameState {
         );
 
       case CardType.babyRaccoon:
-        final validTargets = banditValidTargets();
+        // En mode pagaille : le joueur actif perd 2 nourritures
+        if (chaosMode) {
+          final removed = _removeFood(player, 2);
+          if (remainingDeck.isEmpty) {
+            _markGameOver();
+          } else {
+            _advance();
+          }
+          return CardResolution(
+            message: removed > 0
+                ? '${player.name} perd $removed nourriture${removed > 1 ? 's' : ''}'
+                : 'Aucune nourriture à retirer',
+            targetPlayerId: player.id,
+            foodStolen: removed > 0,
+          );
+        }
+
+        final validTargets = pinceValidTargets();
 
         if (validTargets.isEmpty) {
           return const CardResolution(
@@ -315,9 +251,9 @@ class GameState {
           foodStolen: stolenTotal > 0,
         );
 
-      case CardType.bandit:
-        sessionStats.banditCardsPlayed++;
-        final validTargets = banditValidTargets();
+      case CardType.pince:
+        sessionStats.pinceCardsPlayed++;
+        final validTargets = pinceValidTargets();
 
         if (validTargets.isEmpty) {
           return const CardResolution(
@@ -340,7 +276,7 @@ class GameState {
         return const CardResolution(
           message: '',
           needsTargetSelection: true,
-          pendingTargetCardType: CardType.bandit,
+          pendingTargetCardType: CardType.pince,
         );
     }
   }

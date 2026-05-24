@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../core/game/game_state.dart';
 import '../../core/models/result_screen_args.dart';
@@ -63,6 +64,7 @@ class _ResultScreenState extends State<ResultScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final gameState = _getGameState(context);
     final ranking = gameState.ranking;
     final winner = ranking.first;
@@ -113,7 +115,7 @@ class _ResultScreenState extends State<ResultScreen>
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '${winner.name} remporte la partie !',
+                              l10n.resultWinner(winner.name),
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -193,36 +195,36 @@ class _ResultScreenState extends State<ResultScreen>
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Résumé de partie',
-                                        style: TextStyle(
+                                      Text(
+                                        l10n.resultGameSummary,
+                                        style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
                                         ),
                                       ),
                                       const SizedBox(height: 10),
                                       _StatLine(
-                                        label: 'Cartes jouées',
+                                        label: l10n.resultCardsPlayed,
                                         value:
                                             '${gameState.sessionStats.cardsPlayed}',
                                       ),
                                       _StatLine(
-                                        label: 'Nourriture gagnée',
+                                        label: l10n.resultFoodGained,
                                         value:
                                             '${gameState.sessionStats.foodGained}',
                                       ),
                                       _StatLine(
-                                        label: 'Nourriture volée',
+                                        label: l10n.resultFoodStolen,
                                         value:
                                             '${gameState.sessionStats.foodStolen}',
                                       ),
                                       _StatLine(
-                                        label: 'Bandits joués',
+                                        label: l10n.resultPinceCards,
                                         value:
-                                            '${gameState.sessionStats.banditCardsPlayed}',
+                                            '${gameState.sessionStats.pinceCardsPlayed}',
                                       ),
                                       _StatLine(
-                                        label: 'Raccoons joués',
+                                        label: l10n.resultRaccoonCards,
                                         value:
                                             '${gameState.sessionStats.raccoonCardsPlayed}',
                                       ),
@@ -238,7 +240,7 @@ class _ResultScreenState extends State<ResultScreen>
                       // ── Actions ──────────────────────────────────────────
                       const SizedBox(height: 10),
                       PrimaryButton(
-                        label: 'REJOUER',
+                        label: l10n.resultPlayAgain,
                         onPressed: _goLobby,
                       ),
                       TextButton(
@@ -246,7 +248,7 @@ class _ResultScreenState extends State<ResultScreen>
                           AudioService.instance.playButtonSound();
                           _goHome();
                         },
-                        child: const Text('Retour accueil'),
+                        child: Text(l10n.resultBackHome),
                       ),
                     ],
                   ),

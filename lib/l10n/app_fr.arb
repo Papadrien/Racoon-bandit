@@ -1,0 +1,450 @@
+{
+  "@@locale": "fr",
+  "play": "JOUER",
+  "@play": {
+    "description": "Bouton principal — lancer une partie"
+  },
+  "tooltipSettings": "Paramètres",
+  "@tooltipSettings": {
+    "description": "Tooltip icône Paramètres"
+  },
+  "tooltipPremium": "Premium",
+  "@tooltipPremium": {
+    "description": "Tooltip icône Premium"
+  },
+  "noLivesAdHint": "Regardez une publicité complète pour récupérer 1 vie.",
+  "@noLivesAdHint": {
+    "description": "Aide sous bouton pub — plus de vies"
+  },
+  "watchAdButton": "Regarder une publicité",
+  "@watchAdButton": {
+    "description": "Label bouton regarder une pub"
+  },
+  "adLoading": "Chargement de la publicité...",
+  "@adLoading": {
+    "description": "Label bouton pub en chargement"
+  },
+  "lifeEarned": "1 vie gagnée !",
+  "@lifeEarned": {
+    "description": "Snackbar vie gagnée via pub"
+  },
+  "lobbyTitle": "SALON",
+  "@lobbyTitle": {
+    "description": "Titre de la page Lobby"
+  },
+  "lobbyPlayerCount": "Nombre de joueurs",
+  "@lobbyPlayerCount": {
+    "description": "Label sélecteur nombre de joueurs"
+  },
+  "lobbyStart": "COMMENCER",
+  "@lobbyStart": {
+    "description": "Bouton démarrer la partie"
+  },
+  "lobbyCardBackLabel": "DOS DE CARTES",
+  "@lobbyCardBackLabel": {
+    "description": "Label section dos de cartes"
+  },
+  "lobbyCardBackEquipped": "✓ Équipé",
+  "@lobbyCardBackEquipped": {
+    "description": "Badge dos de carte équipé"
+  },
+  "lobbyChaosTitle": "Mode Pagaille",
+  "@lobbyChaosTitle": {
+    "description": "Titre section Mode Pagaille"
+  },
+  "lobbyChaosSubtitle": "Cartes spéciales · plus de chaos !",
+  "@lobbyChaosSubtitle": {
+    "description": "Sous-titre section Mode Pagaille"
+  },
+  "lobbyChaosTooltip": "Tutoriel Mode Pagaille",
+  "@lobbyChaosTooltip": {
+    "description": "Tooltip bouton aide chaos"
+  },
+  "lobbySlot1": "Joueur 1",
+  "@lobbySlot1": {
+    "description": "Label slot joueur 1"
+  },
+  "lobbySlot2": "Joueur 2",
+  "@lobbySlot2": {
+    "description": "Label slot joueur 2"
+  },
+  "lobbySlot3": "Joueur 3",
+  "@lobbySlot3": {
+    "description": "Label slot joueur 3"
+  },
+  "lobbySlot4": "Joueur 4",
+  "@lobbySlot4": {
+    "description": "Label slot joueur 4"
+  },
+  "lobbyChooseProfile": "Choisir un profil",
+  "@lobbyChooseProfile": {
+    "description": "Texte slot vide + titre bottom sheet"
+  },
+  "lobbyNoProfiles": "Aucun profil disponible.\nCréez des profils dans les réglages.",
+  "@lobbyNoProfiles": {
+    "description": "Message état vide sélecteur profil"
+  },
+  "lobbyProfileAlreadyUsed": "Déjà utilisé",
+  "@lobbyProfileAlreadyUsed": {
+    "description": "Tag profil déjà sélectionné"
+  },
+  "chaosTutorialClose": "Fermer",
+  "@chaosTutorialClose": {
+    "description": "Bouton fermer tutoriel chaos"
+  },
+  "chaosTutorialSheetTitle": "TUTORIEL MODE PAGAILLE",
+  "@chaosTutorialSheetTitle": {
+    "description": "Titre de la bottom sheet tutoriel chaos"
+  },
+  "chaosTutorialNext": "Suivant",
+  "@chaosTutorialNext": {
+    "description": "Bouton page suivante tutoriel chaos"
+  },
+  "chaosTutorialDone": "C'est parti !",
+  "@chaosTutorialDone": {
+    "description": "Bouton dernière slide tutoriel chaos"
+  },
+  "chaosSlide1Title": "Mode Pagaille",
+  "@chaosSlide1Title": {
+    "description": "Titre slide 1 tutoriel chaos"
+  },
+  "chaosSlide1Desc": "Des cartes spéciales s'ajoutent au paquet.\nPlus de surprises, plus de chaos !",
+  "@chaosSlide1Desc": {
+    "description": "Description slide 1 tutoriel chaos"
+  },
+  "chaosSlide2Title": "Banquet",
+  "@chaosSlide2Title": {
+    "description": "Titre slide 2 tutoriel chaos"
+  },
+  "chaosSlide2Desc": "Tu pioches cette carte ? Tu gagnes 2 nourritures d'un coup.\nBonne pioche !",
+  "@chaosSlide2Desc": {
+    "description": "Description slide 2 tutoriel chaos"
+  },
+  "chaosSlide3Title": "Bébé Raton",
+  "@chaosSlide3Title": {
+    "description": "Titre slide 3 tutoriel chaos"
+  },
+  "chaosSlide3Desc": "Un petit raton affamé te vole 2 nourritures.\nMoins dangereux que son grand frère, mais ça fait mal.",
+  "@chaosSlide3Desc": {
+    "description": "Description slide 3 tutoriel chaos"
+  },
+  "chaosSlide4Title": "Aspirateur",
+  "@chaosSlide4Title": {
+    "description": "Titre slide 4 tutoriel chaos"
+  },
+  "chaosSlide4Desc": "Cette carte vole 1 nourriture à CHAQUE joueur.\nLe chaos absolu !",
+  "@chaosSlide4Desc": {
+    "description": "Description slide 4 tutoriel chaos"
+  },
+  "chaosSlide5Title": "Prêt pour le chaos ?",
+  "@chaosSlide5Title": {
+    "description": "Titre slide 5 tutoriel chaos"
+  },
+  "chaosSlide5Desc": "Ce mode est plus imprévisible.\nRigolo en famille, surprenant à chaque partie !",
+  "@chaosSlide5Desc": {
+    "description": "Description slide 5 tutoriel chaos"
+  },
+  "gameQuitDialogTitle": "Quitter la partie ?",
+  "@gameQuitDialogTitle": {
+    "description": "Titre dialog confirmation quitter"
+  },
+  "gameQuitDialogContent": "La partie en cours sera perdue.",
+  "@gameQuitDialogContent": {
+    "description": "Contenu dialog confirmation quitter"
+  },
+  "gameQuitCancel": "Annuler",
+  "@gameQuitCancel": {
+    "description": "Bouton annuler dans le dialog quitter"
+  },
+  "gameQuitConfirm": "Quitter",
+  "@gameQuitConfirm": {
+    "description": "Bouton confirmer quitter la partie"
+  },
+  "gameTurnOf": "Tour de {playerName}",
+  "@gameTurnOf": {
+    "description": "Indicateur du joueur actif",
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "gameRemainingCards": "{count, plural, one{{count} carte} other{{count} cartes}}",
+  "@gameRemainingCards": {
+    "description": "Nombre de cartes restantes dans la pioche",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pinceChooseTarget": "Choisir une cible",
+  "@pinceChooseTarget": {
+    "description": "Titre overlay sélection cible bandit"
+  },
+  "pinceWhoToSteal": "Qui voulez-vous voler ?",
+  "@pinceWhoToSteal": {
+    "description": "Sous-titre overlay sélection cible bandit"
+  },
+  "pinceFoodAvailable": "{count, plural, one{{count} nourriture disponible} other{{count} nourritures disponibles}}",
+  "@pinceFoodAvailable": {
+    "description": "Nourriture disponible sur la cible bandit",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultWinner": "{playerName} remporte la partie !",
+  "@resultWinner": {
+    "description": "Annonce du gagnant sur l'écran résultats",
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "resultGameSummary": "Résumé de partie",
+  "@resultGameSummary": {
+    "description": "Titre de la carte résumé de partie"
+  },
+  "resultCardsPlayed": "Cartes jouées",
+  "@resultCardsPlayed": {
+    "description": "Stat : cartes jouées"
+  },
+  "resultFoodGained": "Nourriture gagnée",
+  "@resultFoodGained": {
+    "description": "Stat : nourriture gagnée"
+  },
+  "resultFoodStolen": "Nourriture volée",
+  "@resultFoodStolen": {
+    "description": "Stat : nourriture volée"
+  },
+  "resultPinceCards": "Pinces jouées",
+  "@resultPinceCards": {
+    "description": "Stat : cartes bandit jouées"
+  },
+  "resultRaccoonCards": "Raccoons joués",
+  "@resultRaccoonCards": {
+    "description": "Stat : cartes raccoon jouées"
+  },
+  "resultPlayAgain": "REJOUER",
+  "@resultPlayAgain": {
+    "description": "Bouton rejouer sur l'écran résultats"
+  },
+  "resultBackHome": "Retour accueil",
+  "@resultBackHome": {
+    "description": "Bouton retour accueil sur l'écran résultats"
+  },
+  "profilesTitle": "PROFILS",
+  "@profilesTitle": {
+    "description": "Titre de l'écran Profils"
+  },
+  "profilesEmpty": "Aucun profil",
+  "@profilesEmpty": {
+    "description": "Message état vide liste profils"
+  },
+  "profilesAddTooltip": "Ajouter un profil",
+  "@profilesAddTooltip": {
+    "description": "Tooltip bouton flottant ajouter profil"
+  },
+  "profileDeleteTitle": "Supprimer le profil ?",
+  "@profileDeleteTitle": {
+    "description": "Titre dialog suppression profil"
+  },
+  "profileDeleteContent": "Supprimer \"{profileName}\" définitivement ?",
+  "@profileDeleteContent": {
+    "description": "Contenu dialog suppression profil",
+    "placeholders": {
+      "profileName": {
+        "type": "String"
+      }
+    }
+  },
+  "profileDeleteCancel": "Annuler",
+  "@profileDeleteCancel": {
+    "description": "Bouton annuler suppression profil"
+  },
+  "profileDeleteConfirm": "Supprimer",
+  "@profileDeleteConfirm": {
+    "description": "Bouton confirmer suppression profil"
+  },
+  "profileEditTitleNew": "NOUVEAU PROFIL",
+  "@profileEditTitleNew": {
+    "description": "Titre AppBar nouveau profil"
+  },
+  "profileEditTitleEdit": "MODIFIER PROFIL",
+  "@profileEditTitleEdit": {
+    "description": "Titre AppBar modifier profil"
+  },
+  "profileEditSaveTooltip": "Enregistrer",
+  "@profileEditSaveTooltip": {
+    "description": "Tooltip bouton enregistrer profil"
+  },
+  "profileEditNameLabel": "Nom",
+  "@profileEditNameLabel": {
+    "description": "Label champ nom du profil"
+  },
+  "profileEditNameEmpty": "Le nom ne peut pas être vide.",
+  "@profileEditNameEmpty": {
+    "description": "Erreur snackbar nom vide"
+  },
+  "profileEditSectionAvatar": "Avatar",
+  "@profileEditSectionAvatar": {
+    "description": "Label section sélecteur avatar"
+  },
+  "profileEditSectionColor": "Couleur",
+  "@profileEditSectionColor": {
+    "description": "Label section sélecteur couleur"
+  },
+  "profileEditButtonCreate": "CRÉER",
+  "@profileEditButtonCreate": {
+    "description": "Bouton créer nouveau profil"
+  },
+  "profileEditButtonSave": "ENREGISTRER",
+  "@profileEditButtonSave": {
+    "description": "Bouton enregistrer profil existant"
+  },
+  "settingsTitle": "PARAMÈTRES",
+  "@settingsTitle": {
+    "description": "Titre AppBar Settings"
+  },
+  "settingsSectionAudio": "Audio & Retours",
+  "@settingsSectionAudio": {
+    "description": "Label section audio settings"
+  },
+  "settingsSoundLabel": "Sons",
+  "@settingsSoundLabel": {
+    "description": "Toggle sons"
+  },
+  "settingsSoundSubtitle": "Effets sonores du jeu",
+  "@settingsSoundSubtitle": {
+    "description": "Sous-titre toggle sons"
+  },
+  "settingsVibrationLabel": "Vibrations",
+  "@settingsVibrationLabel": {
+    "description": "Toggle vibrations"
+  },
+  "settingsVibrationSubtitle": "Retours haptiques",
+  "@settingsVibrationSubtitle": {
+    "description": "Sous-titre toggle vibrations"
+  },
+  "settingsSectionGame": "Jeu",
+  "@settingsSectionGame": {
+    "description": "Label section jeu settings"
+  },
+  "settingsProfilesLabel": "Gestion des profils",
+  "@settingsProfilesLabel": {
+    "description": "Tile profils"
+  },
+  "settingsTutorialLabel": "Revoir le tutoriel",
+  "@settingsTutorialLabel": {
+    "description": "Tile revoir tutoriel"
+  },
+  "settingsSectionLegal": "Légal",
+  "@settingsSectionLegal": {
+    "description": "Label section légal"
+  },
+  "settingsPrivacyLabel": "Politique de confidentialité",
+  "@settingsPrivacyLabel": {
+    "description": "Tile politique de confidentialité"
+  },
+  "settingsDebugUnlockAll": "Tous les dos débloqués !",
+  "@settingsDebugUnlockAll": {
+    "description": "Snackbar debug unlock all"
+  },
+  "settingsDebugOnboardingReset": "Onboarding reset — relancez l'app",
+  "@settingsDebugOnboardingReset": {
+    "description": "Snackbar debug onboarding reset"
+  },
+  "settingsVersionLabel": "v1.0.0 — Raccoon Bandit",
+  "@settingsVersionLabel": {
+    "description": "Label version en bas de settings"
+  },
+  "privacyTitle": "CONFIDENTIALITÉ",
+  "@privacyTitle": {
+    "description": "Titre AppBar politique confidentialité"
+  },
+  "privacyHeading": "Politique de confidentialité",
+  "@privacyHeading": {
+    "description": "Titre principal écran confidentialité"
+  },
+  "privacyAppName": "Raccoon Bandit",
+  "@privacyAppName": {
+    "description": "Nom app sous le titre confidentialité"
+  },
+  "privacySection1Title": "Collecte de données",
+  "@privacySection1Title": {
+    "description": "Titre section collecte données"
+  },
+  "privacySection1Content": "Raccoon Bandit ne collecte aucune donnée personnelle. Toutes les données de jeu sont stockées localement sur votre appareil.",
+  "@privacySection1Content": {
+    "description": "Contenu section collecte données"
+  },
+  "privacySection2Title": "Publicités",
+  "@privacySection2Title": {
+    "description": "Titre section publicités"
+  },
+  "privacySection2Content": "L'application peut afficher des publicités via Google AdMob. Ces publicités peuvent utiliser des identifiants anonymisés conformément à la politique de Google.",
+  "@privacySection2Content": {
+    "description": "Contenu section publicités"
+  },
+  "privacySection3Title": "Contact",
+  "@privacySection3Title": {
+    "description": "Titre section contact"
+  },
+  "privacySection3Content": "Pour toute question concernant la confidentialité, vous pouvez nous contacter via la page de l'application sur le Google Play Store.",
+  "@privacySection3Content": {
+    "description": "Contenu section contact"
+  },
+  "privacyComingSoon": "Politique de confidentialité complète à venir",
+  "@privacyComingSoon": {
+    "description": "Note placeholder politique confidentialité"
+  },
+  "premiumTitle": "PREMIUM",
+  "@premiumTitle": {
+    "description": "Titre AppBar premium"
+  },
+  "premiumHeading": "Raccoon Bandit\nPremium",
+  "@premiumHeading": {
+    "description": "Titre principal écran premium"
+  },
+  "premiumSubtitle": "Sans publicités • Vies illimitées\nThèmes exclusifs",
+  "@premiumSubtitle": {
+    "description": "Sous-titre écran premium"
+  },
+  "premiumBuyButton": "ACHETER — 2,99 €",
+  "@premiumBuyButton": {
+    "description": "Bouton achat premium"
+  },
+  "premiumRestorePurchases": "Restaurer les achats",
+  "@premiumRestorePurchases": {
+    "description": "Bouton restaurer achats premium"
+  },
+  "livesAdButton": "Pub +1",
+  "@livesAdButton": {
+    "description": "Label bouton pub +1 vie dans la barre de vies"
+  },
+  "onboardingSkip": "Passer",
+  "onboardingNext": "Suivant",
+  "onboardingStart": "C'est parti !",
+  "onboardingFoodTitle": "Nourriture",
+  "onboardingFoodDesc": "Ramasse le maximum de nourriture sans te les faire voler.",
+  "onboardingPinceTitle": "Pince",
+  "onboardingPinceDesc": "La pince te permet de voler une nourriture à un autre joueur.",
+  "onboardingRaccoonTitle": "Raton laveur",
+  "onboardingRaccoonDesc": "Le raton laveur vole toute ta nourriture. Fais attention.",
+  "onboardingTrashTitle": "Poubelle sécurisée",
+  "onboardingTrashDesc": "La poubelle sécurisée te protège contre un passage du raton laveur.",
+  "cardBacksTitle": "DOS DE CARTES",
+  "equipped": "ÉQUIPÉ",
+  "tapToEquip": "Appuyer pour équiper",
+  "gamesPlayed": "{count, plural, one{{count} partie jouée} other{{count} parties jouées}}",
+  "gamesRemaining": "{count, plural, one{{count} partie restante} other{{count} parties restantes}}",
+  "requiredGames": "{count, plural, one{{count} partie} other{{count} parties}}",
+  "unlockProgressNext": "Prochain déblocage",
+  "defaultLabel": "Défaut",
+  "newCardBackUnlocked": "NOUVEAU DOS DÉBLOQUÉ",
+  "tryButton": "ESSAYER",
+  "laterButton": "Plus tard"
+}

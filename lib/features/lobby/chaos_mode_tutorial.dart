@@ -3,56 +3,52 @@ import 'package:flutter/material.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/theme/app_theme.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../onboarding/onboarding_slide.dart';
 
-/// Slides du tutoriel Mode Pagaille.
+/// Slides du tutoriel Mode Pagaille — construites à partir des traductions.
 ///
-/// Même structure que [OnboardingSlides] — facile à étendre.
+/// Plus de const : les textes sont fournis par [AppLocalizations].
 class ChaosTutorialSlides {
   ChaosTutorialSlides._();
 
-  static const List<OnboardingSlide> all = [
-    OnboardingSlide(
-      emoji: '🌀',
-      title: 'Mode Pagaille',
-      description:
-          'Des cartes spéciales s\'ajoutent au paquet.\nPlus de surprises, plus de chaos !',
-      cardColor: Color(0xFF2A1F3D),
-      accentColor: Color(0xFFCE93D8),
-    ),
-    OnboardingSlide(
-      emoji: '🍎',
-      title: 'Banquet',
-      description:
-          'Tu pioches cette carte ? Tu gagnes 2 nourritures d\'un coup.\nBonne pioche !',
-      cardColor: Color(0xFF1B3A1B),
-      accentColor: Color(0xFF81C784),
-    ),
-    OnboardingSlide(
-      emoji: '🦝',
-      title: 'Bébé Raton',
-      description:
-          'Un petit raton affamé te vole 2 nourritures.\nMoins dangereux que son grand frère, mais ça fait mal.',
-      cardColor: Color(0xFF37474F),
-      accentColor: Color(0xFF90A4AE),
-    ),
-    OnboardingSlide(
-      emoji: '🌀',
-      title: 'Aspirateur',
-      description:
-          'Cette carte vole 1 nourriture à CHAQUE joueur.\nLe chaos absolu !',
-      cardColor: Color(0xFF1A0D2E),
-      accentColor: Color(0xFF7C4DFF),
-    ),
-    OnboardingSlide(
-      emoji: '🎲',
-      title: 'Prêt pour le chaos ?',
-      description:
-          'Ce mode est plus imprévisible.\nRigolo en famille, surprenant à chaque partie !',
-      cardColor: Color(0xFF1A1A2E),
-      accentColor: Color(0xFFFF9800),
-    ),
-  ];
+  static List<OnboardingSlide> build(AppLocalizations l10n) => [
+        OnboardingSlide(
+          emoji: '🌀',
+          title: (_) => l10n.chaosSlide1Title,
+          description: (_) => l10n.chaosSlide1Desc,
+          cardColor: const Color(0xFF2A1F3D),
+          accentColor: const Color(0xFFCE93D8),
+        ),
+        OnboardingSlide(
+          emoji: '🍎',
+          title: (_) => l10n.chaosSlide2Title,
+          description: (_) => l10n.chaosSlide2Desc,
+          cardColor: const Color(0xFF1B3A1B),
+          accentColor: const Color(0xFF81C784),
+        ),
+        OnboardingSlide(
+          emoji: '🦝',
+          title: (_) => l10n.chaosSlide3Title,
+          description: (_) => l10n.chaosSlide3Desc,
+          cardColor: const Color(0xFF37474F),
+          accentColor: const Color(0xFF90A4AE),
+        ),
+        OnboardingSlide(
+          emoji: '🌀',
+          title: (_) => l10n.chaosSlide4Title,
+          description: (_) => l10n.chaosSlide4Desc,
+          cardColor: const Color(0xFF1A0D2E),
+          accentColor: const Color(0xFF7C4DFF),
+        ),
+        OnboardingSlide(
+          emoji: '🎲',
+          title: (_) => l10n.chaosSlide5Title,
+          description: (_) => l10n.chaosSlide5Desc,
+          cardColor: const Color(0xFF1A1A2E),
+          accentColor: const Color(0xFFFF9800),
+        ),
+      ];
 }
 
 /// Tutoriel Mode Pagaille — même UX que l'onboarding principal.
@@ -80,7 +76,14 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
-  final List<OnboardingSlide> _slides = ChaosTutorialSlides.all;
+  // Slides construites dans didChangeDependencies pour avoir accès au contexte.
+  late List<OnboardingSlide> _slides;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _slides = ChaosTutorialSlides.build(AppLocalizations.of(context)!);
+  }
 
   bool get _isLast => _currentIndex == _slides.length - 1;
 
@@ -105,6 +108,7 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
@@ -137,9 +141,10 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
                       opacity: _isLast ? 0.0 : 1.0,
                       duration: const Duration(milliseconds: 200),
                       child: TextButton(
-                        onPressed: _isLast ? null : () => Navigator.of(context).pop(),
+                        onPressed:
+                            _isLast ? null : () => Navigator.of(context).pop(),
                         child: Text(
-                          'Fermer',
+                          l10n.chaosTutorialClose,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.5),
                             fontSize: 14,
@@ -157,7 +162,7 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
 
             // ── Titre de la bottom sheet ───────────────────────────────────
             Text(
-              'TUTORIEL MODE PAGAILLE',
+              l10n.chaosTutorialSheetTitle,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -209,7 +214,7 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
                     shadowColor: AppTheme.primary.withValues(alpha: 0.4),
                   ),
                   child: Text(
-                    _isLast ? 'C\'est parti !' : 'Suivant',
+                    _isLast ? l10n.chaosTutorialDone : l10n.chaosTutorialNext,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -273,7 +278,7 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
               ),
               SizedBox(height: screenHeight < 650 ? 16 : 24),
               Text(
-                slide.title,
+                slide.title(context),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: titleSize,
@@ -284,7 +289,7 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                slide.description,
+                slide.description(context),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: descSize,

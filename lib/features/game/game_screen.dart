@@ -13,13 +13,13 @@ import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/audio_service.dart';
-import '../../core/services/game_save_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/services/wakelock_service.dart';
 import '../../core/services/stats_service.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/player_avatar.dart';
-import 'widgets/bandit_target_overlay.dart';
+import 'widgets/pince_target_overlay.dart';
 import 'widgets/gameplay_overlay_animation_manager.dart';
 
 class GameScreen extends StatefulWidget {
@@ -50,13 +50,27 @@ class _GameScreenState extends State<GameScreen>
   final Map<int, GlobalKey> _fridgeZoneKeys = {};
   final GlobalKey _rootStackKey = GlobalKey();
   int? _lastResolvedPlayerId;
+  // Nom du joueur affiché pendant l'animation (pour ne pas sauter visuellement)
+  String? _displayPlayerName;
 
-  bool _showingBanditOverlay = false;
-  List<PlayerState> _banditTargets = [];
+  bool _showingPinceOverlay = false;
+  List<PlayerState> _pinceTargets = [];
   bool _quitDialogOpen = false;
 
   late final AnimationController _flipController;
   late final AnimationController _slideController;
+  // Animation d'apparition subtile (remontée + fade) quand une carte arrive
+  late final AnimationController _appearController;
+  late final Animation<double> _appearOffset;
+  late final Animation<double> _appearOpacity;
+
+  static const Map<CardType, AssetImage> _cardFaceProviders = {
+    CardType.raccoon: AssetImage('assets/images/card_front_raccoon.png'),
+    CardType.trash: AssetImage('assets/images/card_front_trash.png'),
+    CardType.food: AssetImage('assets/images/card_front_food.png'),
+    CardType.pince: AssetImage('assets/images/card_front_pince.png'),
+    CardType.vacuum: AssetImage('assets/images/card_front_vacuum.png'),
+  };
 
   bool _resultScreenOpened = false;
 
@@ -65,7 +79,7 @@ class _GameScreenState extends State<GameScreen>
   bool get _isCriticalAnimationRunning =>
       _flipController.isAnimating ||
       _slideController.isAnimating ||
-      _showingBanditOverlay;
+      _showingPinceOverlay;
 
   bool _navigationInProgress = false;
 
@@ -88,6 +102,19 @@ class _GameScreenState extends State<GameScreen>
       vsync: this,
       duration: const Duration(milliseconds: 275),
     );
+    // Animation d'apparition de carte : 180ms, très rapide et premium
+    _appearController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+    );
+    _appearOffset = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _appearController, curve: Curves.easeOut),
+    );
+    _appearOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _appearController, curve: Curves.easeOut),
+    );
+    // Initialiser à 1 (carte visible) — on jouera l'animation à chaque pioche
+    _appearController.value = 1.0;
   }
 
   @override
@@ -96,6 +123,7 @@ class _GameScreenState extends State<GameScreen>
     unawaited(WakelockService.disable());
     _flipController.dispose();
     _slideController.dispose();
+    _appearController.dispose();
     // Vide la liste avant dispose pour éviter listeners dangling
     _animationsNotifier.value = [];
     _animationsNotifier.dispose();
@@ -105,6 +133,12 @@ class _GameScreenState extends State<GameScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Précache les faces des cartes pour éviter le délai lors du retournement.
+    precacheImage(const AssetImage('assets/images/card_front_raccoon.png'), context);
+    precacheImage(const AssetImage('assets/images/card_front_trash.png'), context);
+    precacheImage(const AssetImage('assets/images/card_front_food.png'), context);
+    precacheImage(const AssetImage('assets/images/card_front_pince.png'), context);
+    precacheImage(const AssetImage('assets/images/card_front_vacuum.png'), context);
     if (!_initialized) {
       _restoreOrInitGame();
     }
@@ -118,30 +152,19 @@ class _GameScreenState extends State<GameScreen>
       _gameState = args;
       NavigationGuard.log(_tag, 'init — nouvelle partie, ${_gameState.players.length} joueurs');
     } else {
-      final save = GameSaveService.current;
-      if (save != null) {
-        _gameState = GameState.fromSave(save);
-        NavigationGuard.log(
-          _tag,
-          'init — reprise depuis sauvegarde, '
-          'joueur: ${_gameState.currentPlayerIndex}, '
-          'deck: ${_gameState.remainingCards} cartes',
-        );
-      } else {
-        NavigationGuard.log(_tag, 'init — pas de sauvegarde, redirection home');
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.home,
-          (route) => false,
-        );
-        return;
-      }
+      NavigationGuard.log(_tag, 'init — pas de GameState, redirection home');
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.home,
+        (route) => false,
+      );
+      return;
     }
 
     _isAnimating = false;
-    _showingBanditOverlay = false;
-    _banditTargets = [];
-    _pendingBanditCallback = null;
+    _showingPinceOverlay = false;
+    _pinceTargets = [];
+    _pendingPinceCallback = null;
     _revealedCard = null;
     _effectText = '';
     _resultScreenOpened = false;
@@ -149,17 +172,9 @@ class _GameScreenState extends State<GameScreen>
     _lastResolvedPlayerId = null;
     _navigationInProgress = false;
 
+    _displayPlayerName = null;
     _initialized = true;
     unawaited(WakelockService.enable());
-  }
-
-  // ── Sauvegarde automatique ─────────────────────────────────────────────────
-
-  void _autoSave() {
-    if (_gameState.isGameOver) return;
-    if (_showingBanditOverlay) return;
-    if (_disposed) return;
-    unawaited(GameSaveService.save(_gameState.toSave()));
   }
 
   // ── Nettoyage overlays avant navigation ────────────────────────────────────
@@ -171,9 +186,9 @@ class _GameScreenState extends State<GameScreen>
     }
     _flipController.stop();
     _slideController.stop();
-    _showingBanditOverlay = false;
-    _banditTargets = [];
-    _pendingBanditCallback = null;
+    _showingPinceOverlay = false;
+    _pinceTargets = [];
+    _pendingPinceCallback = null;
     _quitDialogOpen = false;
   }
 
@@ -192,6 +207,8 @@ class _GameScreenState extends State<GameScreen>
     NavigationGuard.log(_tag, 'dialog opened — quit confirmation');
     setState(() => _quitDialogOpen = true);
 
+    final l10n = AppLocalizations.of(context)!;
+
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -200,16 +217,16 @@ class _GameScreenState extends State<GameScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: const Text(
-          'Quitter la partie ?',
-          style: TextStyle(
+        title: Text(
+          l10n.gameQuitDialogTitle,
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        content: const Text(
-          'La partie en cours sera perdue.',
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          l10n.gameQuitDialogContent,
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
@@ -217,9 +234,9 @@ class _GameScreenState extends State<GameScreen>
               AudioService.instance.playButtonSound();
               Navigator.of(ctx).pop(false);
             },
-            child: const Text(
-              'Annuler',
-              style: TextStyle(color: Colors.white54),
+            child: Text(
+              l10n.gameQuitCancel,
+              style: const TextStyle(color: Colors.white54),
             ),
           ),
           TextButton(
@@ -230,9 +247,9 @@ class _GameScreenState extends State<GameScreen>
             style: TextButton.styleFrom(
               foregroundColor: Colors.redAccent,
             ),
-            child: const Text(
-              'Quitter',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            child: Text(
+              l10n.gameQuitConfirm,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -264,7 +281,6 @@ class _GameScreenState extends State<GameScreen>
 
     _cleanupBeforeNavigation();
 
-    await GameSaveService.clear();
     if (!mounted) {
       _navigationInProgress = false;
       return;
@@ -302,7 +318,7 @@ class _GameScreenState extends State<GameScreen>
   // ── Game logic ─────────────────────────────────────────────────────────────
 
   Future<void> _drawCard() async {
-    if (_isAnimating || _showingBanditOverlay || _gameState.isGameOver) return;
+    if (_isAnimating || _showingPinceOverlay || _gameState.isGameOver) return;
 
     HapticService.trigger(HapticType.light);
     AudioService.instance.playSfx(SoundEffect.piocheCarte);
@@ -313,6 +329,8 @@ class _GameScreenState extends State<GameScreen>
     });
 
     _lastResolvedPlayerId = _gameState.currentPlayer.id;
+    // Capturer le nom avant l'avancée du tour pour l'afficher pendant l'animation
+    final String currentPlayerNameSnapshot = _gameState.currentPlayer.name;
     final foodCountBeforeDraw = _gameState.currentPlayer.foodCount;
 
     final result = _gameState.drawCard();
@@ -320,13 +338,20 @@ class _GameScreenState extends State<GameScreen>
 
     setState(() {
       _revealedCard = card;
+      _displayPlayerName = currentPlayerNameSnapshot;
     });
+
+    // Précharger agressivement les faces avant avant le flip
+    // afin d'éviter tout délai visible pendant la rotation.
+    if (card != null && _cardFaceProviders.containsKey(card.type)) {
+      await precacheImage(_cardFaceProviders[card.type]!, context);
+    }
 
     await _flipController.forward(from: 0);
     _playCardFeedback(card, result);
 
     if (result.needsTargetSelection) {
-      await _handleTargetSelection(card, result.pendingTargetCardType ?? CardType.bandit);
+      await _handleTargetSelection(card, result.pendingTargetCardType ?? CardType.pince);
       return;
     }
 
@@ -336,19 +361,17 @@ class _GameScreenState extends State<GameScreen>
       _effectText = result.message;
     });
 
-    _autoSave();
-
     final bool isRaccoonEffect =
         card?.type == CardType.raccoon && !result.trashDestroyed && foodCountBeforeDraw > 0;
     await _finishCardAnimation(extraDelay: isRaccoonEffect ? 600 : 0);
   }
 
   Future<void> _handleTargetSelection(GameCard? card, CardType targetCardType) async {
-    final targets = _gameState.banditValidTargets();
+    final targets = _gameState.pinceValidTargets();
 
     setState(() {
-      _banditTargets = targets;
-      _showingBanditOverlay = true;
+      _pinceTargets = targets;
+      _showingPinceOverlay = true;
     });
 
     final completer = Completer<PlayerState>();
@@ -358,39 +381,38 @@ class _GameScreenState extends State<GameScreen>
     }
 
     setState(() {
-      _pendingBanditCallback = onChosen;
+      _pendingPinceCallback = onChosen;
     });
 
     final target = await completer.future;
 
     if (!mounted || _disposed) return;
 
-    final resolution = targetCardType == CardType.bandit
-        ? _gameState.resolveBandit(target)
+    final resolution = targetCardType == CardType.pince
+        ? _gameState.resolvePince(target)
         : _gameState.resolveTargetedSpecial(targetCardType, target);
 
     setState(() {
-      _showingBanditOverlay = false;
-      _banditTargets = [];
-      _pendingBanditCallback = null;
+      _showingPinceOverlay = false;
+      _pinceTargets = [];
+      _pendingPinceCallback = null;
       _effectText = resolution.message;
     });
 
     // Son bandit joué uniquement en cas de vol effectif
     if (resolution.foodStolen) {
-      AudioService.instance.playSfx(SoundEffect.bandit);
+      AudioService.instance.playSfx(SoundEffect.pince);
     }
 
-    _playBanditStealAnimation(
+    _playPinceStealAnimation(
       thiefId: _lastResolvedPlayerId,
       targetId: target.id,
     );
 
-    _autoSave();
     await _finishCardAnimation();
   }
 
-  void _playBanditStealAnimation({
+  void _playPinceStealAnimation({
     required int? thiefId,
     required int targetId,
   }) {
@@ -417,10 +439,17 @@ class _GameScreenState extends State<GameScreen>
     setState(() {
       _revealedCard = null;
       _isAnimating = false;
+      _displayPlayerName = null;
     });
 
     _flipController.reset();
     _slideController.reset();
+
+    // Animation d'apparition : la nouvelle carte remonte légèrement du paquet
+    // quand elle devient disponible pour la prochaine pioche.
+    if (!_gameState.isGameOver) {
+      unawaited(_appearController.forward(from: 0));
+    }
 
     if (_gameState.isGameOver && mounted && !_resultScreenOpened) {
       _resultScreenOpened = true;
@@ -444,9 +473,12 @@ class _GameScreenState extends State<GameScreen>
         dureePartieEstimee: _gameState.sessionStats.cardsPlayed * 8,
       ));
 
-      await GameSaveService.clear();
       HapticService.trigger(HapticType.heavy);
-      AudioService.instance.playSfx(SoundEffect.popupRecompense);
+      // Son joué ici uniquement s'il n'y a pas de popup de déblocage.
+      // Si des dos sont débloqués, c'est la popup qui joue le son.
+      if (newUnlocks.isEmpty) {
+        AudioService.instance.playSfx(SoundEffect.popupRecompense);
+      }
 
       if (!mounted || _disposed) return;
 
@@ -462,7 +494,7 @@ class _GameScreenState extends State<GameScreen>
     }
   }
 
-  void Function(PlayerState)? _pendingBanditCallback;
+  void Function(PlayerState)? _pendingPinceCallback;
 
   Offset _widgetCenter(GlobalKey key, {double? verticalBias}) {
     final ctx = key.currentContext;
@@ -556,9 +588,9 @@ class _GameScreenState extends State<GameScreen>
           _overlayCoordinator.playRaccoonDevour(playerCenter: playerCenter, cardCenter: start, foodCount: foodCountBeforeDraw);
         }
         return;
-      case CardType.bandit:
+      case CardType.pince:
         if (result.targetPlayerId != null) {
-          _playBanditStealAnimation(thiefId: currentPlayerId, targetId: result.targetPlayerId!);
+          _playPinceStealAnimation(thiefId: currentPlayerId, targetId: result.targetPlayerId!);
         }
         return;
       case CardType.banquet:
@@ -570,7 +602,10 @@ class _GameScreenState extends State<GameScreen>
         });
         return;
       case CardType.babyRaccoon:
-        if (result.targetPlayerId != null) {
+        if (_gameState.chaosMode) {
+          // Mode pagaille : le joueur actif perd 2 nourritures
+          _overlayCoordinator.playRaccoonDevour(playerCenter: playerCenter, cardCenter: start, foodCount: 2);
+        } else if (result.targetPlayerId != null) {
           final targetCenter = _playerFoodCenter(result.targetPlayerId!);
           _overlayCoordinator.playRaccoonDevour(playerCenter: targetCenter, cardCenter: start, foodCount: 2);
         }
@@ -601,10 +636,10 @@ class _GameScreenState extends State<GameScreen>
           AudioService.instance.playSfx(SoundEffect.raccoon);
         }
         return;
-      case CardType.bandit:
+      case CardType.pince:
         HapticService.trigger(HapticType.medium);
         if (!result.needsTargetSelection && result.foodStolen) {
-          AudioService.instance.playSfx(SoundEffect.bandit);
+          AudioService.instance.playSfx(SoundEffect.pince);
         }
         return;
       case CardType.food:
@@ -638,7 +673,11 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _buildPlayerCard(int index, {double maxWidth = 150}) {
     final player = _gameState.players[index];
-    final active = index == _gameState.currentPlayerIndex;
+    // Durant l'animation, on maintient la mise en évidence du joueur qui joue
+    final animatingPlayerId = _displayPlayerName != null ? _lastResolvedPlayerId : null;
+    final active = animatingPlayerId != null
+        ? player.id == animatingPlayerId
+        : index == _gameState.currentPlayerIndex;
 
     _playerKeys.putIfAbsent(player.id, GlobalKey.new);
     _foodZoneKeys.putIfAbsent(player.id, GlobalKey.new);
@@ -695,7 +734,12 @@ class _GameScreenState extends State<GameScreen>
               runSpacing: 1,
               children: List.generate(
                 player.foodCount,
-                (_) => Text('🍎', style: TextStyle(fontSize: emojiFontSize)),
+                (_) => Image.asset(
+                  'assets/images/icon_food.png',
+                  width: emojiFontSize * 1.4,
+                  height: emojiFontSize * 1.4,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             const SizedBox(height: 2),
@@ -709,7 +753,8 @@ class _GameScreenState extends State<GameScreen>
                 (_) => Image.asset(
                   'assets/images/icon_trash.png',
                   width: emojiFontSize * 1.4,
-                  height: emojiFontSize * 1.4,
+                  height: emojiFontSize * 1.75,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
@@ -742,8 +787,8 @@ class _GameScreenState extends State<GameScreen>
       4: [
         <String, double>{'top': topOffset, 'left': hMargin},
         <String, double>{'top': topOffset, 'right': hMargin},
-        <String, double>{'bottom': bottomOffset, 'left': hMargin},
         <String, double>{'bottom': bottomOffset, 'right': hMargin},
+        <String, double>{'bottom': bottomOffset, 'left': hMargin},
       ],
     };
 
@@ -778,7 +823,7 @@ class _GameScreenState extends State<GameScreen>
     return GestureDetector(
       onTap: backgroundCard || deckExhausted ? null : _drawCard,
       child: AnimatedBuilder(
-        animation: Listenable.merge([_flipController, _slideController]),
+        animation: Listenable.merge([_flipController, _slideController, _appearController]),
         builder: (context, child) {
           final flip = _flipController.value;
           final slide = _slideController.value;
@@ -786,20 +831,44 @@ class _GameScreenState extends State<GameScreen>
           final showFront = angle > math.pi / 2;
           final isBack = !deckExhausted && !(showFront && _revealedCard != null);
 
-          return Transform.translate(
+          // Masquer la carte lorsqu'elle est presque de profil (angle ≈ π/2)
+          // pour éviter le flash de backface visible pendant la rotation 3D.
+          final nearEdge = !backgroundCard &&
+              angle > math.pi / 2 - 0.08 &&
+              angle < math.pi / 2 + 0.08;
+
+          // Animation d'apparition : légère remontée depuis le paquet.
+          // Appliquée uniquement à la carte principale au repos (pas pendant le flip).
+          final isFlipping = flip > 0.0;
+          final appearDy = (backgroundCard || isFlipping) ? 0.0 : _appearOffset.value * 10.0;
+          final appearAlpha = (backgroundCard || isFlipping) ? 1.0 : _appearOpacity.value;
+
+          return Opacity(
+            opacity: nearEdge ? 0.0 : appearAlpha,
+            child: Transform.translate(
             offset: backgroundCard
                 ? const Offset(0, 0)
-                : Offset(0, slide * 600),
+                : Offset(0, slide * 600 + appearDy),
             child: Transform(
               alignment: Alignment.center,
               transform: Matrix4.identity()
                 ..setEntry(3, 2, 0.001)
                 ..rotateY(backgroundCard ? 0 : angle),
-              child: SizedBox(
+              child: Container(
                 width: _cardWidth,
                 height: _cardHeight,
-                child: ClipRRect(
+                decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(_cardRadius),
+                  // Contour uniquement sur la face avant — le dos n'a pas de contour
+                  border: (!backgroundCard && showFront && _revealedCard != null)
+                      ? Border.all(
+                          color: Colors.white,
+                          width: 7.0,
+                        )
+                      : null,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(_cardRadius - 7.0),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -807,22 +876,19 @@ class _GameScreenState extends State<GameScreen>
                         child: isBack || backgroundCard
                             ? _buildCardBackWidget()
                             : (showFront && _revealedCard?.type == CardType.raccoon)
-                                ? Image.asset(
-                                    'assets/images/card_front_raccoon.png',
-                                    fit: BoxFit.cover,
-                                  )
+                                ? Image(image: _cardFaceProviders[CardType.raccoon]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
                                 : (showFront && _revealedCard?.type == CardType.trash)
-                                    ? Image.asset(
-                                        'assets/images/card_front_trash.png',
-                                        fit: BoxFit.cover,
-                                      )
-                                    : ColoredBox(
-                                        color: _revealedCard?.color ?? Colors.deepPurple,
-                                      ),
+                                    ? Image(image: _cardFaceProviders[CardType.trash]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
+                                    : (showFront && _revealedCard?.type == CardType.food)
+                                        ? Image(image: _cardFaceProviders[CardType.food]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
+                                        : ((showFront && _revealedCard?.type == CardType.pince) || (showFront && _revealedCard?.type == CardType.vacuum))
+                                            ? Image(image: _cardFaceProviders[_revealedCard!.type]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
+                                            : ColoredBox(
+                                                color: _revealedCard?.color ?? Colors.deepPurple,
+                                              ),
                       ),
                       if (!backgroundCard &&
-                          !(showFront && (_revealedCard?.type == CardType.raccoon ||
-                              _revealedCard?.type == CardType.trash)))
+                          !(showFront && (_revealedCard?.type == CardType.raccoon || _revealedCard?.type == CardType.trash || _revealedCard?.type == CardType.food || _revealedCard?.type == CardType.pince || _revealedCard?.type == CardType.vacuum)))
                         Center(
                           child: Transform(
                             alignment: Alignment.center,
@@ -847,7 +913,7 @@ class _GameScreenState extends State<GameScreen>
                 ),
               ),
             ),
-          );
+          ));
         },
       ),
     );
@@ -865,7 +931,9 @@ class _GameScreenState extends State<GameScreen>
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
-            'Tour de ${_gameState.currentPlayer.name}',
+            AppLocalizations.of(context)!.gameTurnOf(
+              _displayPlayerName ?? _gameState.currentPlayer.name,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -902,7 +970,7 @@ class _GameScreenState extends State<GameScreen>
           child: Text(
             _gameState.remainingCards == 0
                 ? ''
-                : '${_gameState.remainingCards} carte${_gameState.remainingCards > 1 ? "s" : ""}',
+                : AppLocalizations.of(context)!.gameRemainingCards(_gameState.remainingCards),
             key: ValueKey(_gameState.remainingCards),
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
@@ -927,7 +995,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Widget _buildGameplayControlsBar() {
-    final bool quitEnabled = !_isAnimating && !_showingBanditOverlay;
+    final bool quitEnabled = !_isAnimating && !_showingPinceOverlay;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -943,7 +1011,7 @@ class _GameScreenState extends State<GameScreen>
                   }
                 : null,
             icon: const Icon(Icons.exit_to_app, size: 18),
-            label: const Text('Quitter'),
+            label: Text(AppLocalizations.of(context)!.gameQuitConfirm),
             style: TextButton.styleFrom(
               foregroundColor: Colors.white70,
               disabledForegroundColor: Colors.white24,
@@ -1016,11 +1084,11 @@ class _GameScreenState extends State<GameScreen>
                   ),
 
                   // ── Bandit target overlay ─────────────────────────────────
-                  if (_showingBanditOverlay && _pendingBanditCallback != null)
+                  if (_showingPinceOverlay && _pendingPinceCallback != null)
                     Positioned.fill(
-                      child: BanditTargetOverlay(
-                        targets: _banditTargets,
-                        onTargetSelected: _pendingBanditCallback!,
+                      child: PinceTargetOverlay(
+                        targets: _pinceTargets,
+                        onTargetSelected: _pendingPinceCallback!,
                       ),
                     ),
                 ],

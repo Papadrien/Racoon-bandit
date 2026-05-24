@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../core/theme/app_theme.dart';
 
@@ -9,9 +10,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CONFIDENTIALITÉ'),
+        title: Text(l10n.privacyTitle),
         leading: const BackButton(),
       ),
       body: SafeArea(
@@ -39,18 +41,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      'Politique de confidentialité',
-                      style: TextStyle(
+                    Text(
+                      l10n.privacyHeading,
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Raccoon Bandit',
-                      style: TextStyle(
+                    Text(
+                      l10n.privacyAppName,
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppTheme.textMuted,
                       ),
@@ -72,30 +74,22 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.07),
                   ),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _PolicySection(
-                      title: 'Collecte de données',
-                      content:
-                          'Raccoon Bandit ne collecte aucune donnée personnelle. '
-                          'Toutes les données de jeu sont stockées localement sur votre appareil.',
+                      title: l10n.privacySection1Title,
+                      content: l10n.privacySection1Content,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _PolicySection(
-                      title: 'Publicités',
-                      content:
-                          "L'application peut afficher des publicités via Google AdMob. "
-                          'Ces publicités peuvent utiliser des identifiants anonymisés '
-                          'conformément à la politique de Google.',
+                      title: l10n.privacySection2Title,
+                      content: l10n.privacySection2Content,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _PolicySection(
-                      title: 'Contact',
-                      content:
-                          'Pour toute question concernant la confidentialité, '
-                          "vous pouvez nous contacter via la page de l'application "
-                          'sur le Google Play Store.',
+                      title: l10n.privacySection3Title,
+                      content: l10n.privacySection3Content,
                     ),
                   ],
                 ),
@@ -106,7 +100,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               // Note placeholder
               Center(
                 child: Text(
-                  'Politique de confidentialité complète à venir',
+                  l10n.privacyComingSoon,
                   style: TextStyle(
                     color: AppTheme.textMuted.withValues(alpha: 0.6),
                     fontSize: 11,

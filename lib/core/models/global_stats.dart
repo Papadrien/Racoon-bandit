@@ -14,7 +14,7 @@ class GlobalStats {
   int totalFoodGained;
   int totalFoodStolen;
   int totalCardsPlayed;
-  int totalBanditCardsPlayed;
+  int totalPinceCardsPlayed;
   int totalRaccoonCardsPlayed;
   List<AchievementProgress> achievements;
 
@@ -24,7 +24,7 @@ class GlobalStats {
     this.totalFoodGained=0,
     this.totalFoodStolen=0,
     this.totalCardsPlayed=0,
-    this.totalBanditCardsPlayed=0,
+    this.totalPinceCardsPlayed=0,
     this.totalRaccoonCardsPlayed=0,
     this.achievements=const [],
   });
@@ -35,7 +35,7 @@ class GlobalStats {
     'totalFoodGained':totalFoodGained,
     'totalFoodStolen':totalFoodStolen,
     'totalCardsPlayed':totalCardsPlayed,
-    'totalBanditCardsPlayed':totalBanditCardsPlayed,
+    'totalPinceCardsPlayed':totalPinceCardsPlayed,
     'totalRaccoonCardsPlayed':totalRaccoonCardsPlayed,
     'achievements':achievements.map((e)=>e.toJson()).toList(),
   };
@@ -47,7 +47,7 @@ class GlobalStats {
         totalFoodGained: (json['totalFoodGained'] as num?)?.toInt() ?? 0,
         totalFoodStolen: (json['totalFoodStolen'] as num?)?.toInt() ?? 0,
         totalCardsPlayed: (json['totalCardsPlayed'] as num?)?.toInt() ?? 0,
-        totalBanditCardsPlayed: (json['totalBanditCardsPlayed'] as num?)?.toInt() ?? 0,
+        totalPinceCardsPlayed: (json['totalPinceCardsPlayed'] as num?)?.toInt() ?? 0,
         totalRaccoonCardsPlayed: (json['totalRaccoonCardsPlayed'] as num?)?.toInt() ?? 0,
         achievements: (json['achievements'] as List<dynamic>?)
                 ?.map((e) => AchievementProgress(

@@ -14,10 +14,13 @@ import '../../core/services/lobby_service.dart';
 import '../../core/services/player_profiles_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
+import '../../core/constants/app_assets.dart';
+import '../../core/models/card_back_config.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import 'chaos_mode_tutorial.dart';
 
 class LobbyScreen extends StatefulWidget {
@@ -207,7 +210,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('SALON'),
+          title: Text(AppLocalizations.of(context)!.lobbyTitle),
           leading: const BackButton(),
         ),
         body: SafeArea(
@@ -229,8 +232,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         // ── Sélecteur nombre de joueurs ───────────────────
                         const SizedBox(height: 8),
                         Text(
-                          'Nombre de joueurs',
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.lobbyPlayerCount,
+                          style: const TextStyle(
                             fontSize: 18,
                             color: AppTheme.textMuted,
                           ),
@@ -296,21 +299,21 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
                         const Spacer(),
 
-                        // ── Section Mode Pagaille ──────────────────────────
+                        // ── Bouton démarrer ────────────────────────────────
                         const SizedBox(height: 20),
+                        PrimaryButton(
+                          label: AppLocalizations.of(context)!.lobbyStart,
+                          onPressed: _canStart ? _startGame : null,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // ── Section Mode Pagaille ──────────────────────────
                         _ChaosModeSection(
                           enabled: _chaosModeEnabled,
                           onToggle: (value) {
                             setState(() => _chaosModeEnabled = value);
                           },
                           onHelpTap: _openChaosTutorial,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // ── Bouton démarrer ────────────────────────────────
-                        PrimaryButton(
-                          label: 'COMMENCER',
-                          onPressed: _canStart ? _startGame : null,
                         ),
                         const SizedBox(height: 12),
 
@@ -378,9 +381,9 @@ class _ChaosModeSection extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Mode Pagaille',
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.of(context)!.lobbyChaosTitle,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -388,8 +391,8 @@ class _ChaosModeSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Cartes spéciales · plus de chaos !',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.lobbyChaosSubtitle,
+                        style: const TextStyle(
                           color: AppTheme.textMuted,
                           fontSize: 12,
                         ),
@@ -406,7 +409,7 @@ class _ChaosModeSection extends StatelessWidget {
             onPressed: onHelpTap,
             icon: const Icon(Icons.help_outline, size: 20),
             color: AppTheme.textMuted,
-            tooltip: 'Tutoriel Mode Pagaille',
+            tooltip: AppLocalizations.of(context)!.lobbyChaosTooltip,
             padding: const EdgeInsets.all(8),
             constraints: const BoxConstraints(),
           ),
@@ -418,7 +421,7 @@ class _ChaosModeSection extends StatelessWidget {
               AudioService.instance.playButtonSound();
               onToggle(val);
             },
-            activeColor: const Color(0xFF7C4DFF),
+            activeThumbColor: const Color(0xFF7C4DFF),
           ),
         ],
       ),
@@ -441,11 +444,17 @@ class _PlayerSlotCard extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _slotLabels = ['Joueur 1', 'Joueur 2', 'Joueur 3', 'Joueur 4'];
+  static List<String> _slotLabels(AppLocalizations l10n) => [
+    l10n.lobbySlot1,
+    l10n.lobbySlot2,
+    l10n.lobbySlot3,
+    l10n.lobbySlot4,
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final label = _slotLabels[slotIndex % _slotLabels.length];
+    final l10n = AppLocalizations.of(context)!;
+    final label = _slotLabels(l10n)[slotIndex % 4];
     final hasProfile = profile != null;
     final color =
         hasProfile ? Color(profile!.colorValue) : AppTheme.textMuted;
@@ -512,7 +521,7 @@ class _PlayerSlotCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        hasProfile ? profile!.name : 'Choisir un profil',
+                        hasProfile ? profile!.name : l10n.lobbyChooseProfile,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -536,10 +545,10 @@ class _PlayerSlotCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _CardBackButton
+// _CardBackButton — aperçu visuel du dos sélectionné avec animation idle
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CardBackButton extends StatelessWidget {
+class _CardBackButton extends StatefulWidget {
   final String selectedId;
   final VoidCallback onTap;
 
@@ -549,32 +558,205 @@ class _CardBackButton extends StatelessWidget {
   });
 
   @override
+  State<_CardBackButton> createState() => _CardBackButtonState();
+}
+
+class _CardBackButtonState extends State<_CardBackButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _idleCtrl;
+  late Animation<double> _floatAnim;
+  bool _pressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _idleCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+    _floatAnim = Tween<double>(begin: -2.5, end: 2.5).animate(
+      CurvedAnimation(parent: _idleCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _idleCtrl.dispose();
+    super.dispose();
+  }
+
+  CardBackConfig get _config {
+    try {
+      return ProgressionService.cardBacks
+          .firstWhere((c) => c.id == widget.selectedId);
+    } catch (_) {
+      return ProgressionService.cardBacks.first;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          AudioService.instance.playButtonSound();
-          onTap();
-        },
-        icon: const Icon(Icons.style_outlined, size: 18),
-        label: Text(
-          'Dos de cartes · $selectedId'.toUpperCase(),
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppTheme.textMuted,
-          side: const BorderSide(color: Colors.white12, width: 1.5),
-          minimumSize: const Size(double.infinity, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          textStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1,
+    final config = _config;
+    final accentColor = config.themeColor;
+    final cardBackId = widget.selectedId;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        AudioService.instance.playButtonSound();
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: accentColor.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: accentColor.withValues(alpha: 0.30),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+          child: Row(
+            children: [
+              // ── Mini carte inclinée avec animation idle ────────────────
+              _AnimatedCardPreview(
+                assetPath: AppAssets.cardBackAsset(cardBackId),
+                accentColor: accentColor,
+                floatAnim: _floatAnim,
+              ),
+              const SizedBox(width: 16),
+
+              // ── Textes ─────────────────────────────────────────────────
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.lobbyCardBackLabel,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.textMuted,
+                        letterSpacing: 1.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      config.name,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Badge "Équipé"
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: accentColor.withValues(alpha: 0.35),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.lobbyCardBackEquipped,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: accentColor,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Chevron ────────────────────────────────────────────────
+              Icon(
+                Icons.chevron_right,
+                color: accentColor.withValues(alpha: 0.5),
+                size: 22,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Mini carte inclinée avec animation de flottement
+class _AnimatedCardPreview extends StatelessWidget {
+  final String assetPath;
+  final Color accentColor;
+  final Animation<double> floatAnim;
+
+  const _AnimatedCardPreview({
+    required this.assetPath,
+    required this.accentColor,
+    required this.floatAnim,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: floatAnim,
+      builder: (_, child) {
+        return Transform.translate(
+          offset: Offset(0, floatAnim.value),
+          child: Transform.rotate(
+            angle: -0.12 + floatAnim.value * 0.006,
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        width: 52,
+        height: 74,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(7),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: 0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 6,
+              offset: const Offset(2, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(7),
+          child: Image.asset(
+            assetPath,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: accentColor.withValues(alpha: 0.3),
+              child: Icon(Icons.style, color: accentColor, size: 28),
+            ),
           ),
         ),
       ),
@@ -621,9 +803,9 @@ class _ProfilePickerSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Choisir un profil',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.lobbyChooseProfile,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
@@ -634,13 +816,13 @@ class _ProfilePickerSheet extends StatelessWidget {
               const Divider(color: Colors.white12),
               Expanded(
                 child: profiles.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Aucun profil disponible.\nCréez des profils dans les réglages.',
+                            AppLocalizations.of(context)!.lobbyNoProfiles,
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppTheme.textMuted),
+                            style: const TextStyle(color: AppTheme.textMuted),
                           ),
                         ),
                       )
@@ -706,9 +888,9 @@ class _ProfilePickerSheet extends StatelessWidget {
                                           ),
                                         ),
                                         if (isDisabled)
-                                          const Text(
-                                            'Déjà utilisé',
-                                            style: TextStyle(
+                                          Text(
+                                            AppLocalizations.of(context)!.lobbyProfileAlreadyUsed,
+                                            style: const TextStyle(
                                               fontSize: 11,
                                               color: AppTheme.textMuted,
                                               letterSpacing: 0.5,

@@ -146,6 +146,16 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
     super.dispose();
   }
 
+  Widget _buildParticleChild(String emoji) {
+    if (emoji == '__food__') {
+      return Image.asset('assets/images/icon_food.png', width: 42, height: 42);
+    }
+    if (emoji == '__trash__') {
+      return Image.asset('assets/images/icon_trash.png', width: 42, height: 42);
+    }
+    return Text(emoji, style: const TextStyle(fontSize: 42));
+  }
+
   @override
   Widget build(BuildContext context) {
     // Intervalle actif : [_delayFraction .. 1.0]
@@ -256,10 +266,7 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
             color: Colors.black.withValues(alpha: 0.25),
             shape: BoxShape.circle,
           ),
-          child: Text(
-            widget.animation.emoji,
-            style: const TextStyle(fontSize: 42),
-          ),
+          child: _buildParticleChild(widget.animation.emoji),
         ),
       ),
     );
@@ -270,8 +277,8 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
 // Coordinator — façade publique pour déclencher les animations
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Émojis nourriture variés pour l'animation raton laveur.
-const List<String> _foodEmojis = ['🍎', '🥕', '🍗', '🧀', '🍞'];
+/// Token nourriture pour l'animation raton laveur (utilise icon_food.png).
+const List<String> _foodEmojis = ['__food__', '__food__', '__food__', '__food__', '__food__'];
 
 class GameplayOverlayCoordinator {
   GameplayOverlayCoordinator(this.animationsNotifier);
@@ -290,7 +297,7 @@ class GameplayOverlayCoordinator {
     required Offset end,
   }) {
     _add(
-      emoji: '🍎',
+      emoji: '__food__',
       start: start,
       end: end,
     );
@@ -301,7 +308,7 @@ class GameplayOverlayCoordinator {
     required Offset end,
   }) {
     _add(
-      emoji: '🧊',
+      emoji: '__trash__',
       start: start,
       end: end,
     );
@@ -313,7 +320,7 @@ class GameplayOverlayCoordinator {
     required Offset toThief,
   }) {
     _add(
-      emoji: '🍎',
+      emoji: '__food__',
       start: fromTarget,
       end: toThief,
       duration: const Duration(milliseconds: 750),
@@ -367,7 +374,7 @@ class GameplayOverlayCoordinator {
   /// (200–400 ms), sans bloquer l'UI.
   void playFridgeImpact({required Offset center}) {
     const int count = 6;
-    const List<String> emojis = ['❄️', '💥', '❄️', '✨', '❄️', '💥'];
+    const List<String> emojis = ['💥', '✨', '💥', '✨', '💥', '✨'];
     for (int i = 0; i < count; i++) {
       final angle = (2 * math.pi / count) * i;
       _addRaw(GameplayOverlayAnimation(

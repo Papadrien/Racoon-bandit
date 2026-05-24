@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../core/navigation/app_router.dart';
 import '../../core/models/reward_unlock.dart';
@@ -57,10 +58,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _debugUnlockAll() async {
     await ProgressionService.debugUnlockAll();
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     // ignore: use_build_context_synchronously
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tous les dos débloqués !'),
+      SnackBar(
+        content: Text(l10n.settingsDebugUnlockAll),
         backgroundColor: Colors.orange,
       ),
     );
@@ -68,9 +70,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PARAMÈTRES'),
+        title: Text(l10n.settingsTitle),
         leading: const BackButton(),
       ),
       body: SafeArea(
@@ -79,21 +82,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           children: [
             // ── Son & Vibrations ──────────────────────────────────────────
-            const _SectionLabel(label: 'Audio & Retours'),
+            _SectionLabel(label: l10n.settingsSectionAudio),
             _SettingsCard(
               children: [
                 _ToggleTile(
                   icon: Icons.volume_up_rounded,
-                  label: 'Sons',
-                  subtitle: 'Effets sonores du jeu',
+                  label: l10n.settingsSoundLabel,
+                  subtitle: l10n.settingsSoundSubtitle,
                   value: _soundEnabled,
                   onChanged: _onSoundChanged,
                 ),
                 const _CardDivider(),
                 _ToggleTile(
                   icon: Icons.vibration_rounded,
-                  label: 'Vibrations',
-                  subtitle: 'Retours haptiques',
+                  label: l10n.settingsVibrationLabel,
+                  subtitle: l10n.settingsVibrationSubtitle,
                   value: _vibrationEnabled,
                   onChanged: _onVibrationChanged,
                 ),
@@ -103,18 +106,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 20),
 
             // ── Profils & Tutoriel ────────────────────────────────────────
-            const _SectionLabel(label: 'Jeu'),
+            _SectionLabel(label: l10n.settingsSectionGame),
             _SettingsCard(
               children: [
                 _NavTile(
                   icon: Icons.person_outline_rounded,
-                  label: 'Gestion des profils',
+                  label: l10n.settingsProfilesLabel,
                   onTap: () => Navigator.pushNamed(context, AppRoutes.profiles),
                 ),
                 const _CardDivider(),
                 _NavTile(
                   icon: Icons.school_outlined,
-                  label: 'Revoir le tutoriel',
+                  label: l10n.settingsTutorialLabel,
                   onTap: _replayTutorial,
                 ),
               ],
@@ -123,12 +126,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 20),
 
             // ── Légal ─────────────────────────────────────────────────────
-            const _SectionLabel(label: 'Légal'),
+            _SectionLabel(label: l10n.settingsSectionLegal),
             _SettingsCard(
               children: [
                 _NavTile(
                   icon: Icons.privacy_tip_outlined,
-                  label: 'Politique de confidentialité',
+                  label: l10n.settingsPrivacyLabel,
                   onTap: () => Navigator.pushNamed(context, AppRoutes.privacyPolicy),
                 ),
               ],
@@ -138,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             // ── Section Debug (debug uniquement) ─────────────────────────
             if (kDebugMode) ...[
-              _SectionLabel(label: 'Debug', color: Colors.orange),
+              const _SectionLabel(label: 'Debug', color: Colors.orange),
               _SettingsCard(
                 borderColor: Colors.orange.withValues(alpha: 0.3),
                 children: [
@@ -160,9 +163,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () async {
                       await OnboardingService.resetForDebug();
                       if (!context.mounted) return;
+                      final l10n = AppLocalizations.of(context)!;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Onboarding reset — relancez l\'app'),
+                        SnackBar(
+                          content: Text(l10n.settingsDebugOnboardingReset),
                           backgroundColor: Colors.orange,
                         ),
                       );
@@ -174,10 +178,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
 
             // ── Version ───────────────────────────────────────────────────
-            const Center(
+            Center(
               child: Text(
-                'v1.0.0 — Raccoon Bandit',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                l10n.settingsVersionLabel,
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
               ),
             ),
             const SizedBox(height: 16),

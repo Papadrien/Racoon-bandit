@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../core/models/player_profile.dart';
 import '../../core/services/audio_service.dart';
@@ -47,27 +48,28 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
   }
 
   Future<void> _deleteProfile(PlayerProfile profile) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer le profil ?'),
-        content: Text('Supprimer "${profile.name}" définitivement ?'),
+        title: Text(l10n.profileDeleteTitle),
+        content: Text(l10n.profileDeleteContent(profile.name)),
         actions: [
           TextButton(
             onPressed: () {
               AudioService.instance.playButtonSound();
               Navigator.pop(ctx, false);
             },
-            child: const Text('Annuler'),
+            child: Text(l10n.profileDeleteCancel),
           ),
           TextButton(
             onPressed: () {
               AudioService.instance.playButtonSound();
               Navigator.pop(ctx, true);
             },
-            child: const Text(
-              'Supprimer',
-              style: TextStyle(color: Colors.redAccent),
+            child: Text(
+              l10n.profileDeleteConfirm,
+              style: const TextStyle(color: Colors.redAccent),
             ),
           ),
         ],
@@ -81,76 +83,186 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PROFILS'),
+        title: Text(l10n.profilesTitle),
         leading: const BackButton(),
       ),
       body: SafeArea(
         minimum: const EdgeInsets.symmetric(horizontal: 4),
         child: _profiles.isEmpty
-            ? const Center(
-                child: Text(
-                  'Aucun profil',
-                  style: TextStyle(color: AppTheme.textMuted),
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.person_outline_rounded,
+                      size: 56,
+                      color: AppTheme.textMuted,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.profilesEmpty,
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: () {
+                        AudioService.instance.playButtonSound();
+                        _addProfile();
+                      },
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.profilesAddTooltip),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               )
             : ListView.separated(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 itemCount: _profiles.length,
-                separatorBuilder: (_, i) =>
-                    const Divider(color: AppTheme.textMuted, height: 1),
+                separatorBuilder: (_, i) => const SizedBox(height: 8),
                 itemBuilder: (_, i) {
                   final p = _profiles[i];
-                  return ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                    leading: PlayerAvatar(
-                      emoji: p.emoji,
-                      color: Color(p.colorValue),
-                      size: 52,
-                    ),
-                    title: Text(
-                      p.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined,
-                              color: AppTheme.primary),
-                          onPressed: () {
-                            AudioService.instance.playButtonSound();
-                            _editProfile(p);
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: Colors.redAccent),
-                          onPressed: () {
-                            AudioService.instance.playButtonSound();
-                            _deleteProfile(p);
-                          },
-                        ),
-                      ],
-                    ),
+                  final color = Color(p.colorValue);
+                  return _ProfileCard(
+                    profile: p,
+                    color: color,
+                    onEdit: () {
+                      AudioService.instance.playButtonSound();
+                      _editProfile(p);
+                    },
+                    onDelete: () {
+                      AudioService.instance.playButtonSound();
+                      _deleteProfile(p);
+                    },
                   );
                 },
               ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          AudioService.instance.playButtonSound();
-          _addProfile();
-        },
-        backgroundColor: AppTheme.primary,
-        tooltip: 'Ajouter un profil',
-        child: const Icon(Icons.add),
+      floatingActionButton: _profiles.isNotEmpty
+          ? FloatingActionButton(
+              onPressed: () {
+                AudioService.instance.playButtonSound();
+                _addProfile();
+              },
+              backgroundColor: AppTheme.primary,
+              tooltip: l10n.profilesAddTooltip,
+              child: const Icon(Icons.add),
+            )
+          : null,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _ProfileCard — carte de profil style cohérent avec Settings
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ProfileCard extends StatelessWidget {
+  final PlayerProfile profile;
+  final Color color;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _ProfileCard({
+    required this.profile,
+    required this.color,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withValues(alpha: 0.20),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            // Avatar
+            PlayerAvatar(
+              emoji: profile.emoji,
+              color: color,
+              size: 52,
+            ),
+            const SizedBox(width: 16),
+
+            // Nom
+            Expanded(
+              child: Text(
+                profile.name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            // Actions
+            _ActionIconButton(
+              icon: Icons.edit_outlined,
+              color: AppTheme.primary,
+              onPressed: onEdit,
+            ),
+            const SizedBox(width: 4),
+            _ActionIconButton(
+              icon: Icons.delete_outline,
+              color: Colors.redAccent,
+              onPressed: onDelete,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionIconButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _ActionIconButton({
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, color: color, size: 20),
+        ),
       ),
     );
   }

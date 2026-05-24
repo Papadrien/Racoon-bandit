@@ -7,12 +7,12 @@ import 'package:flutter/material.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
-import '../../core/services/game_save_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_theme_provider.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/primary_button.dart';
 import '../onboarding/onboarding_screen.dart';
@@ -39,8 +39,6 @@ class _HomeScreenState extends State<HomeScreen>
   // Controller pour le feedback press du bouton Jouer
   late final AnimationController _playButtonPressController;
   late final Animation<double> _playButtonScale;
-
-  bool get _hasSavedGame => GameSaveService.hasSavedGame;
 
   @override
   void initState() {
@@ -73,11 +71,10 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && mounted) {
-      GameSaveService.load().then((_) {
+      _lifeSystemService.updateLivesFromTime().then((_) {
         if (mounted) {
-          _lifeSystemService.updateLivesFromTime().then((_) {
-            if (mounted) setState(() {});
-          });
+          _ensureAdPreloaded();
+          setState(() {});
         }
       });
     }
@@ -85,11 +82,14 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _initializeLives() async {
     await _lifeSystemService.load();
-    await RewardedAdService.instance.preloadAd();
+    _ensureAdPreloaded();
 
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) async {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       await _lifeSystemService.updateLivesFromTime();
-      if (mounted) setState(() {});
+      if (mounted) {
+        _ensureAdPreloaded();
+        setState(() {});
+      }
     });
 
     if (mounted) {
@@ -98,6 +98,14 @@ class _HomeScreenState extends State<HomeScreen>
         // Déclencher l'onboarding au bon moment : après chargement, avant UI
         _showOnboarding = OnboardingService.shouldShowOnboarding;
       });
+    }
+  }
+
+  /// Déclenche le preload de la pub uniquement si le bouton est visible.
+  /// Sans effet si déjà chargée ou en cours de chargement.
+  void _ensureAdPreloaded() {
+    if (_lifeSystemService.currentLives < LifeSystemService.maxLives) {
+      RewardedAdService.instance.preloadAd();
     }
   }
 
@@ -118,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _watchAdForLife() async {
-    if (_isRewardLoading || RewardedAdService.instance.isBusy) {
+    if (_isRewardLoading) {
       return;
     }
 
@@ -127,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen>
     });
 
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     await RewardedAdService.instance.showRewardedLifeAd(
       onRewardEarned: () async {
@@ -140,17 +149,12 @@ class _HomeScreenState extends State<HomeScreen>
         setState(() {});
 
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text('1 vie gagnée !'),
-          ),
+          SnackBar(content: Text(l10n.lifeEarned)),
         );
       },
       onError: (message) {
         if (!mounted) return;
-
-        messenger.showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        messenger.showSnackBar(SnackBar(content: Text(message)));
       },
     );
 
@@ -159,18 +163,6 @@ class _HomeScreenState extends State<HomeScreen>
         _isRewardLoading = false;
       });
     }
-  }
-
-  Future<void> _resumeGame() async {
-    await GameSaveService.load();
-    if (!mounted) return;
-
-    if (!GameSaveService.hasSavedGame) {
-      setState(() {});
-      return;
-    }
-
-    Navigator.pushNamed(context, AppRoutes.game);
   }
 
   @override
@@ -215,10 +207,12 @@ class _HomeScreenState extends State<HomeScreen>
         body: Stack(
           children: [
             // ── Hero image ancrée en bas avec animation idle ─────────────
+            // bottom: -6 pour que le bas de l'image dépasse légèrement
+            // et évite toute séparation visible entre l'image et le bord.
             const Positioned(
               left: 0,
               right: 0,
-              bottom: 0,
+              bottom: -6,
               child: _HeroImage(),
             ),
 
@@ -258,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   IconButton(
                                     icon: const Icon(Icons.workspace_premium),
                                     color: AppTheme.accent,
-                                    tooltip: 'Premium',
+                                    tooltip: AppLocalizations.of(context)!.tooltipPremium,
                                     onPressed: () {
                                       AudioService.instance.playButtonSound();
                                       Navigator.pushNamed(
@@ -268,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   IconButton(
                                     icon: const Icon(Icons.settings),
                                     color: AppTheme.textMuted,
-                                    tooltip: 'Paramètres',
+                                    tooltip: AppLocalizations.of(context)!.tooltipSettings,
                                     onPressed: () {
                                       AudioService.instance.playButtonSound();
                                       Navigator.pushNamed(
@@ -300,13 +294,11 @@ class _HomeScreenState extends State<HomeScreen>
                 top: false,
                 maintainBottomViewPadding: true,
                 child: _PlayButtonArea(
-                  hasSavedGame: _hasSavedGame,
                   noLives: noLives,
                   isLoading: _isLoading,
                   isRewardLoading: _isRewardLoading,
                   playButtonScale: _playButtonScale,
                   onPlay: _startGame,
-                  onResume: _resumeGame,
                   onWatchAd: _watchAdForLife,
                 ),
               ),
@@ -323,23 +315,19 @@ class _HomeScreenState extends State<HomeScreen>
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PlayButtonArea extends StatelessWidget {
-  final bool hasSavedGame;
   final bool noLives;
   final bool isLoading;
   final bool isRewardLoading;
   final Animation<double> playButtonScale;
   final VoidCallback onPlay;
-  final VoidCallback onResume;
   final VoidCallback onWatchAd;
 
   const _PlayButtonArea({
-    required this.hasSavedGame,
     required this.noLives,
     required this.isLoading,
     required this.isRewardLoading,
     required this.playButtonScale,
     required this.onPlay,
-    required this.onResume,
     required this.onWatchAd,
   });
 
@@ -354,10 +342,6 @@ class _PlayButtonArea extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (hasSavedGame) ...[
-            _ResumeButton(onPressed: onResume),
-            const SizedBox(height: 12),
-          ],
           if (noLives)
             _RewardAdButton(
               isLoading: isRewardLoading,
@@ -367,18 +351,18 @@ class _PlayButtonArea extends StatelessWidget {
             ScaleTransition(
               scale: playButtonScale,
               child: PrimaryButton(
-                label: 'JOUER',
+                label: AppLocalizations.of(context)!.play,
                 onPressed: isLoading ? null : onPlay,
               ),
             ),
           if (noLives) ...[
             const SizedBox(height: 10),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                'Regardez une publicité complète pour récupérer 1 vie.',
+                AppLocalizations.of(context)!.noLivesAdHint,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppTheme.textMuted,
                   fontSize: 13,
                 ),
@@ -486,44 +470,14 @@ class _RewardAdButton extends StatelessWidget {
             : const Icon(Icons.ondemand_video_rounded),
         label: Text(
           isLoading
-              ? 'Chargement de la publicité...'
-              : 'Regarder une publicité',
+              ? AppLocalizations.of(context)!.adLoading
+              : AppLocalizations.of(context)!.watchAdButton,
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.accent,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 52),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ResumeButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _ResumeButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () {
-          AudioService.instance.playButtonSound();
-          onPressed();
-        },
-        icon: const Icon(Icons.play_arrow_rounded),
-        label: const Text('Reprendre la partie'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppTheme.accent,
-          side: BorderSide(color: AppTheme.accent),
-          minimumSize: const Size(double.infinity, 48),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),

@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../core/models/player_state.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/services/haptic_service.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../../widgets/player_avatar.dart';
 
-/// Overlay de sélection de cible pour la carte Bandit.
+/// Overlay de sélection de cible pour la carte Pince.
 ///
 /// Affiche un backdrop semi-transparent + une carte modale centrée
 /// listant les cibles valides. L'appelant fournit [targets] et reçoit
@@ -13,8 +14,8 @@ import '../../../widgets/player_avatar.dart';
 ///
 /// Architecture réutilisable : ce widget peut servir de base pour
 /// toute future popup gameplay (récompenses, confirmations, événements).
-class BanditTargetOverlay extends StatefulWidget {
-  const BanditTargetOverlay({
+class PinceTargetOverlay extends StatefulWidget {
+  const PinceTargetOverlay({
     super.key,
     required this.targets,
     required this.onTargetSelected,
@@ -24,10 +25,10 @@ class BanditTargetOverlay extends StatefulWidget {
   final void Function(PlayerState target) onTargetSelected;
 
   @override
-  State<BanditTargetOverlay> createState() => _BanditTargetOverlayState();
+  State<PinceTargetOverlay> createState() => _PinceTargetOverlayState();
 }
 
-class _BanditTargetOverlayState extends State<BanditTargetOverlay>
+class _PinceTargetOverlayState extends State<PinceTargetOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
@@ -124,9 +125,9 @@ class _BanditTargetOverlayState extends State<BanditTargetOverlay>
                 style: TextStyle(fontSize: 36),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Choisir une cible',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.pinceChooseTarget,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -135,7 +136,7 @@ class _BanditTargetOverlayState extends State<BanditTargetOverlay>
               ),
               const SizedBox(height: 2),
               Text(
-                'Qui voulez-vous voler ?',
+                AppLocalizations.of(context)!.pinceWhoToSteal,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.55),
                   fontSize: 13,
@@ -200,7 +201,7 @@ class _BanditTargetOverlayState extends State<BanditTargetOverlay>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${target.foodCount} nourriture disponible',
+                      AppLocalizations.of(context)!.pinceFoodAvailable(target.foodCount),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12,
