@@ -34,6 +34,7 @@ flutter:
     - assets/images/cards/
     - assets/images/splash_logo.png
     - assets/images/raccoon_bandit_hero.png
+    - assets/images/raccoon_bandit_logo.png
     - assets/images/card_front_raccoon.png
     - assets/images/card_front_trash.png
     - assets/images/card_front_food.png
