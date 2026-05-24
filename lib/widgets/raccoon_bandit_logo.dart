@@ -1,10 +1,11 @@
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 
-/// Logo « RACCOON / BANDIT » — contour net via Picture → toImage → dilate.
+/// Logo « RACCOON / BANDIT » — contour net via Picture → toImage (DPR-aware) → dilate.
 class RaccoonBanditLogo extends StatefulWidget {
   const RaccoonBanditLogo({super.key});
 
@@ -16,9 +17,11 @@ class _RaccoonBanditLogoState extends State<RaccoonBanditLogo> {
   ui.Image? _raccoonImg;
   ui.Image? _banditImg;
   Size? _lastSize;
+  double? _lastDpr;
 
   @override
   Widget build(BuildContext context) {
+    final dpr = MediaQuery.devicePixelRatioOf(context);
     final screenH = MediaQuery.sizeOf(context).height;
     final heightScale = screenH < 600 ? 0.85 : 1.0;
 
@@ -26,12 +29,12 @@ class _RaccoonBanditLogoState extends State<RaccoonBanditLogo> {
       builder: (context, constraints) {
         final w = constraints.maxWidth;
         final h = w * 0.50 * heightScale;
-        final sz = Size(w, h);
+        final logicalSize = Size(w, h);
 
-        // Regénère les images si la taille change
-        if (_lastSize != sz) {
-          _lastSize = sz;
-          _buildImages(sz);
+        if (_lastSize != logicalSize || _lastDpr != dpr) {
+          _lastSize = logicalSize;
+          _lastDpr = dpr;
+          _buildImages(logicalSize, dpr);
         }
 
         return SizedBox(
@@ -43,6 +46,7 @@ class _RaccoonBanditLogoState extends State<RaccoonBanditLogo> {
               accentColor: AppTheme.accent,
               raccoonImg: _raccoonImg,
               banditImg: _banditImg,
+              dpr: dpr,
             ),
           ),
         );
@@ -50,11 +54,17 @@ class _RaccoonBanditLogoState extends State<RaccoonBanditLogo> {
     );
   }
 
-  Future<void> _buildImages(Size size) async {
+  Future<void> _buildImages(Size logicalSize, double dpr) async {
+    final physW = (logicalSize.width * dpr).ceil();
+    final physH = (logicalSize.height * dpr).ceil();
+
     final r = await _renderWordToImage(
       word: 'RACCOON',
       fillColor: AppTheme.primary,
-      size: size,
+      logicalSize: logicalSize,
+      physW: physW,
+      physH: physH,
+      dpr: dpr,
       yFraction: 0.33,
       arcCurve: 0.55,
       fontSizeFraction: 0.170,
@@ -62,33 +72,42 @@ class _RaccoonBanditLogoState extends State<RaccoonBanditLogo> {
     final b = await _renderWordToImage(
       word: 'BANDIT',
       fillColor: AppTheme.accent,
-      size: size,
+      logicalSize: logicalSize,
+      physW: physW,
+      physH: physH,
+      dpr: dpr,
       yFraction: 0.67,
       arcCurve: 0.55,
       fontSizeFraction: 0.190,
     );
     if (mounted) {
       setState(() {
+        _raccoonImg?.dispose();
+        _banditImg?.dispose();
         _raccoonImg = r;
         _banditImg = b;
       });
     }
   }
 
-  /// Rend un mot dans une ui.Image de la taille du canvas.
   static Future<ui.Image> _renderWordToImage({
     required String word,
     required Color fillColor,
-    required Size size,
+    required Size logicalSize,
+    required int physW,
+    required int physH,
+    required double dpr,
     required double yFraction,
     required double arcCurve,
     required double fontSizeFraction,
   }) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
+    // Scale par le DPR : on dessine en coords logiques → bitmap physique net
+    canvas.scale(dpr, dpr);
     _paintWord(
       canvas: canvas,
-      size: size,
+      size: logicalSize,
       word: word,
       fillColor: fillColor,
       yFraction: yFraction,
@@ -96,10 +115,8 @@ class _RaccoonBanditLogoState extends State<RaccoonBanditLogo> {
       fontSizeFraction: fontSizeFraction,
     );
     final picture = recorder.endRecording();
-    return picture.toImage(size.width.ceil(), size.height.ceil());
+    return picture.toImage(physW, physH);
   }
-
-  // ── Logique de dessin d'un mot (positions + arc) ──────────────────────────
 
   static void _paintWord({
     required Canvas canvas,
@@ -167,65 +184,78 @@ class _LogoPainter extends CustomPainter {
     required this.accentColor,
     required this.raccoonImg,
     required this.banditImg,
+    required this.dpr,
   });
 
   final Color primaryColor;
   final Color accentColor;
   final ui.Image? raccoonImg;
   final ui.Image? banditImg;
+  final double dpr;
+
+  /// Matrice 4×4 colonne-majeure qui divise x et y par [dpr].
+  /// Permet d'afficher le bitmap physique à taille logique.
+  Float64List _scaleDown() {
+    final s = 1.0 / dpr;
+    return Float64List.fromList([
+      s, 0, 0, 0,
+      0, s, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1,
+    ]);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     if (raccoonImg == null || banditImg == null) return;
-
     _drawWithOutline(canvas, size, raccoonImg!);
     _drawWithOutline(canvas, size, banditImg!);
   }
 
   void _drawWithOutline(Canvas canvas, Size size, ui.Image img) {
-    final outlineR = size.width * 0.012; // rayon du contour net
+    // Le contour en pixels physiques — épais pour couvrir les interstices
+    final outlineR = size.width * dpr * 0.032;
+    final logicalRect = Offset.zero & size;
+    final sd = _scaleDown();
 
-    final rect = Offset.zero & size;
-
-    // 1. Ombre portée
-    canvas.saveLayer(rect, Paint());
+    // 1. Ombre portée floue
+    canvas.save();
+    canvas.translate(4, 9);
+    canvas.saveLayer(logicalRect, Paint());
+    canvas.transform(sd);
     canvas.drawImage(
       img,
       Offset.zero,
       Paint()
         ..colorFilter = const ColorFilter.mode(Color(0x55000000), BlendMode.srcIn)
-        ..imageFilter = ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        ..imageFilter = ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14),
     );
-    canvas.restore();
-    // décalage ombre — on refait avec translate
-    canvas.save();
-    canvas.translate(3, 7);
-    canvas.saveLayer(rect, Paint());
-    canvas.drawImage(
-      img,
-      Offset.zero,
-      Paint()
-        ..colorFilter = const ColorFilter.mode(Color(0x44000000), BlendMode.srcIn)
-        ..imageFilter = ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-    );
-    canvas.restore();
-    canvas.restore();
+    canvas.restore(); // saveLayer
+    canvas.restore(); // translate
 
-    // 2. Contour blanc net via dilate sur le bitmap
-    canvas.saveLayer(rect,
+    // 2. Contour blanc net via dilate sur le bitmap physique
+    canvas.saveLayer(
+      logicalRect,
       Paint()
         ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
         ..imageFilter = ui.ImageFilter.dilate(radiusX: outlineR, radiusY: outlineR),
     );
+    canvas.transform(sd);
     canvas.drawImage(img, Offset.zero, Paint());
     canvas.restore();
 
-    // 3. Lettres colorées par-dessus
+    // 3. Lettres colorées (bitmap à taille logique)
+    canvas.save();
+    canvas.transform(sd);
     canvas.drawImage(img, Offset.zero, Paint());
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _LogoPainter old) =>
-      old.raccoonImg != raccoonImg || old.banditImg != banditImg ||
-      old.primaryColor != primaryColor || old.accentColor != accentColor;
+      old.raccoonImg != raccoonImg ||
+      old.banditImg != banditImg ||
+      old.dpr != dpr ||
+      old.primaryColor != primaryColor ||
+      old.accentColor != accentColor;
 }
