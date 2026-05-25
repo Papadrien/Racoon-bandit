@@ -455,19 +455,27 @@ class _StickerPainter extends CustomPainter {
     final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
     final dstRect = _fitRect(size);
 
-    // ── 1. Ombre portée sous le héros ────────────────────────────────────
-    // Ombre ovale large et douce, décalée légèrement sous les pieds
-    final shadowRect = Rect.fromCenter(
-      center: Offset(size.width / 2, dstRect.bottom + 6),
-      width: dstRect.width * 0.72,
-      height: dstRect.height * 0.07,
-    );
-    canvas.drawOval(
-      shadowRect,
+    // ── 1. Ombre portée style logo (décalée bas-droite, blur doux) ───────
+    canvas.saveLayer(
+      Rect.fromLTWH(0, 0, size.width, size.height),
       Paint()
-        ..color = const Color(0x66000000)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22),
+        ..colorFilter = ColorFilter.mode(
+          const Color(0x40000000),
+          BlendMode.srcATop,
+        ),
     );
+    canvas.drawImageRect(
+      image,
+      srcRect,
+      dstRect.shift(const Offset(6, 8)),
+      Paint()
+        ..colorFilter = const ColorFilter.mode(
+          Color(0xFF000000),
+          BlendMode.srcIn,
+        )
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
+    canvas.restore();
 
     // ── 2. Contour sticker blanc uniforme ────────────────────────────────
     // Multiples passes circulaires pour obtenir une épaisseur constante.
@@ -601,20 +609,20 @@ class _StickerPlayButton extends StatelessWidget {
             ),
           ),
 
-          // ── Ombre sous le bouton (décalée vers le bas) ────────────────────
+          // ── Ombre sous le bouton style logo (sombre, décalée bas-droite) ──
           Positioned(
             left: _border,
             right: _border,
-            top: _border + 5,
+            top: _border,
             child: Container(
               height: _height,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(_radius),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
-                    color: _orangeDark.withOpacity(0.6),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
+                    color: Color(0x40000000),
+                    blurRadius: 10,
+                    offset: Offset(6, 8),
                   ),
                 ],
               ),
