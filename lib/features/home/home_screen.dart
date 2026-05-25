@@ -796,11 +796,13 @@ class _ButtonBodyPainter extends CustomPainter {
     canvas.restore();
 
     // ── Triangle-rebord bas-droit (coin replié style page) ───────────────
-    // p1/p2 alignés sur la diagonale du CONTOUR BLANC (cutSize + border)
-    // car le canvas body est indenté de border=8px par rapport au sticker total
-    final cb = c + border; // coupe diagonale du contour blanc, dans ce repère
-    final p1 = Offset(size.width - cb, size.height + border);
-    final p2 = Offset(size.width + border, size.height - cb);
+    // On translate le canvas de +border vers bas-droit pour que la base
+    // du triangle coïncide avec la diagonale du contour blanc extérieur.
+    canvas.save();
+    canvas.translate(border, border);
+
+    final p1 = Offset(size.width - c, size.height);
+    final p2 = Offset(size.width, size.height - c);
     final mid = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
 
     // Pointe vers l'intérieur (haut-gauche), profondeur = tabSize
@@ -821,7 +823,7 @@ class _ButtonBodyPainter extends CustomPainter {
     final leg2Nx = leg2Dx / leg2Len;
     final leg2Ny = leg2Dy / leg2Len;
 
-    // Rayon de l'arc concave à la pointe
+    // Rayon de l'arc concave à la pointe — ne pas modifier
     const tipRadius = 10.0;
 
     // arcEntry : recule sur le côté p1→tip depuis la pointe
@@ -830,7 +832,6 @@ class _ButtonBodyPainter extends CustomPainter {
     final arcExit  = Offset(tip.dx - leg2Nx * tipRadius, tip.dy - leg2Ny * tipRadius);
 
     // Tracé : p1 → arcEntry → arc concave → arcExit → p2 → diagonale (close)
-    // clockwise: true → arc bombe vers l'extérieur du triangle = concave vu de l'intérieur
     final tabPath = Path()
       ..moveTo(p1.dx, p1.dy)
       ..lineTo(arcEntry.dx, arcEntry.dy)
@@ -846,6 +847,8 @@ class _ButtonBodyPainter extends CustomPainter {
         ..color = const Color(0xFFDDCFBF)
         ..style = PaintingStyle.fill,
     );
+
+    canvas.restore();
   }
 
   @override
