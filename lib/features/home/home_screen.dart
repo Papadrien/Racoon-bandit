@@ -455,17 +455,18 @@ class _StickerPainter extends CustomPainter {
     final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
     final dstRect = _fitRect(size);
 
-    // ── 1. Ombre ovale centrée sous les pieds ─────────────────────────────
+    // ── 1. Ombre portée sous le héros ────────────────────────────────────
+    // Ombre ovale large et douce, décalée légèrement sous les pieds
     final shadowRect = Rect.fromCenter(
-      center: Offset(size.width / 2, dstRect.bottom - 2),
-      width: dstRect.width * 0.5,
-      height: dstRect.height * 0.05,
+      center: Offset(size.width / 2, dstRect.bottom + 6),
+      width: dstRect.width * 0.72,
+      height: dstRect.height * 0.07,
     );
     canvas.drawOval(
       shadowRect,
       Paint()
-        ..color = const Color(0x55000000)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
+        ..color = const Color(0x66000000)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22),
     );
 
     // ── 2. Contour sticker blanc uniforme ────────────────────────────────
@@ -566,7 +567,7 @@ class _StickerPlayButton extends StatelessWidget {
 
   static const _orange     = Color(0xFFE16713);
   static const _orangeDark = Color(0xFFB84D0A);
-  static const _cutSize    = 22.0; // taille de la coupe diagonale bas-droit
+  static const _cutSize    = 36.0; // plus grande = base du triangle plus large // taille de la coupe diagonale bas-droit
   static const _tabSize    = 20.0; // taille du triangle-rebord
   static const _height     = 74.0;
   static const _radius     = 22.0;
@@ -791,34 +792,39 @@ class _ButtonBodyPainter extends CustomPainter {
 
     canvas.restore();
 
-    // ── Triangle-rebord bas-droit (pointe arrondie vers l'extérieur) ──────
-    final p1 = Offset(size.width - c, size.height); // bas-gauche de la diagonale
-    final p2 = Offset(size.width, size.height - c); // haut-droit de la diagonale
-    // Milieu de la diagonale
+    // ── Triangle-rebord bas-droit ─────────────────────────────────────────
+    // p1 = extrémité bas-gauche de la diagonale, p2 = extrémité haut-droit
+    // Pointe vers haut-gauche (intérieur), arc arrondi vers l'extérieur du triangle
+    final p1 = Offset(size.width - c, size.height);
+    final p2 = Offset(size.width, size.height - c);
     final mid = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
-    // Direction perpendiculaire vers l'extérieur bas-droit (+1, +1) normalisée
-    const outward = Offset(0.7071, 0.7071);
-    // Pointe écrasée : distance réduite pour rapprocher la pointe de la base
-    final tipCenter = Offset(mid.dx + outward.dx * t * 0.5, mid.dy + outward.dy * t * 0.5);
 
-    // Vecteur normalisé le long de la diagonale (de p1 vers p2)
+    // Direction haut-gauche (perpendiculaire intérieure à la diagonale)
+    const inward = Offset(-0.7071, -0.7071);
+    // Pointe légèrement en retrait (triangle pas trop haut)
+    final tip = Offset(mid.dx + inward.dx * t * 0.6, mid.dy + inward.dy * t * 0.6);
+
+    // Arc arrondi à la pointe, bombé vers l'extérieur du triangle (bas-droit)
+    // On trace p1 → tip → p2, l'arc à la pointe bombe vers l'extérieur = clockwise: false
+    // (car on tourne dans le sens p1→p2 le long de la diagonale = sens anti-horaire vu de la pointe)
+    const tipRadius = 7.0;
+
+    // Vecteur normalisé le long de la diagonale (p1 vers p2)
     final diagDx = p2.dx - p1.dx;
     final diagDy = p2.dy - p1.dy;
     final diagLen = Offset(diagDx, diagDy).distance;
     final diagNx = diagDx / diagLen;
     final diagNy = diagDy / diagLen;
 
-    // Rayon de l'arc à la pointe
-    const tipRadius = 6.0;
-
-    final arcEntry = Offset(tipCenter.dx - diagNx * tipRadius, tipCenter.dy - diagNy * tipRadius);
-    final arcExit  = Offset(tipCenter.dx + diagNx * tipRadius, tipCenter.dy + diagNy * tipRadius);
+    // Points où l'arc commence/finit autour de la pointe
+    final arcEntry = Offset(tip.dx - diagNx * tipRadius, tip.dy - diagNy * tipRadius);
+    final arcExit  = Offset(tip.dx + diagNx * tipRadius, tip.dy + diagNy * tipRadius);
 
     final tabPath = Path()
       ..moveTo(p1.dx, p1.dy)
       ..lineTo(arcEntry.dx, arcEntry.dy)
       ..arcToPoint(arcExit,
-          radius: const Radius.circular(tipRadius), clockwise: true)
+          radius: const Radius.circular(tipRadius), clockwise: false)
       ..lineTo(p2.dx, p2.dy)
       ..close();
 
