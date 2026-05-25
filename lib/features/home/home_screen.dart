@@ -792,42 +792,50 @@ class _ButtonBodyPainter extends CustomPainter {
 
     canvas.restore();
 
-    // ── Triangle-rebord bas-droit ─────────────────────────────────────────
-    // p1 = extrémité bas-gauche de la diagonale, p2 = extrémité haut-droit
-    // Pointe vers haut-gauche (intérieur), arc arrondi vers l'extérieur du triangle
+    // ── Triangle-rebord bas-droit (coin replié style page) ───────────────
+    // p1 = pied bas de la diagonale, p2 = pied droit de la diagonale
+    // La base du triangle = la coupe diagonale (segment p1→p2, fermé par close())
     final p1 = Offset(size.width - c, size.height);
     final p2 = Offset(size.width, size.height - c);
     final mid = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
 
-    // Direction haut-gauche (perpendiculaire intérieure à la diagonale)
+    // Pointe vers l'intérieur (haut-gauche), profondeur = tabSize
     const inward = Offset(-0.7071, -0.7071);
-    // Pointe légèrement en retrait (triangle pas trop haut)
-    final tip = Offset(mid.dx + inward.dx * t * 0.6, mid.dy + inward.dy * t * 0.6);
+    final tip = Offset(mid.dx + inward.dx * t, mid.dy + inward.dy * t);
 
-    // Arc concave à la pointe : suit les côtés du triangle (creusé vers l'intérieur)
-    // clockwise: false → arc concave vu de l'extérieur = arrondi qui suit les bords
-    const tipRadius = 7.0;
+    // Vecteur normalisé côté p1→tip
+    final leg1Dx = tip.dx - p1.dx;
+    final leg1Dy = tip.dy - p1.dy;
+    final leg1Len = Offset(leg1Dx, leg1Dy).distance;
+    final leg1Nx = leg1Dx / leg1Len;
+    final leg1Ny = leg1Dy / leg1Len;
 
-    // Vecteur normalisé le long de la diagonale (p1 vers p2)
-    final diagDx = p2.dx - p1.dx;
-    final diagDy = p2.dy - p1.dy;
-    final diagLen = Offset(diagDx, diagDy).distance;
-    final diagNx = diagDx / diagLen;
-    final diagNy = diagDy / diagLen;
+    // Vecteur normalisé côté p2→tip
+    final leg2Dx = tip.dx - p2.dx;
+    final leg2Dy = tip.dy - p2.dy;
+    final leg2Len = Offset(leg2Dx, leg2Dy).distance;
+    final leg2Nx = leg2Dx / leg2Len;
+    final leg2Ny = leg2Dy / leg2Len;
 
-    // Points où l'arc commence/finit autour de la pointe
-    final arcEntry = Offset(tip.dx - diagNx * tipRadius, tip.dy - diagNy * tipRadius);
-    final arcExit  = Offset(tip.dx + diagNx * tipRadius, tip.dy + diagNy * tipRadius);
+    // Rayon de l'arc concave à la pointe
+    const tipRadius = 10.0;
 
+    // arcEntry : recule sur le côté p1→tip depuis la pointe
+    final arcEntry = Offset(tip.dx - leg1Nx * tipRadius, tip.dy - leg1Ny * tipRadius);
+    // arcExit  : recule sur le côté p2→tip depuis la pointe
+    final arcExit  = Offset(tip.dx - leg2Nx * tipRadius, tip.dy - leg2Ny * tipRadius);
+
+    // Tracé : p1 → arcEntry → arc concave → arcExit → p2 → diagonale (close)
+    // clockwise: true → arc bombe vers l'extérieur du triangle = concave vu de l'intérieur
     final tabPath = Path()
       ..moveTo(p1.dx, p1.dy)
       ..lineTo(arcEntry.dx, arcEntry.dy)
       ..arcToPoint(arcExit,
-          radius: const Radius.circular(tipRadius), clockwise: false)
+          radius: const Radius.circular(tipRadius), clockwise: true)
       ..lineTo(p2.dx, p2.dy)
       ..close();
 
-    // Couleur blanc cassé chaud, 10% plus foncée
+    // Couleur blanc cassé chaud, 10% plus foncée que 0xFFF5EBE0
     canvas.drawPath(
       tabPath,
       Paint()
