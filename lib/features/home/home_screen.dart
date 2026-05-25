@@ -431,7 +431,6 @@ class _HeroImageState extends State<_HeroImage> {
 /// Peint l'image avec un contour blanc via saveLayer + blur et l'image originale
 class _StickerPainter extends CustomPainter {
   final ui.Image image;
-  static const double _outlineWidth = 10.0;
 
   const _StickerPainter({required this.image});
 
@@ -469,7 +468,7 @@ class _StickerPainter extends CustomPainter {
       dstRect,
       Paint()
         ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.solid, 8.0),
+        ..maskFilter = MaskFilter.blur(BlurStyle.solid, 8.0),
     );
 
     // Repasse l'image par-dessus pour effacer l'intérieur du contour
@@ -894,12 +893,13 @@ class _Sticker extends StatelessWidget {
   final double? bottom;
   final double angle;
 
-  const _Sticker({
+  _Sticker({
     required this.asset,
     required this.size,
     this.left,
     this.right,
     this.top,
+    this.bottom,
     this.angle = 0.0,
   });
 
