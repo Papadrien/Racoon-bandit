@@ -804,9 +804,8 @@ class _ButtonBodyPainter extends CustomPainter {
     // Pointe légèrement en retrait (triangle pas trop haut)
     final tip = Offset(mid.dx + inward.dx * t * 0.6, mid.dy + inward.dy * t * 0.6);
 
-    // Arc arrondi à la pointe, bombé vers l'extérieur du triangle (bas-droit)
-    // On trace p1 → tip → p2, l'arc à la pointe bombe vers l'extérieur = clockwise: false
-    // (car on tourne dans le sens p1→p2 le long de la diagonale = sens anti-horaire vu de la pointe)
+    // Arc concave à la pointe : suit les côtés du triangle (creusé vers l'intérieur)
+    // clockwise: false → arc concave vu de l'extérieur = arrondi qui suit les bords
     const tipRadius = 7.0;
 
     // Vecteur normalisé le long de la diagonale (p1 vers p2)
@@ -824,15 +823,15 @@ class _ButtonBodyPainter extends CustomPainter {
       ..moveTo(p1.dx, p1.dy)
       ..lineTo(arcEntry.dx, arcEntry.dy)
       ..arcToPoint(arcExit,
-          radius: const Radius.circular(tipRadius), clockwise: true)
+          radius: const Radius.circular(tipRadius), clockwise: false)
       ..lineTo(p2.dx, p2.dy)
       ..close();
 
-    // Couleur crème pour le rebord
+    // Couleur blanc cassé chaud, 10% plus foncée
     canvas.drawPath(
       tabPath,
       Paint()
-        ..color = const Color(0xFFF5EBE0)
+        ..color = const Color(0xFFDDCFBF)
         ..style = PaintingStyle.fill,
     );
   }
