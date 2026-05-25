@@ -430,7 +430,7 @@ class _HeroImageState extends State<_HeroImage> {
 class _StickerPainter extends CustomPainter {
   final ui.Image image;
   final double shadowOverflow;
-  static const double _outlineWidth = 10.0;
+  static const double _outlineWidth = 18.0;
 
   const _StickerPainter({required this.image, this.shadowOverflow = 0});
 
@@ -459,14 +459,18 @@ class _StickerPainter extends CustomPainter {
     final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
     final dstRect = _fitRect(size);
 
-    // ── 1. Ombre portée style logo (décalée bas-droite, 20% plus claire) ─
-    final shadowPaint = Paint()
-      ..colorFilter = const ColorFilter.mode(Color(0xFF000000), BlendMode.srcIn)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height),
-        Paint()..color = const Color(0x33000000));
-    canvas.drawImageRect(image, srcRect, dstRect.shift(const Offset(6, 8)), shadowPaint);
-    canvas.restore();
+    // ── 1. Ombre portée style sticker ─
+    canvas.drawImageRect(
+      image,
+      srcRect,
+      dstRect.shift(const Offset(8, 10)),
+      Paint()
+        ..colorFilter = const ColorFilter.mode(
+          Color(0xFF000000),
+          BlendMode.srcIn,
+        )
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
+    );
 
     // ── 2. Contour sticker blanc uniforme via saveLayer + blur ────────────
     // Peindre l'image en blanc avec un blur de dilatation dans un layer isolé
@@ -576,7 +580,7 @@ class _StickerPlayButton extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // ── Contour blanc sticker (layer derrière) ────────────────────────
+          // ── Contour blanc sticker + ombre portée ───────────────────────
           const CustomPaint(
             painter: _StickerBorderPainter(
               cutSize: _cutSize,
@@ -585,7 +589,7 @@ class _StickerPlayButton extends StatelessWidget {
             ),
             child: SizedBox(
               width: double.infinity,
-              height: _height + _border * 2,
+              height: _height + _border * 2 + 16,
             ),
           ),
 
@@ -663,6 +667,13 @@ class _StickerBorderPainter extends CustomPainter {
       ..arcToPoint(Offset(r, 0),
           radius: Radius.circular(r), clockwise: true)
       ..close();
+
+    canvas.drawPath(
+      path.shift(const Offset(6, 8)),
+      Paint()
+        ..color = const Color(0x33000000)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
 
     canvas.drawPath(path, Paint()..color = Colors.white);
   }
