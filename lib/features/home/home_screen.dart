@@ -688,7 +688,7 @@ class _StickerBorderPainter extends CustomPainter {
       ..lineTo(size.width - c, size.height)
       ..lineTo(r, size.height)
       ..arcToPoint(Offset(0, size.height - r),
-          radius: Radius.circular(r), clockwise: false)
+          radius: Radius.circular(r), clockwise: true)
       ..lineTo(0, r)
       ..arcToPoint(Offset(r, 0),
           radius: Radius.circular(r), clockwise: true)
@@ -730,7 +730,7 @@ class _ButtonBodyPainter extends CustomPainter {
       ..lineTo(size.width - c, size.height)
       ..lineTo(r, size.height)
       ..arcToPoint(Offset(0, size.height - r),
-          radius: Radius.circular(r), clockwise: false)
+          radius: Radius.circular(r), clockwise: true)
       ..lineTo(0, r)
       ..arcToPoint(Offset(r, 0),
           radius: Radius.circular(r), clockwise: true)
@@ -791,29 +791,26 @@ class _ButtonBodyPainter extends CustomPainter {
 
     canvas.restore();
 
-    // ── Triangle-rebord bas-droit (pointe arrondie vers l'intérieur) ──────
-    // Les deux points de base sont les extrémités de la diagonale de coupe.
-    // La pointe est décalée vers l'intérieur (haut-gauche), arrondie.
-    final p1 = Offset(size.width - c, size.height); // bas sur la diagonale
-    final p2 = Offset(size.width, size.height - c); // droite sur la diagonale
+    // ── Triangle-rebord bas-droit (pointe arrondie vers l'extérieur) ──────
+    final p1 = Offset(size.width - c, size.height); // bas-gauche de la diagonale
+    final p2 = Offset(size.width, size.height - c); // haut-droit de la diagonale
     // Milieu de la diagonale
     final mid = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
-    // Direction perpendiculaire à la diagonale, vers l'intérieur (haut-gauche)
-    // La diagonale va de bas-gauche vers haut-droit : perpendiculaire intérieure = (-1, -1) normalisée
-    const inward = Offset(-0.7071, -0.7071);
-    final tipCenter = Offset(mid.dx + inward.dx * t, mid.dy + inward.dy * t);
+    // Direction perpendiculaire vers l'extérieur bas-droit (+1, +1) normalisée
+    const outward = Offset(0.7071, 0.7071);
+    // Pointe écrasée : distance réduite pour rapprocher la pointe de la base
+    final tipCenter = Offset(mid.dx + outward.dx * t * 0.5, mid.dy + outward.dy * t * 0.5);
 
-    // Rayon de la pointe arrondie
-    const tipRadius = 5.0;
-
-    // Vecteur de p1 à p2 normalisé (long de la diagonale)
+    // Vecteur normalisé le long de la diagonale (de p1 vers p2)
     final diagDx = p2.dx - p1.dx;
     final diagDy = p2.dy - p1.dy;
-    final diagLen = (Offset(diagDx, diagDy)).distance;
+    final diagLen = Offset(diagDx, diagDy).distance;
     final diagNx = diagDx / diagLen;
     final diagNy = diagDy / diagLen;
 
-    // Points d'entrée/sortie de l'arc de la pointe (légèrement en retrait)
+    // Rayon de l'arc à la pointe
+    const tipRadius = 6.0;
+
     final arcEntry = Offset(tipCenter.dx - diagNx * tipRadius, tipCenter.dy - diagNy * tipRadius);
     final arcExit  = Offset(tipCenter.dx + diagNx * tipRadius, tipCenter.dy + diagNy * tipRadius);
 
@@ -821,24 +818,15 @@ class _ButtonBodyPainter extends CustomPainter {
       ..moveTo(p1.dx, p1.dy)
       ..lineTo(arcEntry.dx, arcEntry.dy)
       ..arcToPoint(arcExit,
-          radius: const Radius.circular(tipRadius), clockwise: false)
+          radius: const Radius.circular(tipRadius), clockwise: true)
       ..lineTo(p2.dx, p2.dy)
       ..close();
 
-    // Couleur crème légèrement ombragée pour le rebord
+    // Couleur crème pour le rebord
     canvas.drawPath(
       tabPath,
       Paint()
         ..color = const Color(0xFFEDD9A3)
-        ..style = PaintingStyle.fill,
-    );
-
-    // Ombre douce sur le rebord
-    canvas.drawPath(
-      tabPath,
-      Paint()
-        ..color = Colors.black.withOpacity(0.12)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2)
         ..style = PaintingStyle.fill,
     );
   }
