@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as Math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -427,7 +428,7 @@ class _HeroImageState extends State<_HeroImage> {
 /// 3. L'image originale par-dessus
 class _StickerPainter extends CustomPainter {
   final ui.Image image;
-  static const double _outlineWidth = 12.0;
+  static const double _outlineWidth = 10.0;
 
   const _StickerPainter({required this.image});
 
@@ -467,30 +468,38 @@ class _StickerPainter extends CustomPainter {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
     );
 
-    // ── 2. Contour blanc via saveLayer ────────────────────────────────────
-    // On utilise les bounds complets du canvas pour éviter tout artefact
-    // de bord visible lié au clipping du layer.
-    canvas.saveLayer(Offset.zero & size, Paint());
+    // ── 2. Contour sticker blanc uniforme ────────────────────────────────
+    // Multiples passes circulaires pour obtenir une épaisseur constante.
+    final outlinePaint = Paint()
+      ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
+      ..filterQuality = FilterQuality.high;
 
-    // 2a. Image entièrement blanche, dilatée
+    const steps = 24;
+    for (int i = 0; i < steps; i++) {
+      final angle = (i / steps) * 6.28318530718;
+      final dx = ui.lerpDouble(0, _outlineWidth, 1)! * Math.cos(angle);
+      final dy = ui.lerpDouble(0, _outlineWidth, 1)! * Math.sin(angle);
+
+      canvas.drawImageRect(
+        image,
+        srcRect,
+        dstRect.shift(Offset(dx, dy)),
+        outlinePaint,
+      );
+    }
+
+    // Léger adoucissement du contour
     canvas.drawImageRect(
       image,
       srcRect,
       dstRect,
       Paint()
-        ..colorFilter = const ColorFilter.matrix(<double>[
-          0, 0, 0, 0, 255,
-          0, 0, 0, 0, 255,
-          0, 0, 0, 0, 255,
-          0, 0, 0, 20, 0,  // alpha amplifié pour remplir le blur
-        ])
-        ..maskFilter = MaskFilter.blur(BlurStyle.solid, _outlineWidth),
+        ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
     );
 
-    // 2b. Image originale par-dessus dans le layer
+    // ── 3. Image originale ───────────────────────────────────────────────
     canvas.drawImageRect(image, srcRect, dstRect, Paint());
-
-    canvas.restore();
   }
 
   @override
@@ -557,10 +566,10 @@ class _StickerPlayButton extends StatelessWidget {
 
   static const _orange     = Color(0xFFE16713);
   static const _orangeDark = Color(0xFFB84D0A);
-  static const _foldSize   = 22.0;
-  static const _height     = 68.0;
-  static const _radius     = 18.0;
-  static const _border     = 5.0;  // épaisseur contour blanc
+  static const _foldSize   = 18.0;
+  static const _height     = 74.0;
+  static const _radius     = 22.0;
+  static const _border     = 8.0;  // épaisseur contour blanc
 
   @override
   Widget build(BuildContext context) {
@@ -602,8 +611,8 @@ class _StickerPlayButton extends StatelessWidget {
                 boxShadow: [
                   BoxShadow(
                     color: _orangeDark.withOpacity(0.6),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
@@ -628,9 +637,9 @@ class _StickerPlayButton extends StatelessWidget {
                     label.toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 28,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 4,
+                      letterSpacing: 3,
                       shadows: [
                         Shadow(
                           color: Color(0x66000000),
