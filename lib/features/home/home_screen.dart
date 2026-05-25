@@ -412,10 +412,12 @@ class _HeroImageState extends State<_HeroImage> {
       return SizedBox(height: heroHeight);
     }
 
+    // Padding supplémentaire pour que l'ombre portée ne soit pas clippée
+    const shadowOverflow = 20.0;
     return SizedBox(
-      height: heroHeight,
+      height: heroHeight + shadowOverflow,
       child: CustomPaint(
-        painter: _StickerPainter(image: _uiImage!),
+        painter: _StickerPainter(image: _uiImage!, shadowOverflow: shadowOverflow),
         size: Size.infinite,
       ),
     );
@@ -423,26 +425,29 @@ class _HeroImageState extends State<_HeroImage> {
 }
 
 /// Peint l'image avec :
-/// 1. Une ombre ovale douce centrée sous les pieds
-/// 2. Un contour blanc lisse via saveLayer + dilatation blur
+/// 1. Une ombre portée style logo (décalée bas-droite, blur doux)
+/// 2. Un contour blanc lisse via saveLayer + blur (uniforme, sans artefacts)
 /// 3. L'image originale par-dessus
 class _StickerPainter extends CustomPainter {
   final ui.Image image;
+  final double shadowOverflow;
   static const double _outlineWidth = 10.0;
 
-  const _StickerPainter({required this.image});
+  const _StickerPainter({required this.image, this.shadowOverflow = 0});
 
   Rect _fitRect(Size size) {
     final imgW = image.width.toDouble();
     final imgH = image.height.toDouble();
+    // La zone utile exclut le shadowOverflow en bas
+    final usableH = size.height - shadowOverflow;
     final scaleX = size.width / imgW;
-    final scaleY = size.height / imgH;
+    final scaleY = usableH / imgH;
     final scale = scaleX < scaleY ? scaleX : scaleY;
     final dstW = imgW * scale;
     final dstH = imgH * scale;
     return Rect.fromLTWH(
       (size.width - dstW) / 2,
-      (size.height - dstH) / 2,
+      (usableH - dstH) / 2,
       dstW,
       dstH,
     );
@@ -455,64 +460,40 @@ class _StickerPainter extends CustomPainter {
     final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
     final dstRect = _fitRect(size);
 
-    // ── 1. Ombre portée style logo (décalée bas-droite, blur doux) ───────
-    canvas.saveLayer(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      Paint()
-        ..colorFilter = ColorFilter.mode(
-          const Color(0x40000000),
-          BlendMode.srcATop,
-        ),
-    );
-    canvas.drawImageRect(
-      image,
-      srcRect,
-      dstRect.shift(const Offset(6, 8)),
-      Paint()
-        ..colorFilter = const ColorFilter.mode(
-          Color(0xFF000000),
-          BlendMode.srcIn,
-        )
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
-    );
+    // ── 1. Ombre portée style logo (décalée bas-droite, 20% plus claire) ─
+    final shadowPaint = Paint()
+      ..colorFilter = const ColorFilter.mode(Color(0xFF000000), BlendMode.srcIn)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+    canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height),
+        Paint()..color = const Color(0x33000000));
+    canvas.drawImageRect(image, srcRect, dstRect.shift(const Offset(6, 8)), shadowPaint);
     canvas.restore();
 
-    // ── 2. Contour sticker blanc uniforme ────────────────────────────────
-    // Multiples passes circulaires pour obtenir une épaisseur constante.
-    final outlinePaint = Paint()
-      ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-      ..filterQuality = FilterQuality.high;
+    // ── 2. Contour sticker blanc uniforme via saveLayer + blur ────────────
+    // Peindre l'image en blanc avec un blur de dilatation dans un layer isolé
+    canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
 
-    const steps = 24;
-    for (int i = 0; i < steps; i++) {
-      final angle = (i / steps) * 6.28318530718;
-      final dx = ui.lerpDouble(0, _outlineWidth, 1)! * Math.cos(angle);
-      final dy = ui.lerpDouble(0, _outlineWidth, 1)! * Math.sin(angle);
-
-      canvas.drawImageRect(
-        image,
-        srcRect,
-        dstRect.shift(Offset(dx, dy)),
-        outlinePaint,
-      );
-    }
-
-    // Léger adoucissement du contour
+    // Passe dilatée : blanc avec blur pour remplir uniformément autour
     canvas.drawImageRect(
       image,
       srcRect,
       dstRect,
       Paint()
         ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+        ..maskFilter = MaskFilter.blur(BlurStyle.solid, _outlineWidth * 0.8),
     );
+
+    // Repasse l'image par-dessus pour effacer l'intérieur du contour
+    canvas.drawImageRect(image, srcRect, dstRect, Paint());
+    canvas.restore();
 
     // ── 3. Image originale ───────────────────────────────────────────────
     canvas.drawImageRect(image, srcRect, dstRect, Paint());
   }
 
   @override
-  bool shouldRepaint(_StickerPainter old) => old.image != image;
+  bool shouldRepaint(_StickerPainter old) =>
+      old.image != image || old.shadowOverflow != shadowOverflow;
 }
 
 class _RewardAdButton extends StatelessWidget {
@@ -606,26 +587,6 @@ class _StickerPlayButton extends StatelessWidget {
             child: SizedBox(
               width: double.infinity,
               height: _height + _border * 2,
-            ),
-          ),
-
-          // ── Ombre sous le bouton style logo (sombre, décalée bas-droite) ──
-          Positioned(
-            left: _border,
-            right: _border,
-            top: _border,
-            child: Container(
-              height: _height,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(_radius),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x40000000),
-                    blurRadius: 10,
-                    offset: Offset(6, 8),
-                  ),
-                ],
-              ),
             ),
           ),
 
@@ -754,6 +715,14 @@ class _ButtonBodyPainter extends CustomPainter {
     final c = cutSize;
     final t = tabSize;
     final path = _buildPath(size);
+
+    // ── Ombre portée style logo (sombre, décalée bas-droite) ─────────────
+    canvas.drawPath(
+      _buildPath(size).shift(const Offset(6, 8)),
+      Paint()
+        ..color = const Color(0x40000000)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
 
     // ── Fond dégradé orange ───────────────────────────────────────────────
     canvas.drawPath(
