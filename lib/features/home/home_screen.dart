@@ -568,7 +568,7 @@ class _StickerPlayButton extends StatelessWidget {
   static const _orange     = Color(0xFFE16713);
   static const _orangeDark = Color(0xFFB84D0A);
   static const _cutSize    = 36.0; // plus grande = base du triangle plus large // taille de la coupe diagonale bas-droit
-  static const _tabSize    = 20.0; // taille du triangle-rebord
+  static const _tabSize    = 32.0; // taille du triangle-rebord
   static const _height     = 74.0;
   static const _radius     = 22.0;
   static const _border     = 8.0;  // épaisseur contour blanc
