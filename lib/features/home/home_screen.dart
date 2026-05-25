@@ -467,7 +467,7 @@ class _StickerPainter extends CustomPainter {
       image,
       srcRect,
       dstRect,
-      const Paint()
+      Paint()
         ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
         ..maskFilter = MaskFilter.blur(BlurStyle.solid, _outlineWidth * 0.8),
     );
@@ -894,12 +894,13 @@ class _Sticker extends StatelessWidget {
   final double? bottom;
   final double angle;
 
-  const _Sticker({
+  _Sticker({
     required this.asset,
     required this.size,
     this.left,
     this.right,
     this.top,
+    this.bottom,
     this.angle = 0.0,
   });
 
