@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as Math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -478,8 +477,8 @@ class _StickerPainter extends CustomPainter {
       image,
       srcRect,
       dstRect,
-      Paint()
-        ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
+      const Paint()
+        ..colorFilter = ColorFilter.mode(Colors.white, BlendMode.srcIn)
         ..maskFilter = MaskFilter.blur(BlurStyle.solid, _outlineWidth * 0.8),
     );
 
@@ -578,7 +577,7 @@ class _StickerPlayButton extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           // ── Contour blanc sticker (layer derrière) ────────────────────────
-          CustomPaint(
+          const CustomPaint(
             painter: _StickerBorderPainter(
               cutSize: _cutSize,
               radius: _radius + _border,
@@ -595,7 +594,7 @@ class _StickerPlayButton extends StatelessWidget {
             padding: const EdgeInsets.all(_border),
             child: CustomPaint(
               painter: _ButtonBodyPainter(
-                color: enabled ? _orange : _orange.withOpacity(0.5),
+                color: enabled ? _orange : _orange.withValues(alpha: 0.5),
                 darkColor: _orangeDark,
                 cutSize: _cutSize,
                 tabSize: _tabSize,
@@ -756,8 +755,8 @@ class _ButtonBodyPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: [
-            Colors.white.withOpacity(0.45),
-            Colors.white.withOpacity(0.0),
+            Colors.white.withValues(alpha: 0.45),
+            Colors.white.withValues(alpha: 0.0),
           ],
         ).createShader(highlightRect),
     );
@@ -766,7 +765,7 @@ class _ButtonBodyPainter extends CustomPainter {
     canvas.drawRect(
       Rect.fromLTWH(0, size.height * 0.6, size.width, size.height * 0.4),
       Paint()
-        ..color = darkColor.withOpacity(0.35)
+        ..color = darkColor.withValues(alpha: 0.35)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
 
