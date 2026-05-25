@@ -477,17 +477,17 @@ class _StickerPainter extends CustomPainter {
       image,
       srcRect,
       dstRect,
-      const Paint()
+      Paint()
         ..colorFilter = ColorFilter.mode(Colors.white, BlendMode.srcIn)
         ..maskFilter = MaskFilter.blur(BlurStyle.solid, _outlineWidth * 0.8),
     );
 
     // Repasse l'image par-dessus pour effacer l'intérieur du contour
-    canvas.drawImageRect(image, srcRect, dstRect, Paint());
+    canvas.drawImageRect(image, srcRect, dstRect, const Paint());
     canvas.restore();
 
     // ── 3. Image originale ───────────────────────────────────────────────
-    canvas.drawImageRect(image, srcRect, dstRect, Paint());
+    canvas.drawImageRect(image, srcRect, dstRect, const Paint());
   }
 
   @override
