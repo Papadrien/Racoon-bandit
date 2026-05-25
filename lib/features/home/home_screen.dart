@@ -469,7 +469,7 @@ class _StickerPainter extends CustomPainter {
       dstRect,
       Paint()
         ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-        ..maskFilter = MaskFilter.blur(BlurStyle.solid, _outlineWidth * 0.8),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.solid, _outlineWidth * 0.8),
     );
 
     // Repasse l'image par-dessus pour effacer l'intérieur du contour
@@ -900,6 +900,7 @@ class _Sticker extends StatelessWidget {
     this.left,
     this.right,
     this.top,
+    this.bottom,
     this.angle = 0.0,
   });
 
