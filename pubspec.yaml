@@ -42,6 +42,9 @@ flutter:
     - assets/images/card_front_vacuum.png
     - assets/images/icon_trash.png
     - assets/images/icon_food.png
+    - assets/images/sticker_pine_cone.png
+    - assets/images/sticker_pine_tree.png
+    - assets/images/sticker_cabin.png
     # Nota : assets/sounds/ inclut automatiquement tous les .mp3 du dossier
     - assets/images/cards/card_back_purple.png
     - assets/images/cards/card_back_blue.png

@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 80),
     );
-    _playButtonScale = Tween<double>(begin: 1.0, end: 0.92).animate(
+    _playButtonScale = Tween<double>(begin: 1.0, end: 0.96).animate(
       CurvedAnimation(
         parent: _playButtonPressController,
         curve: Curves.easeOut,
@@ -208,6 +208,9 @@ class _HomeScreenState extends State<HomeScreen>
       child: Scaffold(
         body: Stack(
           children: [
+            // ── Stickers décoratifs en fond ───────────────────────────────
+            const Positioned.fill(child: _BackgroundStickers()),
+
             // ── Hero image centrée verticalement entre logo et bouton ──
             const Positioned.fill(
               child: Align(
@@ -348,11 +351,15 @@ class _PlayButtonArea extends StatelessWidget {
               onPressed: onWatchAd,
             )
           else
-            ScaleTransition(
-              scale: playButtonScale,
-              child: _StickerPlayButton(
-                label: AppLocalizations.of(context)!.play,
-                onPressed: isLoading ? null : onPlay,
+            AnimatedBuilder(
+              animation: playButtonScale,
+              builder: (context, _) => Transform.scale(
+                scale: playButtonScale.value,
+                child: _StickerPlayButton(
+                  label: AppLocalizations.of(context)!.play,
+                  onPressed: isLoading ? null : onPlay,
+                  shadowScale: playButtonScale.value,
+                ),
               ),
             ),
           if (noLives) ...[
@@ -411,42 +418,34 @@ class _HeroImageState extends State<_HeroImage> {
       return SizedBox(height: heroHeight);
     }
 
-    // Padding supplémentaire pour que l'ombre portée ne soit pas clippée
-    const shadowOverflow = 20.0;
     return SizedBox(
-      height: heroHeight + shadowOverflow,
+      height: heroHeight,
       child: CustomPaint(
-        painter: _StickerPainter(image: _uiImage!, shadowOverflow: shadowOverflow),
+        painter: _StickerPainter(image: _uiImage!),
         size: Size.infinite,
       ),
     );
   }
 }
 
-/// Peint l'image avec :
-/// 1. Une ombre portée style logo (décalée bas-droite, blur doux)
-/// 2. Un contour blanc lisse via saveLayer + blur (uniforme, sans artefacts)
-/// 3. L'image originale par-dessus
+/// Peint l'image avec un contour blanc via saveLayer + blur et l'image originale
 class _StickerPainter extends CustomPainter {
   final ui.Image image;
-  final double shadowOverflow;
-  static const double _outlineWidth = 18.0;
+  static const double _outlineWidth = 10.0;
 
-  const _StickerPainter({required this.image, this.shadowOverflow = 0});
+  const _StickerPainter({required this.image});
 
   Rect _fitRect(Size size) {
     final imgW = image.width.toDouble();
     final imgH = image.height.toDouble();
-    // La zone utile exclut le shadowOverflow en bas
-    final usableH = size.height - shadowOverflow;
     final scaleX = size.width / imgW;
-    final scaleY = usableH / imgH;
+    final scaleY = size.height / imgH;
     final scale = scaleX < scaleY ? scaleX : scaleY;
     final dstW = imgW * scale;
     final dstH = imgH * scale;
     return Rect.fromLTWH(
       (size.width - dstW) / 2,
-      (usableH - dstH) / 2,
+      (size.height - dstH) / 2,
       dstW,
       dstH,
     );
@@ -459,20 +458,7 @@ class _StickerPainter extends CustomPainter {
     final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
     final dstRect = _fitRect(size);
 
-    // ── 1. Ombre portée style sticker ─
-    canvas.drawImageRect(
-      image,
-      srcRect,
-      dstRect.shift(const Offset(8, 10)),
-      Paint()
-        ..colorFilter = const ColorFilter.mode(
-          Color(0xFF000000),
-          BlendMode.srcIn,
-        )
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
-    );
-
-    // ── 2. Contour sticker blanc uniforme via saveLayer + blur ────────────
+    // ── Contour sticker blanc uniforme via saveLayer + blur ─────────────────
     // Peindre l'image en blanc avec un blur de dilatation dans un layer isolé
     canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
 
@@ -490,13 +476,12 @@ class _StickerPainter extends CustomPainter {
     canvas.drawImageRect(image, srcRect, dstRect, Paint());
     canvas.restore();
 
-    // ── 3. Image originale ───────────────────────────────────────────────
+    // ── Image originale ──────────────────────────────────────────────────────
     canvas.drawImageRect(image, srcRect, dstRect, Paint());
   }
 
   @override
-  bool shouldRepaint(_StickerPainter old) =>
-      old.image != image || old.shadowOverflow != shadowOverflow;
+  bool shouldRepaint(_StickerPainter old) => old.image != image;
 }
 
 class _RewardAdButton extends StatelessWidget {
@@ -554,8 +539,13 @@ class _RewardAdButton extends StatelessWidget {
 class _StickerPlayButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
+  final double shadowScale;
 
-  const _StickerPlayButton({required this.label, required this.onPressed});
+  const _StickerPlayButton({
+    required this.label,
+    required this.onPressed,
+    this.shadowScale = 1.0,
+  });
 
   static const _orange     = Color(0xFFE16713);
   static const _orangeDark = Color(0xFFB84D0A);
@@ -580,16 +570,17 @@ class _StickerPlayButton extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // ── Contour blanc sticker + ombre portée ───────────────────────
-          const CustomPaint(
+          // ── Contour blanc sticker (layer derrière) ────────────────────────
+          CustomPaint(
             painter: _StickerBorderPainter(
               cutSize: _cutSize,
               radius: _radius + _border,
               border: _border,
+              shadowScale: shadowScale,
             ),
-            child: SizedBox(
+            child: const SizedBox(
               width: double.infinity,
-              height: _height + _border * 2 + 16,
+              height: _height + _border * 2,
             ),
           ),
 
@@ -641,11 +632,13 @@ class _StickerBorderPainter extends CustomPainter {
   final double cutSize;
   final double radius;
   final double border;
+  final double shadowScale;
 
   const _StickerBorderPainter({
     required this.cutSize,
     required this.radius,
     required this.border,
+    this.shadowScale = 1.0,
   });
 
   @override
@@ -668,18 +661,25 @@ class _StickerBorderPainter extends CustomPainter {
           radius: Radius.circular(r), clockwise: true)
       ..close();
 
-    canvas.drawPath(
-      path.shift(const Offset(6, 8)),
-      Paint()
-        ..color = const Color(0x33000000)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
-    );
+    // ── Ombre portée style logo (décalée bas-droite, réduite à la pression) ──
+    // shadowScale va de 1.0 (repos) à ~0.96 (pressé), on mappe sur [1.0, 0.0]
+    final shadowOpacity = ((shadowScale - 0.96) / 0.04).clamp(0.0, 1.0);
+    if (shadowOpacity > 0) {
+      final shadowPaint = Paint()
+        ..color = const Color(0xFF000000).withValues(alpha: 0.45 * shadowOpacity)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * shadowOpacity);
+      canvas.drawPath(
+        path.shift(const Offset(5, 7)),
+        shadowPaint,
+      );
+    }
 
     canvas.drawPath(path, Paint()..color = Colors.white);
   }
 
   @override
-  bool shouldRepaint(_StickerBorderPainter old) => false;
+  bool shouldRepaint(_StickerBorderPainter old) =>
+      old.shadowScale != shadowScale;
 }
 
 // ── Corps du bouton : fond orange dégradé + reflet pill + coupe diagonale ────
@@ -727,13 +727,6 @@ class _ButtonBodyPainter extends CustomPainter {
     final path = _buildPath(size);
 
     // ── Ombre portée style logo (sombre, décalée bas-droite) ─────────────
-    canvas.drawPath(
-      _buildPath(size).shift(const Offset(6, 8)),
-      Paint()
-        ..color = const Color(0x40000000)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
-    );
-
     // ── Fond dégradé orange ───────────────────────────────────────────────
     canvas.drawPath(
       path,
@@ -843,3 +836,93 @@ class _ButtonBodyPainter extends CustomPainter {
       old.color != color || old.cutSize != cutSize || old.border != border;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Stickers décoratifs en fond — reproduit le layout de la maquette
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BackgroundStickers extends StatelessWidget {
+  const _BackgroundStickers();
+
+  static const _pine  = 'assets/images/sticker_pine_tree.png';
+  static const _cone  = 'assets/images/sticker_pine_cone.png';
+  static const _cabin = 'assets/images/sticker_cabin.png';
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    final h = MediaQuery.sizeOf(context).height;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // ── Sapins gauche ────────────────────────────────────────────────
+        _Sticker(asset: _pine,  size: w * 0.22, left: -w * 0.04, top:  h * 0.08),
+        _Sticker(asset: _pine,  size: w * 0.26, left: -w * 0.02, top:  h * 0.27),
+        _Sticker(asset: _pine,  size: w * 0.20, left:  w * 0.01, top:  h * 0.78),
+
+        // ── Sapins droite ────────────────────────────────────────────────
+        _Sticker(asset: _pine,  size: w * 0.20, right: -w * 0.02, top:  h * 0.38),
+        _Sticker(asset: _pine,  size: w * 0.24, right: -w * 0.04, top:  h * 0.52),
+        _Sticker(asset: _pine,  size: w * 0.20, right:  w * 0.02, top:  h * 0.68),
+
+        // ── Cabane haut-droit ─────────────────────────────────────────────
+        _Sticker(asset: _cabin, size: w * 0.22, right:  w * 0.02, top:  h * 0.10,
+            angle: 0.05),
+
+        // ── Cabane bas-droit ──────────────────────────────────────────────
+        _Sticker(asset: _cabin, size: w * 0.26, right: -w * 0.01, top:  h * 0.76,
+            angle: -0.04),
+
+        // ── Pomme de pin droite milieu ────────────────────────────────────
+        _Sticker(asset: _cone,  size: w * 0.13, right:  w * 0.10, top:  h * 0.31,
+            angle: 0.15),
+
+        // ── Pomme de pin bas-gauche ───────────────────────────────────────
+        _Sticker(asset: _cone,  size: w * 0.12, left:  w * 0.04, top:  h * 0.68,
+            angle: -0.10),
+      ],
+    );
+  }
+}
+
+class _Sticker extends StatelessWidget {
+  final String asset;
+  final double size;
+  final double? left;
+  final double? right;
+  final double? top;
+  final double? bottom;
+  final double angle;
+
+  const _Sticker({
+    required this.asset,
+    required this.size,
+    this.left,
+    this.right,
+    this.top,
+    this.bottom,
+    this.angle = 0.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget img = Transform.rotate(
+      angle: angle,
+      child: Image.asset(
+        asset,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        opacity: const AlwaysStoppedAnimation(0.90),
+      ),
+    );
+
+    return Positioned(
+      left: left,
+      right: right,
+      top: top,
+      bottom: bottom,
+      child: img,
+    );
+  }
+}
