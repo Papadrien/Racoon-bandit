@@ -824,7 +824,7 @@ class _ButtonBodyPainter extends CustomPainter {
       ..moveTo(p1.dx, p1.dy)
       ..lineTo(arcEntry.dx, arcEntry.dy)
       ..arcToPoint(arcExit,
-          radius: const Radius.circular(tipRadius), clockwise: false)
+          radius: const Radius.circular(tipRadius), clockwise: true)
       ..lineTo(p2.dx, p2.dy)
       ..close();
 
@@ -832,7 +832,7 @@ class _ButtonBodyPainter extends CustomPainter {
     canvas.drawPath(
       tabPath,
       Paint()
-        ..color = const Color(0xFFEDD9A3)
+        ..color = const Color(0xFFF5EBE0)
         ..style = PaintingStyle.fill,
     );
   }
