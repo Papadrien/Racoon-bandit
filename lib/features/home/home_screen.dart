@@ -799,7 +799,7 @@ class _ButtonBodyPainter extends CustomPainter {
     // On translate le canvas de +border vers bas-droit pour que la base
     // du triangle coïncide avec la diagonale du contour blanc extérieur.
     canvas.save();
-    canvas.translate(border, border);
+    canvas.translate(border / 2, border / 2);
 
     final p1 = Offset(size.width - c, size.height);
     final p2 = Offset(size.width, size.height - c);
