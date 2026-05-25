@@ -568,7 +568,7 @@ class _StickerPlayButton extends StatelessWidget {
   static const _orange     = Color(0xFFE16713);
   static const _orangeDark = Color(0xFFB84D0A);
   static const _cutSize    = 36.0; // plus grande = base du triangle plus large // taille de la coupe diagonale bas-droit
-  static const _tabSize    = 32.0; // taille du triangle-rebord
+  static const _tabSize    = 20.0; // taille du triangle-rebord
   static const _height     = 74.0;
   static const _radius     = 22.0;
   static const _border     = 8.0;  // épaisseur contour blanc
@@ -631,6 +631,7 @@ class _StickerPlayButton extends StatelessWidget {
                 cutSize: _cutSize,
                 tabSize: _tabSize,
                 radius: _radius,
+                border: _border,
               ),
               child: SizedBox(
                 width: double.infinity,
@@ -710,6 +711,7 @@ class _ButtonBodyPainter extends CustomPainter {
   final double cutSize;
   final double tabSize;
   final double radius;
+  final double border;
 
   const _ButtonBodyPainter({
     required this.color,
@@ -717,6 +719,7 @@ class _ButtonBodyPainter extends CustomPainter {
     required this.cutSize,
     required this.tabSize,
     required this.radius,
+    required this.border,
   });
 
   Path _buildPath(Size size) {
@@ -793,10 +796,11 @@ class _ButtonBodyPainter extends CustomPainter {
     canvas.restore();
 
     // ── Triangle-rebord bas-droit (coin replié style page) ───────────────
-    // p1 = pied bas de la diagonale, p2 = pied droit de la diagonale
-    // La base du triangle = la coupe diagonale (segment p1→p2, fermé par close())
-    final p1 = Offset(size.width - c, size.height);
-    final p2 = Offset(size.width, size.height - c);
+    // p1/p2 alignés sur la diagonale du CONTOUR BLANC (cutSize + border)
+    // car le canvas body est indenté de border=8px par rapport au sticker total
+    final cb = c + border; // coupe diagonale du contour blanc, dans ce repère
+    final p1 = Offset(size.width - cb, size.height + border);
+    final p2 = Offset(size.width + border, size.height - cb);
     final mid = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
 
     // Pointe vers l'intérieur (haut-gauche), profondeur = tabSize
@@ -846,6 +850,6 @@ class _ButtonBodyPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ButtonBodyPainter old) =>
-      old.color != color || old.cutSize != cutSize;
+      old.color != color || old.cutSize != cutSize || old.border != border;
 }
 
