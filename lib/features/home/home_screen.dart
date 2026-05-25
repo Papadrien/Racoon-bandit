@@ -891,7 +891,6 @@ class _Sticker extends StatelessWidget {
   final double? left;
   final double? right;
   final double? top;
-  final double? bottom;
   final double angle;
 
   const _Sticker({
@@ -900,7 +899,6 @@ class _Sticker extends StatelessWidget {
     this.left,
     this.right,
     this.top,
-    this.bottom,
     this.angle = 0.0,
   });
 
@@ -921,7 +919,6 @@ class _Sticker extends StatelessWidget {
       left: left,
       right: right,
       top: top,
-      bottom: bottom,
       child: img,
     );
   }
