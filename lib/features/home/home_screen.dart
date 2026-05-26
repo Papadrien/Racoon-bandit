@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
@@ -14,6 +12,9 @@ import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_theme_provider.dart';
+import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_decorations.dart';
+import '../../core/ui/app_spacing.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/raccoon_bandit_logo.dart';
@@ -97,14 +98,11 @@ class _HomeScreenState extends State<HomeScreen>
     if (mounted) {
       setState(() {
         _isLoading = false;
-        // Déclencher l'onboarding au bon moment : après chargement, avant UI
         _showOnboarding = OnboardingService.shouldShowOnboarding;
       });
     }
   }
 
-  /// Déclenche le preload de la pub uniquement si le bouton est visible.
-  /// Sans effet si déjà chargée ou en cours de chargement.
   void _ensureAdPreloaded() {
     if (_lifeSystemService.currentLives < LifeSystemService.maxLives) {
       RewardedAdService.instance.preloadAd();
@@ -128,9 +126,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _watchAdForLife() async {
-    if (_isRewardLoading) {
-      return;
-    }
+    if (_isRewardLoading) return;
 
     setState(() {
       _isRewardLoading = true;
@@ -169,7 +165,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Onboarding premier lancement — affiché AVANT l'écran principal
     if (_showOnboarding) {
       return OnboardingScreen(
         onDone: () {
@@ -180,7 +175,6 @@ class _HomeScreenState extends State<HomeScreen>
 
     final remainingDuration =
         _lifeSystemService.getRemainingRechargeDuration();
-
     final noLives = _lifeSystemService.currentLives <= 0;
 
     return ListenableBuilder(
@@ -208,10 +202,10 @@ class _HomeScreenState extends State<HomeScreen>
       child: Scaffold(
         body: Stack(
           children: [
-            // ── Stickers décoratifs en fond ───────────────────────────────
+            // ── Stickers décoratifs en fond ──────────────────────────────
             const Positioned.fill(child: _BackgroundStickers()),
 
-            // ── Hero image centrée verticalement entre logo et bouton ──
+            // ── Hero image — directement depuis l'asset, sans effets artificiels
             const Positioned.fill(
               child: Align(
                 alignment: Alignment.center,
@@ -225,14 +219,14 @@ class _HomeScreenState extends State<HomeScreen>
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isNarrow = constraints.maxWidth < 360;
-                  final hPad = isNarrow ? 16.0 : 32.0;
+                  final hPad = isNarrow ? AppSpacing.hPadNarrow : AppSpacing.hPadWide;
 
                   return Padding(
                     padding: EdgeInsets.symmetric(horizontal: hPad),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // ── Top bar ─────────────────────────────────────
+                        // ── Top bar ────────────────────────────────────
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Row(
@@ -249,23 +243,27 @@ class _HomeScreenState extends State<HomeScreen>
                                 )
                               else
                                 const SizedBox.shrink(),
+                              // ── Boutons flottants blancs ────────────
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.workspace_premium),
+                                  _FloatingIconButton(
+                                    icon: Icons.workspace_premium,
                                     color: AppTheme.accent,
-                                    tooltip: AppLocalizations.of(context)!.tooltipPremium,
+                                    tooltip: AppLocalizations.of(context)!
+                                        .tooltipPremium,
                                     onPressed: () {
                                       AudioService.instance.playButtonSound();
                                       Navigator.pushNamed(
                                           context, AppRoutes.premium);
                                     },
                                   ),
-                                  IconButton(
-                                    icon: const Icon(Icons.settings),
-                                    color: AppTheme.textMuted,
-                                    tooltip: AppLocalizations.of(context)!.tooltipSettings,
+                                  const SizedBox(width: AppSpacing.sm),
+                                  _FloatingIconButton(
+                                    icon: Icons.settings,
+                                    color: AppColors.textMuted,
+                                    tooltip: AppLocalizations.of(context)!
+                                        .tooltipSettings,
                                     onPressed: () {
                                       AudioService.instance.playButtonSound();
                                       Navigator.pushNamed(
@@ -278,8 +276,8 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
 
-                        // ── Titre ────────────────────────────────────────
-                        const SizedBox(height: 12),
+                        // ── Titre ─────────────────────────────────────
+                        const SizedBox(height: AppSpacing.md),
                         const RaccoonBanditLogo(),
                       ],
                     ),
@@ -314,7 +312,41 @@ class _HomeScreenState extends State<HomeScreen>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Zone boutons repositionnée (Partie 1 & 3)
+// Bouton flottant blanc — base visuelle sticker pour le Home Screen
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _FloatingIconButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _FloatingIconButton({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: AppSpacing.floatingButtonSize,
+          height: AppSpacing.floatingButtonSize,
+          decoration: AppDecorations.floatingButton(radius: AppSpacing.radiusMedium),
+          child: Icon(icon, color: color, size: 22),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Zone boutons
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PlayButtonArea extends StatelessWidget {
@@ -337,7 +369,7 @@ class _PlayButtonArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < 360;
-    final hPad = isNarrow ? 8.0 : 16.0;
+    final hPad = isNarrow ? AppSpacing.sm : AppSpacing.lg;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: hPad),
@@ -363,14 +395,14 @@ class _PlayButtonArea extends StatelessWidget {
               ),
             ),
           if (noLives) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm + 2),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
               child: Text(
                 AppLocalizations.of(context)!.noLivesAdHint,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: AppTheme.textMuted,
+                  color: AppColors.textMuted,
                   fontSize: 13,
                 ),
               ),
@@ -383,105 +415,26 @@ class _PlayButtonArea extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Hero image — style autocollant CustomPainter (contour blanc lisse + ombre)
+// Hero image — directement depuis l'asset PNG, sans contour artificiel
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _HeroImage extends StatefulWidget {
+class _HeroImage extends StatelessWidget {
   const _HeroImage();
-
-  @override
-  State<_HeroImage> createState() => _HeroImageState();
-}
-
-class _HeroImageState extends State<_HeroImage> {
-  ui.Image? _uiImage;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadImage();
-  }
-
-  Future<void> _loadImage() async {
-    final data = await rootBundle.load('assets/images/raccoon_bandit_hero.png');
-    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
-    if (mounted) setState(() => _uiImage = frame.image);
-  }
 
   @override
   Widget build(BuildContext context) {
     final screenH = MediaQuery.sizeOf(context).height;
-    final heroHeight = screenH * 0.65 * 0.5;
-
-    if (_uiImage == null) {
-      return SizedBox(height: heroHeight);
-    }
+    // Hauteur responsive : ~32% de l'écran, confortable sur petits Android
+    final heroHeight = (screenH * 0.32).clamp(160.0, 300.0);
 
     return SizedBox(
       height: heroHeight,
-      child: CustomPaint(
-        painter: _StickerPainter(image: _uiImage!),
-        size: Size.infinite,
+      child: Image.asset(
+        'assets/images/raccoon_bandit_hero.png',
+        fit: BoxFit.contain,
       ),
     );
   }
-}
-
-/// Peint l'image avec un contour blanc via saveLayer + blur et l'image originale
-class _StickerPainter extends CustomPainter {
-  final ui.Image image;
-  static const double _outlineWidth = 10.0;
-
-  const _StickerPainter({required this.image});
-
-  Rect _fitRect(Size size) {
-    final imgW = image.width.toDouble();
-    final imgH = image.height.toDouble();
-    final scaleX = size.width / imgW;
-    final scaleY = size.height / imgH;
-    final scale = scaleX < scaleY ? scaleX : scaleY;
-    final dstW = imgW * scale;
-    final dstH = imgH * scale;
-    return Rect.fromLTWH(
-      (size.width - dstW) / 2,
-      (size.height - dstH) / 2,
-      dstW,
-      dstH,
-    );
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final imgW = image.width.toDouble();
-    final imgH = image.height.toDouble();
-    final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
-    final dstRect = _fitRect(size);
-
-    // ── Contour sticker blanc uniforme via saveLayer + blur ─────────────────
-    // Peindre l'image en blanc avec un blur de dilatation dans un layer isolé
-    canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
-
-    // Passe dilatée : blanc avec blur pour remplir uniformément autour
-    canvas.drawImageRect(
-      image,
-      srcRect,
-      dstRect,
-      Paint()
-        ..colorFilter = const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.solid, _outlineWidth * 0.8),
-    );
-
-    // Repasse l'image par-dessus pour effacer l'intérieur du contour
-    canvas.drawImageRect(image, srcRect, dstRect, Paint());
-    canvas.restore();
-
-    // ── Image originale ──────────────────────────────────────────────────────
-    canvas.drawImageRect(image, srcRect, dstRect, Paint());
-  }
-
-  @override
-  bool shouldRepaint(_StickerPainter old) => old.image != image;
 }
 
 class _RewardAdButton extends StatelessWidget {
@@ -517,20 +470,20 @@ class _RewardAdButton extends StatelessWidget {
               : AppLocalizations.of(context)!.watchAdButton,
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.accent,
+          backgroundColor: AppColors.orange,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 52),
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+          minimumSize: const Size(double.infinity, AppSpacing.buttonHeightSecondary),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.radiusMedium, horizontal: AppSpacing.xl),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(AppSpacing.radiusMedium),
+            ),
           ),
         ),
       ),
     );
   }
 }
-
-// _Logo remplacé par RaccoonBanditLogo (lib/widgets/raccoon_bandit_logo.dart)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Bouton Jouer style sticker
@@ -547,13 +500,13 @@ class _StickerPlayButton extends StatelessWidget {
     this.shadowScale = 1.0,
   });
 
-  static const _orange     = Color(0xFFE16713);
-  static const _orangeDark = Color(0xFFB84D0A);
-  static const _cutSize    = 36.0; // plus grande = base du triangle plus large // taille de la coupe diagonale bas-droit
-  static const _tabSize    = 20.0; // taille du triangle-rebord
-  static const _height     = 74.0;
-  static const _radius     = 22.0;
-  static const _border     = 8.0;  // épaisseur contour blanc
+  static const _orange     = AppColors.orange;
+  static const _orangeDark = AppColors.orangeDark;
+  static const _cutSize    = 36.0;
+  static const _tabSize    = 20.0;
+  static const _height     = AppSpacing.buttonHeight;
+  static const _radius     = AppSpacing.radiusXLarge - 6;  // 22.0
+  static const _border     = 8.0;
 
   @override
   Widget build(BuildContext context) {
@@ -570,7 +523,7 @@ class _StickerPlayButton extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // ── Contour blanc sticker (layer derrière) ────────────────────────
+          // ── Contour blanc sticker ─────────────────────────────────────
           CustomPaint(
             painter: _StickerBorderPainter(
               cutSize: _cutSize,
@@ -584,7 +537,7 @@ class _StickerPlayButton extends StatelessWidget {
             ),
           ),
 
-          // ── Corps principal du bouton ─────────────────────────────────────
+          // ── Corps principal du bouton ─────────────────────────────────
           Padding(
             padding: const EdgeInsets.all(_border),
             child: CustomPaint(
@@ -643,7 +596,7 @@ class _StickerBorderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final c = cutSize + border; // coupe diagonale agrandie pour le contour
+    final c = cutSize + border;
     final r = radius;
 
     final path = Path()
@@ -661,8 +614,7 @@ class _StickerBorderPainter extends CustomPainter {
           radius: Radius.circular(r), clockwise: true)
       ..close();
 
-    // ── Ombre portée style logo (décalée bas-droite, réduite à la pression) ──
-    // shadowScale va de 1.0 (repos) à ~0.96 (pressé), on mappe sur [1.0, 0.0]
+    // ── Ombre portée — réduite à la pression ─────────────────────────────
     final shadowOpacity = ((shadowScale - 0.96) / 0.04).clamp(0.0, 1.0);
     if (shadowOpacity > 0) {
       final shadowPaint = Paint()
@@ -682,7 +634,7 @@ class _StickerBorderPainter extends CustomPainter {
       old.shadowScale != shadowScale;
 }
 
-// ── Corps du bouton : fond orange dégradé + reflet pill + coupe diagonale ────
+// ── Corps du bouton : fond orange dégradé + glow gauche doux + coupe diagonale
 
 class _ButtonBodyPainter extends CustomPainter {
   final Color color;
@@ -726,7 +678,6 @@ class _ButtonBodyPainter extends CustomPainter {
     final t = tabSize;
     final path = _buildPath(size);
 
-    // ── Ombre portée style logo (sombre, décalée bas-droite) ─────────────
     // ── Fond dégradé orange ───────────────────────────────────────────────
     canvas.drawPath(
       path,
@@ -743,14 +694,35 @@ class _ButtonBodyPainter extends CustomPainter {
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
     );
 
-    // ── Reflet pill en haut (style bouton jeu) ────────────────────────────
     canvas.save();
     canvas.clipPath(path);
 
-    final highlightW = size.width * 0.55;
-    final highlightH = size.height * 0.28;
+    // ── Glow doux décalé vers la gauche — organique et non agressif ──────
+    // Zone lumineuse positionnée à gauche du centre, basse intensité
+    final glowW = size.width * 0.45;
+    final glowH = size.height * 0.70;
+    final glowRect = Rect.fromCenter(
+      center: Offset(size.width * 0.28, size.height * 0.40),
+      width: glowW,
+      height: glowH,
+    );
+    canvas.drawOval(
+      glowRect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.30),
+            Colors.white.withValues(alpha: 0.0),
+          ],
+          stops: const [0.0, 1.0],
+        ).createShader(glowRect),
+    );
+
+    // ── Reflet pill subtil en haut au centre ─────────────────────────────
+    final highlightW = size.width * 0.40;
+    final highlightH = size.height * 0.20;
     final highlightRect = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height * 0.2),
+      center: Offset(size.width / 2, size.height * 0.15),
       width: highlightW,
       height: highlightH,
     );
@@ -759,7 +731,7 @@ class _ButtonBodyPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: [
-            Colors.white.withValues(alpha: 0.45),
+            Colors.white.withValues(alpha: 0.30),
             Colors.white.withValues(alpha: 0.0),
           ],
         ).createShader(highlightRect),
@@ -767,17 +739,15 @@ class _ButtonBodyPainter extends CustomPainter {
 
     // ── Ombre intérieure basse (relief 3D) ───────────────────────────────
     canvas.drawRect(
-      Rect.fromLTWH(0, size.height * 0.6, size.width, size.height * 0.4),
+      Rect.fromLTWH(0, size.height * 0.65, size.width, size.height * 0.35),
       Paint()
-        ..color = darkColor.withValues(alpha: 0.35)
+        ..color = darkColor.withValues(alpha: 0.30)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
 
     canvas.restore();
 
     // ── Triangle-rebord bas-droit (coin replié style page) ───────────────
-    // On translate le canvas de +border vers bas-droit pour que la base
-    // du triangle coïncide avec la diagonale du contour blanc extérieur.
     canvas.save();
     canvas.translate(border / 2, border / 2);
 
@@ -785,33 +755,26 @@ class _ButtonBodyPainter extends CustomPainter {
     final p2 = Offset(size.width, size.height - c);
     final mid = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
 
-    // Pointe vers l'intérieur (haut-gauche), profondeur = tabSize
     const inward = Offset(-0.7071, -0.7071);
     final tip = Offset(mid.dx + inward.dx * t, mid.dy + inward.dy * t);
 
-    // Vecteur normalisé côté p1→tip
     final leg1Dx = tip.dx - p1.dx;
     final leg1Dy = tip.dy - p1.dy;
     final leg1Len = Offset(leg1Dx, leg1Dy).distance;
     final leg1Nx = leg1Dx / leg1Len;
     final leg1Ny = leg1Dy / leg1Len;
 
-    // Vecteur normalisé côté p2→tip
     final leg2Dx = tip.dx - p2.dx;
     final leg2Dy = tip.dy - p2.dy;
     final leg2Len = Offset(leg2Dx, leg2Dy).distance;
     final leg2Nx = leg2Dx / leg2Len;
     final leg2Ny = leg2Dy / leg2Len;
 
-    // Rayon de l'arc concave à la pointe — ne pas modifier
     const tipRadius = 10.0;
 
-    // arcEntry : recule sur le côté p1→tip depuis la pointe
     final arcEntry = Offset(tip.dx - leg1Nx * tipRadius, tip.dy - leg1Ny * tipRadius);
-    // arcExit  : recule sur le côté p2→tip depuis la pointe
     final arcExit  = Offset(tip.dx - leg2Nx * tipRadius, tip.dy - leg2Ny * tipRadius);
 
-    // Tracé : p1 → arcEntry → arc concave → arcExit → p2 → diagonale (close)
     final tabPath = Path()
       ..moveTo(p1.dx, p1.dy)
       ..lineTo(arcEntry.dx, arcEntry.dy)
@@ -820,11 +783,10 @@ class _ButtonBodyPainter extends CustomPainter {
       ..lineTo(p2.dx, p2.dy)
       ..close();
 
-    // Couleur blanc cassé chaud, 10% plus foncée que 0xFFF5EBE0
     canvas.drawPath(
       tabPath,
       Paint()
-        ..color = const Color(0xFFDDCFBF)
+        ..color = AppColors.stickerWarm
         ..style = PaintingStyle.fill,
     );
 
@@ -837,7 +799,7 @@ class _ButtonBodyPainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Stickers décoratifs en fond — reproduit le layout de la maquette
+// Stickers décoratifs en fond
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _BackgroundStickers extends StatelessWidget {
