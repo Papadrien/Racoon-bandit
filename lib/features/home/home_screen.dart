@@ -815,33 +815,99 @@ class _BackgroundStickers extends StatelessWidget {
     final h = MediaQuery.sizeOf(context).height;
 
     return Stack(
-      clipBehavior: Clip.none,
+      clipBehavior: Clip.hardEdge,
       children: [
-        // ── Sapins gauche ────────────────────────────────────────────────
-        _Sticker(asset: _pine,  size: w * 0.22, left: -w * 0.04, top:  h * 0.08),
-        _Sticker(asset: _pine,  size: w * 0.26, left: -w * 0.02, top:  h * 0.27),
-        _Sticker(asset: _pine,  size: w * 0.20, left:  w * 0.01, top:  h * 0.78),
+        // ════════════════════════════════════════════════════════════════
+        // BANDE HAUTE (h * 0.00 → h * 0.22) — logo / top-bar
+        // Sapin haut-gauche ancré dans le coin, cabane haut-droite lisible
+        // ════════════════════════════════════════════════════════════════
 
-        // ── Sapins droite ────────────────────────────────────────────────
-        _Sticker(asset: _pine,  size: w * 0.20, right: -w * 0.02, top:  h * 0.38),
-        _Sticker(asset: _pine,  size: w * 0.24, right: -w * 0.04, top:  h * 0.52),
-        _Sticker(asset: _pine,  size: w * 0.20, right:  w * 0.02, top:  h * 0.68),
+        // Sapin haut-gauche — grand, ancré dans le coin
+        _Sticker(
+          asset: _pine,
+          size: w * 0.30,
+          left: -w * 0.05,
+          top: h * 0.03,
+          angle: -0.06,
+        ),
 
-        // ── Cabane haut-droit ─────────────────────────────────────────────
-        _Sticker(asset: _cabin, size: w * 0.22, right:  w * 0.02, top:  h * 0.10,
-            angle: 0.05),
+        // Cabane haut-droite — espacée du bord, ne gêne pas la top-bar
+        _Sticker(
+          asset: _cabin,
+          size: w * 0.20,
+          right: w * 0.03,
+          top: h * 0.07,
+          angle: 0.05,
+        ),
 
-        // ── Cabane bas-droit ──────────────────────────────────────────────
-        _Sticker(asset: _cabin, size: w * 0.26, right: -w * 0.01, top:  h * 0.76,
-            angle: -0.04),
+        // ════════════════════════════════════════════════════════════════
+        // BANDE MILIEU-HAUT (h * 0.22 → h * 0.55) — zone héros
+        // Éléments discrets sur les bords, laissent respirer le raccoon
+        // ════════════════════════════════════════════════════════════════
 
-        // ── Pomme de pin droite milieu ────────────────────────────────────
-        _Sticker(asset: _cone,  size: w * 0.13, right:  w * 0.10, top:  h * 0.31,
-            angle: 0.15),
+        // Pomme de pin gauche milieu — petite, accent discret
+        _Sticker(
+          asset: _cone,
+          size: w * 0.11,
+          left: w * 0.04,
+          top: h * 0.38,
+          angle: -0.20,
+        ),
 
-        // ── Pomme de pin bas-gauche ───────────────────────────────────────
-        _Sticker(asset: _cone,  size: w * 0.12, left:  w * 0.04, top:  h * 0.68,
-            angle: -0.10),
+        // Sapin droite milieu — rogné côté droit, crée une coulisse
+        _Sticker(
+          asset: _pine,
+          size: w * 0.25,
+          right: -w * 0.06,
+          top: h * 0.30,
+          angle: 0.08,
+        ),
+
+        // ════════════════════════════════════════════════════════════════
+        // BANDE MILIEU-BAS (h * 0.55 → h * 0.78) — zone bouton Jouer
+        // Symétrie légèrement brisée pour naturel
+        // ════════════════════════════════════════════════════════════════
+
+        // Sapin gauche milieu-bas — ancrage bord gauche
+        _Sticker(
+          asset: _pine,
+          size: w * 0.22,
+          left: -w * 0.03,
+          top: h * 0.57,
+          angle: -0.04,
+        ),
+
+        // Pomme de pin droite milieu-bas — accent asymétrique
+        _Sticker(
+          asset: _cone,
+          size: w * 0.12,
+          right: w * 0.05,
+          top: h * 0.60,
+          angle: 0.18,
+        ),
+
+        // ════════════════════════════════════════════════════════════════
+        // BANDE BASSE (h * 0.78 → h * 1.00) — pied d'écran
+        // Cabane bas-gauche + sapin bas-droit pour clore la composition
+        // ════════════════════════════════════════════════════════════════
+
+        // Cabane bas-gauche — lisible, légèrement inclinée
+        _Sticker(
+          asset: _cabin,
+          size: w * 0.24,
+          left: w * 0.02,
+          top: h * 0.80,
+          angle: -0.05,
+        ),
+
+        // Sapin bas-droit — rogné en bas, équilibre bas de page
+        _Sticker(
+          asset: _pine,
+          size: w * 0.26,
+          right: -w * 0.04,
+          top: h * 0.76,
+          angle: 0.06,
+        ),
       ],
     );
   }
