@@ -676,7 +676,10 @@ class _GameScreenState extends State<GameScreen>
   }
 
   /// Construit la carte joueur nouvelle architecture :
-  /// avatar rond flottant au-dessus + carte sticker blanche
+  /// avatar rond flottant au-dessus + carte sticker blanche + ressources dessous.
+  ///
+  /// La hauteur TOTALE est toujours la même (stable), grâce à des zones
+  /// à hauteur fixe pour la carte et pour les ressources.
   Widget _buildPlayerCard(int index, {double maxWidth = 150}) {
     final player = _gameState.players[index];
     final animatingPlayerId = _displayPlayerName != null ? _lastResolvedPlayerId : null;
@@ -689,34 +692,42 @@ class _GameScreenState extends State<GameScreen>
     _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
 
     final isCompact = maxWidth < 115;
-    final avatarSize = isCompact ? 32.0 : 40.0;
+    final avatarSize = isCompact ? 30.0 : 38.0;
+    final avatarRingSize = avatarSize + 6.0;
     final nameFontSize = isCompact ? 10.0 : 12.0;
-    final resourceIconSize = isCompact ? 14.0 : 16.0;
+    final resourceIconSize = isCompact ? 13.0 : 15.0;
 
-    // Active border color
-    final borderColor = active ? player.profileColor : Colors.transparent;
+    // ── Zones à hauteur fixe pour stabiliser le layout ──────────────
+    // Zone ressources : 2 runs max × (iconSize + runSpacing) + spacing inter-section
+    final resourceZoneHeight = (resourceIconSize * 2 + 4) * 2 + 6.0;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
+    // Chevauchement avatar/carte
+    const double avatarOverlap = 8.0;
+
+    // Hauteur de la carte sticker (fixe, indépendante du contenu)
+    final cardInnerHeight = isCompact ? 32.0 : 38.0;
+
+    return SizedBox(
+      width: maxWidth,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // ── Avatar flottant ──────────────────────────────────────────
           Container(
-            width: avatarSize + 6,
-            height: avatarSize + 6,
+            width: avatarRingSize,
+            height: avatarRingSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.stickerWhite,
-              border: Border.all(
-                color: borderColor,
-                width: active ? 2.5 : 0,
-              ),
+              border: active
+                  ? Border.all(color: player.profileColor, width: 2.5)
+                  : null,
               boxShadow: active
                   ? AppShadows.subtleGlow(player.profileColor)
                   : AppShadows.floating,
             ),
-            child: const Center(
+            child: Center(
               child: PlayerAvatar(
                 emoji: player.emoji,
                 color: player.profileColor,
@@ -725,16 +736,18 @@ class _GameScreenState extends State<GameScreen>
             ),
           ),
 
-          // Overlap : avatar descend légèrement dans la carte
-          const Transform.translate(
-            offset: Offset(0, -8),
+          // ── Carte sticker (hauteur fixe, avatar chevauche le haut) ──
+          Transform.translate(
+            offset: const Offset(0, -avatarOverlap),
             child: Container(
               key: _playerKeys[player.id],
+              width: maxWidth,
+              height: cardInnerHeight + avatarOverlap + (isCompact ? 4 : 6),
               padding: EdgeInsets.fromLTRB(
-                isCompact ? 5 : 8,
-                10, // top padding réduit car avatar chevauche
-                isCompact ? 5 : 8,
-                isCompact ? 5 : 7,
+                isCompact ? 4 : 6,
+                avatarOverlap + 2,
+                isCompact ? 4 : 6,
+                isCompact ? 3 : 5,
               ),
               decoration: BoxDecoration(
                 color: AppColors.stickerWhite,
@@ -744,73 +757,78 @@ class _GameScreenState extends State<GameScreen>
                     : null,
                 boxShadow: AppShadows.sticker,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Espacement pour le chevauchement avatar
-                  const SizedBox(height: 4),
-                  // Prénom
-                  Text(
-                    player.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: AppColors.textDark,
-                      fontWeight: FontWeight.bold,
-                      fontSize: nameFontSize,
-                    ),
+              child: Center(
+                child: Text(
+                  player.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textDark,
+                    fontWeight: FontWeight.bold,
+                    fontSize: nameFontSize,
                   ),
-                ],
+                ),
               ),
             ),
           ),
 
-          // ── Ressources SOUS la carte ──────────────────────────────────
-          const Transform.translate(
-            offset: Offset(0, -6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Nourriture
-                if (player.foodCount > 0)
-                  Wrap(
+          // ── Zone ressources FIXE sous la carte ──────────────────────
+          // La hauteur est fixe pour éviter tout redimensionnement de layout.
+          Transform.translate(
+            offset: const Offset(0, -avatarOverlap + 2),
+            child: SizedBox(
+              width: maxWidth,
+              height: resourceZoneHeight,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Nourriture
+                  SizedBox(
                     key: _foodZoneKeys[player.id],
-                    alignment: WrapAlignment.center,
-                    spacing: 1,
-                    runSpacing: 1,
-                    children: List.generate(
-                      player.foodCount,
-                      (_) => Image.asset(
-                        'assets/images/icon_food.png',
-                        width: resourceIconSize,
-                        height: resourceIconSize,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  )
-                else
-                  SizedBox(key: _foodZoneKeys[player.id]),
-
-                if (player.trashCount > 0) ...[
-                  const SizedBox(height: 2),
-                  Wrap(
-                    key: _fridgeZoneKeys[player.id],
-                    alignment: WrapAlignment.center,
-                    spacing: 1,
-                    runSpacing: 1,
-                    children: List.generate(
-                      player.trashCount,
-                      (_) => Image.asset(
-                        'assets/images/icon_trash.png',
-                        width: resourceIconSize,
-                        height: resourceIconSize * 1.25,
-                        fit: BoxFit.contain,
-                      ),
+                    width: maxWidth,
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 2,
+                      runSpacing: 2,
+                      children: player.foodCount > 0
+                          ? List.generate(
+                              player.foodCount.clamp(0, 8),
+                              (_) => Image.asset(
+                                'assets/images/icon_food.png',
+                                width: resourceIconSize,
+                                height: resourceIconSize,
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                          : const [],
                     ),
                   ),
-                ] else
-                  SizedBox(key: _fridgeZoneKeys[player.id]),
-              ],
+                  if (player.trashCount > 0) ...[
+                    const SizedBox(height: 2),
+                    SizedBox(
+                      key: _fridgeZoneKeys[player.id],
+                      width: maxWidth,
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 2,
+                        runSpacing: 2,
+                        children: List.generate(
+                          player.trashCount.clamp(0, 6),
+                          (_) => Image.asset(
+                            'assets/images/icon_trash.png',
+                            width: resourceIconSize,
+                            height: resourceIconSize * 1.2,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ] else
+                    SizedBox(key: _fridgeZoneKeys[player.id]),
+                ],
+              ),
             ),
           ),
         ],
@@ -822,11 +840,19 @@ class _GameScreenState extends State<GameScreen>
     final sw = constraints.maxWidth;
     final sh = constraints.maxHeight;
 
-    const hMargin = 6.0;
-    final topOffset = sh * 0.01 + 40.0;
-    final bottomOffset = sh * 0.01;
+    // Marge horizontale légèrement plus grande pour ne pas coller au bord.
+    const double hMargin = 4.0;
 
-    final cardMaxW = (sw * 0.38).clamp(90.0, 140.0);
+    // Offset vertical : on part juste en dessous de la top bar (controls).
+    // 48px = hauteur approximative de _buildGameplayControlsBar.
+    final double topOffset = sh * 0.01 + 48.0;
+
+    // Offset bas : espace confortable au-dessus du bord inférieur SafeArea.
+    final double bottomOffset = sh * 0.01 + 4.0;
+
+    // Largeur max de carte — réduite pour laisser de la place au centre.
+    // Sur petits écrans (<340), on compresse davantage.
+    final double cardMaxW = (sw * 0.34).clamp(82.0, 132.0);
 
     final positions = {
       2: [
