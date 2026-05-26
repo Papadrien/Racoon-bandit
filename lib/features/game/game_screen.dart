@@ -1319,7 +1319,7 @@ class _GameSticker extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.contain,
-          opacity: const AlwaysStoppedAnimation(opacity),
+          opacity: AlwaysStoppedAnimation(opacity),
         ),
       ),
     );

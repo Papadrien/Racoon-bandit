@@ -15,7 +15,7 @@ import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/constants/app_assets.dart';
 import '../../core/models/card_back_config.dart';
-import '../../core/theme/app_theme.dart';
+// import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_decorations.dart';
@@ -345,7 +345,7 @@ class _LobbyBackground extends StatelessWidget {
           ),
 
           // Sticker sapin — haut gauche
-          Positioned(
+          const Positioned(
             top: 40,
             left: -10,
             child: _StickerAsset(
@@ -357,7 +357,7 @@ class _LobbyBackground extends StatelessWidget {
           ),
 
           // Sticker sapin — haut droite
-          Positioned(
+          const Positioned(
             top: 20,
             right: -8,
             child: _StickerAsset(
@@ -369,7 +369,7 @@ class _LobbyBackground extends StatelessWidget {
           ),
 
           // Sticker pomme de pin — milieu droite
-          Positioned(
+          const Positioned(
             top: 260,
             right: 4,
             child: _StickerAsset(
@@ -381,7 +381,7 @@ class _LobbyBackground extends StatelessWidget {
           ),
 
           // Sticker cabane — bas gauche
-          Positioned(
+          const Positioned(
             bottom: 140,
             left: -6,
             child: _StickerAsset(
@@ -393,7 +393,7 @@ class _LobbyBackground extends StatelessWidget {
           ),
 
           // Sticker pomme de pin — bas droite
-          Positioned(
+          const Positioned(
             bottom: 200,
             right: 8,
             child: _StickerAsset(
@@ -433,7 +433,7 @@ class _StickerAsset extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          errorBuilder: (_, __, __) => const SizedBox.shrink(),
         ),
       ),
     );
@@ -667,7 +667,7 @@ class _ChaosModeSection extends StatelessWidget {
               AudioService.instance.playButtonSound();
               onToggle(val);
             },
-            activeColor: AppColors.violet,
+            activeThumbColor: AppColors.violet,
           ),
         ],
       ),
@@ -1039,10 +1039,10 @@ class _ProfilePickerSheet extends StatelessWidget {
       maxChildSize: 0.85,
       builder: (_, scrollController) {
         return Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: AppColors.backgroundLight,
             borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(28)),
+                BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: AppShadows.sticker,
           ),
           child: Column(
