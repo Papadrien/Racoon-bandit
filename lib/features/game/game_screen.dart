@@ -17,6 +17,10 @@ import '../../core/services/haptic_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/services/wakelock_service.dart';
 import '../../core/services/stats_service.dart';
+import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_decorations.dart';
+import '../../core/ui/app_shadows.dart';
+import '../../core/ui/app_spacing.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/player_avatar.dart';
 import 'widgets/pince_target_overlay.dart';
@@ -671,9 +675,10 @@ class _GameScreenState extends State<GameScreen>
     _cardWidth = (_cardHeight * 0.70).clamp(130.0, 185.0).clamp(0.0, maxW);
   }
 
+  /// Construit la carte joueur nouvelle architecture :
+  /// avatar rond flottant au-dessus + carte sticker blanche
   Widget _buildPlayerCard(int index, {double maxWidth = 150}) {
     final player = _gameState.players[index];
-    // Durant l'animation, on maintient la mise en évidence du joueur qui joue
     final animatingPlayerId = _displayPlayerName != null ? _lastResolvedPlayerId : null;
     final active = animatingPlayerId != null
         ? player.id == animatingPlayerId
@@ -684,82 +689,131 @@ class _GameScreenState extends State<GameScreen>
     _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
 
     final isCompact = maxWidth < 115;
-    final avatarSize = isCompact ? 28.0 : 38.0;
+    final avatarSize = isCompact ? 32.0 : 40.0;
     final nameFontSize = isCompact ? 10.0 : 12.0;
-    final emojiFontSize = isCompact ? 12.0 : 15.0;
-    final hPad = isCompact ? 5.0 : 9.0;
+    final resourceIconSize = isCompact ? 14.0 : 16.0;
+
+    // Active border color
+    final borderColor = active ? player.profileColor : Colors.transparent;
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
-      child: Container(
-        key: _playerKeys[player.id],
-        padding: EdgeInsets.symmetric(
-          horizontal: hPad,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: active
-              ? player.profileColor.withValues(alpha: 0.18)
-              : Colors.black.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: active ? player.profileColor : Colors.white24,
-            width: active ? 2 : 1,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Avatar flottant ──────────────────────────────────────────
+          Container(
+            width: avatarSize + 6,
+            height: avatarSize + 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.stickerWhite,
+              border: Border.all(
+                color: borderColor,
+                width: active ? 2.5 : 0,
+              ),
+              boxShadow: active
+                  ? AppShadows.subtleGlow(player.profileColor)
+                  : AppShadows.floating,
+            ),
+            child: Center(
+              child: PlayerAvatar(
+                emoji: player.emoji,
+                color: player.profileColor,
+                size: avatarSize,
+              ),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            PlayerAvatar(
-              emoji: player.emoji,
-              color: player.profileColor,
-              size: avatarSize,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              player.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: nameFontSize,
+
+          // Overlap : avatar descend légèrement dans la carte
+          Transform.translate(
+            offset: const Offset(0, -8),
+            child: Container(
+              key: _playerKeys[player.id],
+              padding: EdgeInsets.fromLTRB(
+                isCompact ? 5 : 8,
+                10, // top padding réduit car avatar chevauche
+                isCompact ? 5 : 8,
+                isCompact ? 5 : 7,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.stickerWhite,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                border: active
+                    ? Border.all(color: player.profileColor, width: 2)
+                    : null,
+                boxShadow: AppShadows.sticker,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Espacement pour le chevauchement avatar
+                  const SizedBox(height: 4),
+                  // Prénom
+                  Text(
+                    player.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.textDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: nameFontSize,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Wrap(
-              key: _foodZoneKeys[player.id],
-              alignment: WrapAlignment.center,
-              spacing: 1,
-              runSpacing: 1,
-              children: List.generate(
-                player.foodCount,
-                (_) => Image.asset(
-                  'assets/images/icon_food.png',
-                  width: emojiFontSize * 1.4,
-                  height: emojiFontSize * 1.4,
-                  fit: BoxFit.contain,
-                ),
-              ),
+          ),
+
+          // ── Ressources SOUS la carte ──────────────────────────────────
+          Transform.translate(
+            offset: const Offset(0, -6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Nourriture
+                if (player.foodCount > 0)
+                  Wrap(
+                    key: _foodZoneKeys[player.id],
+                    alignment: WrapAlignment.center,
+                    spacing: 1,
+                    runSpacing: 1,
+                    children: List.generate(
+                      player.foodCount,
+                      (_) => Image.asset(
+                        'assets/images/icon_food.png',
+                        width: resourceIconSize,
+                        height: resourceIconSize,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  )
+                else
+                  SizedBox(key: _foodZoneKeys[player.id]),
+
+                if (player.trashCount > 0) ...[
+                  const SizedBox(height: 2),
+                  Wrap(
+                    key: _fridgeZoneKeys[player.id],
+                    alignment: WrapAlignment.center,
+                    spacing: 1,
+                    runSpacing: 1,
+                    children: List.generate(
+                      player.trashCount,
+                      (_) => Image.asset(
+                        'assets/images/icon_trash.png',
+                        width: resourceIconSize,
+                        height: resourceIconSize * 1.25,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ] else
+                  SizedBox(key: _fridgeZoneKeys[player.id]),
+              ],
             ),
-            const SizedBox(height: 2),
-            Wrap(
-              key: _fridgeZoneKeys[player.id],
-              alignment: WrapAlignment.center,
-              spacing: 1,
-              runSpacing: 1,
-              children: List.generate(
-                player.trashCount,
-                (_) => Image.asset(
-                  'assets/images/icon_trash.png',
-                  width: emojiFontSize * 1.4,
-                  height: emojiFontSize * 1.75,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -768,11 +822,11 @@ class _GameScreenState extends State<GameScreen>
     final sw = constraints.maxWidth;
     final sh = constraints.maxHeight;
 
-    const hMargin = 8.0;
-    final topOffset = sh * 0.01 + 44.0;
+    const hMargin = 6.0;
+    final topOffset = sh * 0.01 + 40.0;
     final bottomOffset = sh * 0.01;
 
-    final cardMaxW = (sw * 0.38).clamp(100.0, 150.0);
+    final cardMaxW = (sw * 0.38).clamp(90.0, 140.0);
 
     final positions = {
       2: [
@@ -832,13 +886,11 @@ class _GameScreenState extends State<GameScreen>
           final isBack = !deckExhausted && !(showFront && _revealedCard != null);
 
           // Masquer la carte lorsqu'elle est presque de profil (angle ≈ π/2)
-          // pour éviter le flash de backface visible pendant la rotation 3D.
           final nearEdge = !backgroundCard &&
               angle > math.pi / 2 - 0.08 &&
               angle < math.pi / 2 + 0.08;
 
-          // Animation d'apparition : légère remontée depuis le paquet.
-          // Appliquée uniquement à la carte principale au repos (pas pendant le flip).
+          // Animation d'apparition
           final isFlipping = flip > 0.0;
           final appearDy = (backgroundCard || isFlipping) ? 0.0 : _appearOffset.value * 10.0;
           final appearAlpha = (backgroundCard || isFlipping) ? 1.0 : _appearOpacity.value;
@@ -859,7 +911,6 @@ class _GameScreenState extends State<GameScreen>
                 height: _cardHeight,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(_cardRadius),
-                  // Contour uniquement sur la face avant — le dos n'a pas de contour
                   border: (!backgroundCard && showFront && _revealedCard != null)
                       ? Border.all(
                           color: Colors.white,
@@ -928,8 +979,10 @@ class _GameScreenState extends State<GameScreen>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+        // Tour du joueur — sticker blanc flottant
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+          decoration: AppDecorations.floatingStickerR(AppSpacing.radiusLarge),
           child: Text(
             AppLocalizations.of(context)!.gameTurnOf(
               _displayPlayerName ?? _gameState.currentPlayer.name,
@@ -938,7 +991,7 @@ class _GameScreenState extends State<GameScreen>
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.textDark,
               fontSize: titleFontSize,
               fontWeight: FontWeight.bold,
             ),
@@ -967,13 +1020,17 @@ class _GameScreenState extends State<GameScreen>
         const SizedBox(height: 10),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
-          child: Text(
-            _gameState.remainingCards == 0
-                ? ''
-                : AppLocalizations.of(context)!.gameRemainingCards(_gameState.remainingCards),
-            key: ValueKey(_gameState.remainingCards),
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-          ),
+          child: _gameState.remainingCards == 0
+              ? const SizedBox.shrink()
+              : Container(
+                  key: ValueKey(_gameState.remainingCards),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: AppDecorations.floatingStickerR(AppSpacing.radiusSmall),
+                  child: Text(
+                    AppLocalizations.of(context)!.gameRemainingCards(_gameState.remainingCards),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
         ),
         const SizedBox(height: 8),
         ConstrainedBox(
@@ -983,9 +1040,9 @@ class _GameScreenState extends State<GameScreen>
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
           ),
@@ -1002,24 +1059,39 @@ class _GameScreenState extends State<GameScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          TextButton.icon(
-            onPressed: quitEnabled
+          // Bouton Quitter — sticker blanc flottant
+          GestureDetector(
+            onTap: quitEnabled
                 ? () async {
                     AudioService.instance.playButtonSound();
                     final confirmed = await _showQuitDialog();
                     if (confirmed && mounted) await _quitToHome();
                   }
                 : null,
-            icon: const Icon(Icons.exit_to_app, size: 18),
-            label: Text(AppLocalizations.of(context)!.gameQuitConfirm),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white70,
-              disabledForegroundColor: Colors.white24,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: const BorderSide(color: Colors.white24),
+            child: Opacity(
+              opacity: quitEnabled ? 1.0 : 0.4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.stickerWhite,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                  boxShadow: AppShadows.floating,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.exit_to_app, size: 16, color: AppColors.textMuted),
+                    const SizedBox(width: 5),
+                    Text(
+                      AppLocalizations.of(context)!.gameQuitConfirm,
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1043,7 +1115,7 @@ class _GameScreenState extends State<GameScreen>
         await _onBackPressed();
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B1525),
+        backgroundColor: AppColors.background,
         body: SafeArea(
           minimum: const EdgeInsets.only(top: 4, left: 4, right: 4, bottom: 8),
           child: LayoutBuilder(
@@ -1051,7 +1123,12 @@ class _GameScreenState extends State<GameScreen>
               return Stack(
                 key: _rootStackKey,
                 children: [
-                  // ── Fond gameplay ─────────────────────────────────────────
+                  // ── Stickers décoratifs fond ──────────────────────────
+                  const Positioned.fill(
+                    child: _GameBackgroundStickers(),
+                  ),
+
+                  // ── Fond gameplay ─────────────────────────────────────
                   Positioned.fill(
                     child: RepaintBoundary(
                       child: Padding(
@@ -1068,7 +1145,7 @@ class _GameScreenState extends State<GameScreen>
                     ),
                   ),
 
-                  // ── Top bar (toujours visible) ────────────────────────────
+                  // ── Top bar (toujours visible) ────────────────────────
                   Positioned(
                     top: 0,
                     left: 0,
@@ -1076,14 +1153,14 @@ class _GameScreenState extends State<GameScreen>
                     child: _buildGameplayControlsBar(),
                   ),
 
-                  // ── Animations overlay ────────────────────────────────────
+                  // ── Animations overlay ────────────────────────────────
                   Positioned.fill(
                     child: GameplayOverlayAnimationManager(
                       animationsNotifier: _animationsNotifier,
                     ),
                   ),
 
-                  // ── Bandit target overlay ─────────────────────────────────
+                  // ── Bandit target overlay ─────────────────────────────
                   if (_showingPinceOverlay && _pendingPinceCallback != null)
                     Positioned.fill(
                       child: PinceTargetOverlay(
@@ -1095,6 +1172,128 @@ class _GameScreenState extends State<GameScreen>
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stickers décoratifs Game Screen — bords et coins uniquement
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GameBackgroundStickers extends StatelessWidget {
+  const _GameBackgroundStickers();
+
+  static const _pine  = 'assets/images/sticker_pine_tree.png';
+  static const _cone  = 'assets/images/sticker_pine_cone.png';
+  static const _cabin = 'assets/images/sticker_cabin.png';
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    final h = MediaQuery.sizeOf(context).height;
+
+    return Stack(
+      clipBehavior: Clip.hardEdge,
+      children: [
+        // Sapin haut-gauche — ancré dans le coin, petit pour ne pas gêner les joueurs
+        _GameSticker(
+          asset: _pine,
+          size: w * 0.18,
+          left: -w * 0.04,
+          top: h * 0.06,
+          angle: -0.10,
+          opacity: 0.55,
+        ),
+
+        // Cabane haut-droite — discrète, coin seulement
+        _GameSticker(
+          asset: _cabin,
+          size: w * 0.14,
+          right: -w * 0.02,
+          top: h * 0.08,
+          angle: 0.07,
+          opacity: 0.45,
+        ),
+
+        // Pomme de pin gauche milieu-bas — petite, ne touche pas le centre
+        _GameSticker(
+          asset: _cone,
+          size: w * 0.08,
+          left: w * 0.02,
+          top: h * 0.52,
+          angle: -0.15,
+          opacity: 0.40,
+        ),
+
+        // Sapin droite milieu — rogné, bord droit uniquement
+        _GameSticker(
+          asset: _pine,
+          size: w * 0.17,
+          right: -w * 0.05,
+          top: h * 0.42,
+          angle: 0.06,
+          opacity: 0.40,
+        ),
+
+        // Sapin bas-gauche
+        _GameSticker(
+          asset: _pine,
+          size: w * 0.16,
+          left: -w * 0.03,
+          top: h * 0.76,
+          angle: -0.05,
+          opacity: 0.50,
+        ),
+
+        // Pomme de pin bas-droite
+        _GameSticker(
+          asset: _cone,
+          size: w * 0.09,
+          right: w * 0.03,
+          top: h * 0.80,
+          angle: 0.20,
+          opacity: 0.40,
+        ),
+      ],
+    );
+  }
+}
+
+class _GameSticker extends StatelessWidget {
+  final String asset;
+  final double size;
+  final double? left;
+  final double? right;
+  final double? top;
+  final double angle;
+  final double opacity;
+
+  const _GameSticker({
+    required this.asset,
+    required this.size,
+    this.left,
+    this.right,
+    this.top,
+    this.angle = 0.0,
+    this.opacity = 0.5,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: left,
+      right: right,
+      top: top,
+      child: Transform.rotate(
+        angle: angle,
+        child: Image.asset(
+          asset,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          opacity: AlwaysStoppedAnimation(opacity),
         ),
       ),
     );
