@@ -716,7 +716,7 @@ class _GameScreenState extends State<GameScreen>
                   ? AppShadows.subtleGlow(player.profileColor)
                   : AppShadows.floating,
             ),
-            child: Center(
+            child: const Center(
               child: PlayerAvatar(
                 emoji: player.emoji,
                 color: player.profileColor,
@@ -726,8 +726,8 @@ class _GameScreenState extends State<GameScreen>
           ),
 
           // Overlap : avatar descend légèrement dans la carte
-          Transform.translate(
-            offset: const Offset(0, -8),
+          const Transform.translate(
+            offset: Offset(0, -8),
             child: Container(
               key: _playerKeys[player.id],
               padding: EdgeInsets.fromLTRB(
@@ -766,8 +766,8 @@ class _GameScreenState extends State<GameScreen>
           ),
 
           // ── Ressources SOUS la carte ──────────────────────────────────
-          Transform.translate(
-            offset: const Offset(0, -6),
+          const Transform.translate(
+            offset: Offset(0, -6),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1028,7 +1028,7 @@ class _GameScreenState extends State<GameScreen>
                   decoration: AppDecorations.floatingStickerR(AppSpacing.radiusSmall),
                   child: Text(
                     AppLocalizations.of(context)!.gameRemainingCards(_gameState.remainingCards),
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
         ),
@@ -1040,7 +1040,7 @@ class _GameScreenState extends State<GameScreen>
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.textDark,
               fontWeight: FontWeight.w700,
               fontSize: 13,
@@ -1080,11 +1080,11 @@ class _GameScreenState extends State<GameScreen>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.exit_to_app, size: 16, color: AppColors.textMuted),
+                    const Icon(Icons.exit_to_app, size: 16, color: AppColors.textMuted),
                     const SizedBox(width: 5),
                     Text(
                       AppLocalizations.of(context)!.gameQuitConfirm,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -1293,7 +1293,7 @@ class _GameSticker extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.contain,
-          opacity: AlwaysStoppedAnimation(opacity),
+          opacity: const AlwaysStoppedAnimation(opacity),
         ),
       ),
     );
