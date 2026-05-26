@@ -6,15 +6,14 @@ import '../../core/models/card_back_config.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/theme/app_theme_provider.dart';
+import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_shadows.dart';
+import '../../core/ui/app_spacing.dart';
 
-/// Bottom sheet de sélection du dos de carte équipé — version premium.
+/// Bottom sheet de sélection du dos de carte — style premium cohérent
+/// avec le Design System beige/sticker de l'app (Home, Lobby).
 ///
-/// Affiche tous les dos dans des cartes UI dédiées avec :
-/// - preview full, nom, état débloqué/verrouillé, badge équipé
-/// - animation scale + glow au moment de l'équipement
-/// - thème UI mis à jour instantanément sans fermer le sheet
-/// - dos verrouillés : désaturés, cadenas, barre de progression
-///
+/// Fond chaud, coins très arrondis, ombres douces, effet floating card.
 /// Appeler via [CardBackSelectionDialog.show].
 class CardBackSelectionDialog extends StatefulWidget {
   const CardBackSelectionDialog({super.key});
@@ -59,7 +58,6 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
 
     AudioService.instance.playButtonSound();
 
-    // Sauvegarde + mise à jour thème (instantané, sans fermer le sheet)
     await ProgressionService.equipCardBack(cardBackId);
 
     await Future<void>.delayed(const Duration(milliseconds: 500));
@@ -77,62 +75,112 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
         final totalGames = ProgressionService.progression.totalGamesPlayed;
 
         return DraggableScrollableSheet(
-          initialChildSize: 0.65,
-          minChildSize: 0.42,
+          initialChildSize: 0.68,
+          minChildSize: 0.45,
           maxChildSize: 0.94,
           snap: true,
-          snapSizes: const [0.65, 0.94],
+          snapSizes: const [0.68, 0.94],
           builder: (_, scrollController) {
             return Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF16162A),
+                color: AppColors.backgroundLight,
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: accent.withValues(alpha: 0.18),
+                    color: Colors.black.withValues(alpha: 0.12),
                     blurRadius: 32,
-                    spreadRadius: 2,
+                    spreadRadius: 0,
                     offset: const Offset(0, -4),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 8,
+                    spreadRadius: 0,
+                    offset: const Offset(0, -1),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  const SizedBox(height: 14),
+                  // Drag handle
+                  const SizedBox(height: AppSpacing.md),
                   Container(
-                    width: 40,
+                    width: 44,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white24,
+                      color: AppColors.textMuted.withValues(alpha: 0.28),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: AppSpacing.lg),
 
-                  // Header avec bouton fermer
+                  // Header
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: _SheetHeader(
-                            accent: accent,
-                            totalGames: totalGames,
+                        // Icône accent
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(
+                                AppSpacing.radiusMedium),
+                            border: Border.all(
+                              color: accent.withValues(alpha: 0.28),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.style_rounded,
+                            color: accent,
+                            size: 20,
                           ),
                         ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)!.cardBacksTitle,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.4,
+                                  color: AppColors.textDark,
+                                ),
+                              ),
+                              Text(
+                                AppLocalizations.of(context)!
+                                    .gamesPlayed(totalGames),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Bouton fermer
                         GestureDetector(
                           onTap: () => Navigator.of(context).pop(_hasChanged),
                           child: Container(
-                            width: 32,
-                            height: 32,
+                            width: 34,
+                            height: 34,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppColors.stickerWhite,
+                              borderRadius: BorderRadius.circular(
+                                  AppSpacing.radiusSmall + 2),
+                              boxShadow: AppShadows.soft,
                             ),
                             child: const Icon(
                               Icons.close_rounded,
-                              color: Colors.white54,
+                              color: AppColors.textMuted,
                               size: 18,
                             ),
                           ),
@@ -141,26 +189,28 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
                     ),
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.md),
                   Divider(
-                    color: accent.withValues(alpha: 0.18),
+                    color: AppColors.textMuted.withValues(alpha: 0.13),
                     height: 1,
-                    indent: 20,
-                    endIndent: 20,
+                    indent: AppSpacing.lg,
+                    endIndent: AppSpacing.lg,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.sm),
 
                   // Grid
                   Expanded(
                     child: GridView.builder(
                       controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg, AppSpacing.md,
+                          AppSpacing.lg, AppSpacing.xl),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        mainAxisSpacing: 14,
-                        crossAxisSpacing: 14,
-                        childAspectRatio: 0.68,
+                        mainAxisSpacing: AppSpacing.md,
+                        crossAxisSpacing: AppSpacing.md,
+                        childAspectRatio: 0.70,
                       ),
                       itemCount: allBacks.length,
                       itemBuilder: (_, i) {
@@ -187,61 +237,6 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
           },
         );
       },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Header
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SheetHeader extends StatelessWidget {
-  const _SheetHeader({required this.accent, required this.totalGames});
-
-  final Color accent;
-  final int totalGames;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-              border:
-                  Border.all(color: accent.withValues(alpha: 0.35), width: 1),
-            ),
-            child: Icon(Icons.style_rounded, color: accent, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.cardBacksTitle,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 2.5,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  AppLocalizations.of(context)!.gamesPlayed(totalGames),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.42),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
     );
   }
 }
@@ -283,17 +278,17 @@ class _CardBackTileState extends State<_CardBackTile>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 480),
+      duration: const Duration(milliseconds: 420),
     );
 
     _scale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 1.07)
+        tween: Tween(begin: 1.0, end: 1.05)
             .chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.07, end: 1.0)
+        tween: Tween(begin: 1.05, end: 1.0)
             .chain(CurveTween(curve: Curves.elasticOut)),
         weight: 70,
       ),
@@ -343,56 +338,41 @@ class _CardBackTileState extends State<_CardBackTile>
           child: GestureDetector(
             onTap: widget.onTap,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 220),
               curve: Curves.easeOut,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: widget.isEquipped
-                    ? LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          color.withValues(alpha: 0.22),
-                          color.withValues(alpha: 0.08),
-                          const Color(0xFF1E1E38),
-                        ],
-                        stops: const [0.0, 0.45, 1.0],
-                      )
+                color: widget.isEquipped
+                    ? AppColors.stickerWhite
                     : widget.isUnlocked
-                        ? const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Color(0xFF252540), Color(0xFF1A1A30)],
-                          )
-                        : const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Color(0xFF1C1C2E), Color(0xFF16162A)],
-                          ),
+                        ? AppColors.stickerWhite
+                        : AppColors.stickerWhite.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
                 border: Border.all(
                   color: widget.isEquipped
-                      ? color
+                      ? color.withValues(alpha: 0.65)
                       : widget.isUnlocked
-                          ? color.withValues(alpha: 0.25)
-                          : Colors.white.withValues(alpha: 0.07),
-                  width: widget.isEquipped ? 2.0 : 1.0,
+                          ? color.withValues(alpha: 0.18)
+                          : AppColors.textMuted.withValues(alpha: 0.10),
+                  width: widget.isEquipped ? 2.0 : 1.2,
                 ),
                 boxShadow: [
-                  if (widget.isEquipped || glowStrength > 0)
+                  if (widget.isEquipped)
+                    ...[
+                      ...AppShadows.subtleGlow(color),
+                      ...AppShadows.floating,
+                    ]
+                  else if (glowStrength > 0)
                     BoxShadow(
-                      color: color.withValues(
-                        alpha: widget.isEquipped
-                            ? 0.28 + glowStrength * 0.22
-                            : glowStrength * 0.45,
-                      ),
-                      blurRadius:
-                          widget.isEquipped ? 18 + glowStrength * 10 : 14,
-                      spreadRadius: widget.isEquipped ? 1 : 0,
-                    ),
+                      color: color.withValues(alpha: glowStrength * 0.28),
+                      blurRadius: 14,
+                      spreadRadius: 0,
+                    )
+                  else
+                    ...AppShadows.soft,
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLarge - 1),
                 child: Column(
                   children: [
                     Expanded(
@@ -456,7 +436,7 @@ class _CardPreview extends StatelessWidget {
       children: [
         // Image (désaturée si verrouillée)
         ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
           child: ColorFiltered(
             colorFilter: isUnlocked
                 ? const ColorFilter.mode(
@@ -465,7 +445,7 @@ class _CardPreview extends StatelessWidget {
                     0.2126, 0.7152, 0.0722, 0, 0,
                     0.2126, 0.7152, 0.0722, 0, 0,
                     0.2126, 0.7152, 0.0722, 0, 0,
-                    0,      0,      0,      0.35, 0,
+                    0,      0,      0,      0.38, 0,
                   ]),
             child: Image.asset(
               assetPath,
@@ -474,7 +454,7 @@ class _CardPreview extends StatelessWidget {
               height: double.infinity,
               errorBuilder: (_, a, b) => Container(
                 width: double.infinity,
-                color: fallbackColor.withValues(alpha: isUnlocked ? 1.0 : 0.3),
+                color: fallbackColor.withValues(alpha: isUnlocked ? 0.25 : 0.10),
               ),
             ),
           ),
@@ -483,15 +463,15 @@ class _CardPreview extends StatelessWidget {
         // Overlay + cadenas si verrouillé
         if (!isUnlocked)
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.20),
-                    Colors.black.withValues(alpha: 0.55),
+                    Colors.white.withValues(alpha: 0.10),
+                    AppColors.background.withValues(alpha: 0.55),
                   ],
                 ),
               ),
@@ -515,26 +495,26 @@ class _CardPreview extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.55),
-                    blurRadius: 8,
-                    spreadRadius: 1,
+                    color: color.withValues(alpha: 0.40),
+                    blurRadius: 6,
+                    spreadRadius: 0,
                   ),
                 ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_rounded, color: Colors.white, size: 10),
+                  const Icon(Icons.check_rounded, color: Colors.white, size: 9),
                   const SizedBox(width: 3),
                   Text(
                     AppLocalizations.of(context)!.equipped,
                     style: const TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
+                      letterSpacing: 0.6,
                       color: Colors.white,
                     ),
                   ),
@@ -576,41 +556,42 @@ class _LockedOverlay extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.45),
+              color: AppColors.stickerWhite.withValues(alpha: 0.80),
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: AppColors.textMuted.withValues(alpha: 0.20),
                 width: 1.5,
               ),
+              boxShadow: AppShadows.soft,
             ),
             child: const Icon(
               Icons.lock_rounded,
-              color: Colors.white70,
-              size: 20,
+              color: AppColors.textMuted,
+              size: 18,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             '$remaining partie${remaining > 1 ? 's' : ''}',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.textDark,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.xs + 2),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 5,
-              backgroundColor: Colors.white.withValues(alpha: 0.15),
+              backgroundColor: AppColors.textMuted.withValues(alpha: 0.15),
               valueColor: AlwaysStoppedAnimation<Color>(
-                color.withValues(alpha: 0.80),
+                color.withValues(alpha: 0.70),
               ),
             ),
           ),
@@ -650,10 +631,10 @@ class _CardFooter extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: isEquipped
-                  ? Colors.white
+                  ? AppColors.textDark
                   : isUnlocked
-                      ? Colors.white.withValues(alpha: 0.80)
-                      : Colors.white.withValues(alpha: 0.30),
+                      ? AppColors.textDark.withValues(alpha: 0.75)
+                      : AppColors.textMuted.withValues(alpha: 0.50),
             ),
           ),
           if (!isUnlocked && !config.unlockedByDefault) ...[
@@ -662,7 +643,7 @@ class _CardFooter extends StatelessWidget {
               AppLocalizations.of(context)!.requiredGames(config.requiredGames),
               style: TextStyle(
                 fontSize: 9,
-                color: Colors.white.withValues(alpha: 0.22),
+                color: AppColors.textMuted.withValues(alpha: 0.55),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -673,7 +654,7 @@ class _CardFooter extends StatelessWidget {
               AppLocalizations.of(context)!.tapToEquip,
               style: TextStyle(
                 fontSize: 9,
-                color: color.withValues(alpha: 0.60),
+                color: color.withValues(alpha: 0.70),
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.3,
               ),
