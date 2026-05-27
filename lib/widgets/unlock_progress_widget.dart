@@ -357,7 +357,7 @@ class _CardPreview extends StatelessWidget {
                   child: Image.asset(
                     config.assetPath,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (context, error, _) => Container(
                       decoration: BoxDecoration(
                         color: config.themeColor
                             .withValues(alpha: isLocked ? 0.25 : 0.75),

@@ -433,7 +433,7 @@ class _StickerAsset extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          errorBuilder: (context, error, _) => const SizedBox.shrink(),
         ),
       ),
     );

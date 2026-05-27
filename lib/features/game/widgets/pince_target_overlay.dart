@@ -118,7 +118,7 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
             _buildDivider(),
             Flexible(
               child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
+                padding: const EdgeInsets.fromLTRB(
                   AppSpacing.lg,
                   AppSpacing.md,
                   AppSpacing.lg,
@@ -155,7 +155,7 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
           Container(
             width: 60,
             height: 60,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.stickerWhite,
               shape: BoxShape.circle,
               boxShadow: AppShadows.floating,
@@ -205,7 +205,6 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
   }
 
   Widget _buildTargetTile(BuildContext context, PlayerState target) {
-    final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.of(context).size.width;
     final isNarrow = screenWidth < 360;
 
