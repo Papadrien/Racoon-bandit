@@ -3,17 +3,18 @@ import 'package:flutter/material.dart';
 import '../../../core/models/player_state.dart';
 import '../../../core/services/audio_service.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../core/ui/app_colors.dart';
+import '../../../core/ui/app_shadows.dart';
+import '../../../core/ui/app_spacing.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../../widgets/player_avatar.dart';
 
-/// Overlay de sélection de cible pour la carte Pince.
+/// Overlay de sélection de cible pour la carte Pince (et assimilés).
 ///
-/// Affiche un backdrop semi-transparent + une carte modale centrée
-/// listant les cibles valides. L'appelant fournit [targets] et reçoit
-/// la cible choisie via [onTargetSelected].
+/// Popup floating card moderne, cohérente avec le HUD gameplay :
+/// fond beige chaud, ombres douces AppShadows, coins arrondis AppSpacing.
 ///
-/// Architecture réutilisable : ce widget peut servir de base pour
-/// toute future popup gameplay (récompenses, confirmations, événements).
+/// La logique gameplay (callback onTargetSelected) est inchangée.
 class PinceTargetOverlay extends StatefulWidget {
   const PinceTargetOverlay({
     super.key,
@@ -77,8 +78,9 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _fadeAnimation,
+      // Backdrop semi-transparent chaud, cohérent avec le fond beige du jeu
       child: Material(
-        color: Colors.black.withValues(alpha: 0.65),
+        color: AppColors.textDark.withValues(alpha: 0.55),
         child: SafeArea(
           child: Center(
             child: ScaleTransition(
@@ -92,133 +94,225 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
   }
 
   Widget _buildCard(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Hauteur max disponible (ex : petit téléphone avec clavier logiciel)
-        final maxCardHeight = MediaQuery.of(context).size.height * 0.78;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxCardHeight = screenHeight * 0.80;
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          constraints: BoxConstraints(maxHeight: maxCardHeight),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+    // Responsive horizontal margin : plus serré sur petits écrans
+    final hMargin = screenWidth < 360 ? 16.0 : 24.0;
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: hMargin),
+      constraints: BoxConstraints(maxHeight: maxCardHeight),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundLight,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXLarge),
+        boxShadow: AppShadows.sticker,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusXLarge),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(context),
+            _buildDivider(),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: widget.targets
+                      .map((target) => _buildTargetTile(context, target))
+                      .toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// En-tête de la popup : emoji + titre + sous-titre.
+  Widget _buildHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.xl,
+        AppSpacing.xl,
+        AppSpacing.md,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Icône bandit dans un cercle sticker blanc
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: AppColors.stickerWhite,
+              shape: BoxShape.circle,
+              boxShadow: AppShadows.floating,
+            ),
+            child: const Center(
+              child: Text(
+                '🥷',
+                style: TextStyle(fontSize: 30),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            l10n.pinceChooseTarget,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textDark,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            l10n.pinceWhoToSteal,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      height: 1.5,
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.stickerWarm,
+        borderRadius: BorderRadius.circular(1),
+      ),
+    );
+  }
+
+  Widget _buildTargetTile(BuildContext context, PlayerState target) {
+    final l10n = AppLocalizations.of(context)!;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrow = screenWidth < 360;
+
+    // Taille avatar responsive
+    final avatarSize = isNarrow ? 40.0 : 48.0;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: GestureDetector(
+        onTap: () => _select(target),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isNarrow ? AppSpacing.md : AppSpacing.lg,
+            vertical: isNarrow ? AppSpacing.sm : AppSpacing.md,
+          ),
           decoration: BoxDecoration(
-            color: const Color(0xFF241C36),
-            borderRadius: BorderRadius.circular(24),
+            color: AppColors.stickerWhite,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
             border: Border.all(
-              color: const Color(0xFF7C4DFF).withValues(alpha: 0.55),
+              color: target.profileColor.withValues(alpha: 0.35),
               width: 1.5,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF7C4DFF).withValues(alpha: 0.25),
-                blurRadius: 32,
-                spreadRadius: 2,
-              ),
-            ],
+            boxShadow: AppShadows.floating,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
             children: [
-              // ── En-tête ─────────────────────────────────────────────────
-              const Text(
-                '🥷',
-                style: TextStyle(fontSize: 36),
+              // Avatar joueur
+              PlayerAvatar(
+                emoji: target.emoji,
+                color: target.profileColor,
+                size: avatarSize,
               ),
-              const SizedBox(height: 6),
-              Text(
-                AppLocalizations.of(context)!.pinceChooseTarget,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                AppLocalizations.of(context)!.pinceWhoToSteal,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.55),
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 14),
+              const SizedBox(width: AppSpacing.md),
 
-              // ── Liste des cibles (scrollable si trop haute) ─────────────
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: widget.targets
-                        .map((target) => _buildTargetTile(target))
-                        .toList(),
+              // Nom + ressources
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      target.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.textDark,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isNarrow ? 14.0 : 15.0,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    _buildFoodBadge(context, target),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: AppSpacing.sm),
+
+              // Chevron dans un cercle coloré
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: target.profileColor.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: target.profileColor,
+                    size: 20,
                   ),
                 ),
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  Widget _buildTargetTile(PlayerState target) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: GestureDetector(
-        onTap: () => _select(target),
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: target.profileColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: target.profileColor.withValues(alpha: 0.45),
-              width: 1.2,
-            ),
-          ),
-          child: Row(
-            children: [
-              PlayerAvatar(
-                emoji: target.emoji,
-                color: target.profileColor,
-                size: 44,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      target.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      AppLocalizations.of(context)!.pinceFoodAvailable(target.foodCount),
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: target.profileColor.withValues(alpha: 0.7),
-                size: 22,
-              ),
-            ],
+  /// Badge nourriture : icône + texte, style pill sticker.
+  Widget _buildFoodBadge(BuildContext context, PlayerState target) {
+    final l10n = AppLocalizations.of(context)!;
+    final foodText = l10n.pinceFoodAvailable(target.foodCount);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Petite icône nourriture
+        Image.asset(
+          'assets/images/icon_food.png',
+          width: 14,
+          height: 14,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          foodText,
+          style: const TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
-      ),
+      ],
     );
   }
 }
