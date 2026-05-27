@@ -121,8 +121,7 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
       ),
       child: SafeArea(
         bottom: true,
-        child: SingleChildScrollView(
-            child: Column(
+        child: Column(
           children: [
             // ── Handle + bouton fermer ─────────────────────────────────────
             Padding(
@@ -266,8 +265,7 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
             ),
             boxShadow: [...AppShadows.sticker, ...AppShadows.subtleGlow(slide.accentColor)],
           ),
-          child: SingleChildScrollView(
-            child: Column(
+          child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
@@ -314,9 +312,7 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
+      );
   }
 }
 

@@ -5,6 +5,7 @@ import '../../core/models/player_profile.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/player_profiles_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
@@ -254,7 +255,7 @@ class _PreviewCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
-              color: AppTheme.textDark,
+              color: AppColors.textDark,
             ),
           ),
         ],
