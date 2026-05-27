@@ -9,6 +9,7 @@ import '../core/services/audio_service.dart';
 import '../core/services/progression_service.dart';
 import '../core/ui/app_colors.dart';
 import '../core/ui/app_spacing.dart';
+import 'primary_button.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Couleur accent par dos (cohérente avec AppAssets.cardBackFallbackColor)
@@ -563,6 +564,7 @@ class _CardPlaceholder extends StatelessWidget {
 // Bouton ESSAYER — style sticker blanc + contour accent (cohérent avec accueil)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Bouton ESSAYER — délègue à [OrangeButton] (style unifié bouton Jouer).
 class _TryButton extends StatelessWidget {
   const _TryButton({
     required this.accent,
@@ -570,63 +572,20 @@ class _TryButton extends StatelessWidget {
     required this.onPressed,
   });
 
+  // [accent] conservé pour compatibilité API ; OrangeButton utilise le dégradé standard.
   final Color accent;
   final AppLocalizations l10n;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: GestureDetector(
-        onTap: () {
-          AudioService.instance.playButtonSound();
-          onPressed();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md + 2),
-          decoration: BoxDecoration(
-            color: accent,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-            boxShadow: [
-              BoxShadow(
-                color: accent.withValues(alpha: 0.40),
-                blurRadius: 16,
-                spreadRadius: 0,
-                offset: const Offset(0, 5),
-              ),
-              BoxShadow(
-                color: accent.withValues(alpha: 0.20),
-                blurRadius: 4,
-                offset: const Offset(3, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.style_rounded, color: Colors.white, size: 18),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                l10n.tryButton.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
-                  shadows: [
-                    Shadow(
-                      color: Color(0x44000000),
-                      offset: Offset(0, 1),
-                      blurRadius: 3,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return OrangeButton(
+      label: l10n.tryButton,
+      icon: Icons.style_rounded,
+      onPressed: onPressed,
+      height: AppSpacing.buttonHeightSecondary,
+      fontSize: 15,
+      letterSpacing: 1.5,
     );
   }
 }

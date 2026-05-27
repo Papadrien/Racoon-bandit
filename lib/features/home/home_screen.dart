@@ -17,6 +17,7 @@ import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/lives_indicator.dart';
 import '../../widgets/raccoon_bandit_logo.dart';
 import '../onboarding/onboarding_screen.dart';
+import '../../widgets/primary_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -431,39 +432,15 @@ class _RewardAdButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: isLoading
-            ? null
-            : () {
-                AudioService.instance.playButtonSound();
-                onPressed();
-              },
-        icon: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.ondemand_video_rounded),
-        label: Text(
-          isLoading
-              ? AppLocalizations.of(context)!.adLoading
-              : AppLocalizations.of(context)!.watchAdButton,
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.orange,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, AppSpacing.buttonHeightSecondary),
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.radiusMedium, horizontal: AppSpacing.xl),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(
-              Radius.circular(AppSpacing.radiusMedium),
-            ),
-          ),
-        ),
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    return OrangeButton(
+      label: isLoading ? l10n.adLoading : l10n.watchAdButton,
+      icon: isLoading ? null : Icons.ondemand_video_rounded,
+      onPressed: isLoading ? null : onPressed,
+      isLoading: isLoading,
+      height: AppSpacing.buttonHeightSecondary,
+      fontSize: 15,
+      letterSpacing: 1.5,
     );
   }
 }

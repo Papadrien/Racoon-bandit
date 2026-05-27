@@ -80,6 +80,10 @@
   "@lobbyChooseProfile": {
     "description": "Texte slot vide + titre bottom sheet"
   },
+  "lobbyNewProfile": "Nouveau profil",
+  "@lobbyNewProfile": {
+    "description": "Bouton créer nouveau profil dans sélecteur"
+  },
   "lobbyNoProfiles": "Aucun profil disponible.\nCréez des profils dans les réglages.",
   "@lobbyNoProfiles": {
     "description": "Message état vide sélecteur profil"

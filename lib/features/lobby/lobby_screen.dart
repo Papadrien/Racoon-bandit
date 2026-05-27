@@ -14,6 +14,7 @@ import '../../core/services/player_profiles_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/constants/app_assets.dart';
+import '../profiles/profile_edit_page.dart';
 import '../../core/models/card_back_config.dart';
 // import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
@@ -1020,7 +1021,7 @@ class _AnimatedCardPreview extends StatelessWidget {
 // _ProfilePickerSheet
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ProfilePickerSheet extends StatelessWidget {
+class _ProfilePickerSheet extends StatefulWidget {
   final List<PlayerProfile> profiles;
   final String? currentProfileId;
   final Set<String> disabledProfileIds;
@@ -1032,11 +1033,52 @@ class _ProfilePickerSheet extends StatelessWidget {
   });
 
   @override
+  State<_ProfilePickerSheet> createState() => _ProfilePickerSheetState();
+}
+
+class _ProfilePickerSheetState extends State<_ProfilePickerSheet> {
+  late List<PlayerProfile> _profiles;
+
+  @override
+  void initState() {
+    super.initState();
+    _profiles = List<PlayerProfile>.from(widget.profiles);
+  }
+
+  Future<void> _createProfile() async {
+    final newP = PlayerProfilesService.newProfile();
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileEditPage(profile: newP, isNew: true),
+      ),
+    );
+    if (created == true && mounted) {
+      setState(() {
+        _profiles = PlayerProfilesService.sortedProfiles;
+      });
+      // Sélectionner automatiquement le profil nouvellement créé
+      final fresh = _profiles.where(
+        (p) => !widget.disabledProfileIds.contains(p.id),
+      );
+      if (fresh.isNotEmpty) {
+        final justCreated = _profiles.lastWhere(
+          (p) => !widget.disabledProfileIds.contains(p.id) && p.id != widget.currentProfileId,
+          orElse: () => fresh.last,
+        );
+        if (mounted) Navigator.pop(context, justCreated);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return DraggableScrollableSheet(
-      initialChildSize: 0.55,
-      minChildSize: 0.35,
-      maxChildSize: 0.85,
+      initialChildSize: 0.60,
+      minChildSize: 0.40,
+      maxChildSize: 0.90,
       builder: (_, scrollController) {
         return Container(
           decoration: const BoxDecoration(
@@ -1047,6 +1089,7 @@ class _ProfilePickerSheet extends StatelessWidget {
           ),
           child: Column(
             children: [
+              // ── Handle ──────────────────────────────────────────────────
               const SizedBox(height: AppSpacing.md),
               Container(
                 width: 44,
@@ -1057,8 +1100,10 @@ class _ProfilePickerSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
+
+              // ── Titre ────────────────────────────────────────────────────
               Text(
-                AppLocalizations.of(context)!.lobbyChooseProfile,
+                l10n.lobbyChooseProfile,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1068,13 +1113,15 @@ class _ProfilePickerSheet extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               Divider(color: AppColors.textMuted.withValues(alpha: 0.15)),
+
+              // ── Liste des profils ─────────────────────────────────────────
               Expanded(
-                child: profiles.isEmpty
+                child: _profiles.isEmpty
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Text(
-                            AppLocalizations.of(context)!.lobbyNoProfiles,
+                            l10n.lobbyNoProfiles,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: AppColors.textMuted,
@@ -1086,12 +1133,12 @@ class _ProfilePickerSheet extends StatelessWidget {
                         controller: scrollController,
                         padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-                        itemCount: profiles.length,
+                        itemCount: _profiles.length,
                         itemBuilder: (_, i) {
-                          final p = profiles[i];
+                          final p = _profiles[i];
                           final isDisabled =
-                              disabledProfileIds.contains(p.id);
-                          final isCurrent = p.id == currentProfileId;
+                              widget.disabledProfileIds.contains(p.id);
+                          final isCurrent = p.id == widget.currentProfileId;
                           final color = Color(p.colorValue);
 
                           return Padding(
@@ -1148,8 +1195,7 @@ class _ProfilePickerSheet extends StatelessWidget {
                                       ),
                                       if (isDisabled)
                                         Text(
-                                          AppLocalizations.of(context)!
-                                              .lobbyProfileAlreadyUsed,
+                                          l10n.lobbyProfileAlreadyUsed,
                                           style: const TextStyle(
                                             fontSize: 11,
                                             color: AppColors.textMuted,
@@ -1171,7 +1217,52 @@ class _ProfilePickerSheet extends StatelessWidget {
                         },
                       ),
               ),
-              const SizedBox(height: AppSpacing.lg),
+
+              // ── Bouton Nouveau profil ─────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg,
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: GestureDetector(
+                    onTap: _createProfile,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md + 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.stickerWhite,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+                        border: Border.all(
+                          color: AppColors.orange.withValues(alpha: 0.35),
+                          width: 1.5,
+                        ),
+                        boxShadow: AppShadows.soft,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.person_add_rounded,
+                            color: AppColors.orange,
+                            size: 18,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            l10n.lobbyNewProfile,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.orange,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         );
