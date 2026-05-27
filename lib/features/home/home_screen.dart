@@ -10,7 +10,6 @@ import '../../core/services/haptic_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_spacing.dart';

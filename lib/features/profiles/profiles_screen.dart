@@ -124,7 +124,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                     100,
                   ),
                   itemCount: _profiles.length,
-                  separatorBuilder: (_, __) =>
+                  separatorBuilder: (_, _) =>
                       const SizedBox(height: AppSpacing.md),
                   itemBuilder: (_, i) {
                     final profile = _profiles[i];

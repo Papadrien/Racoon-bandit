@@ -206,7 +206,7 @@ class _DialogBody extends StatelessWidget {
             child: IgnorePointer(
               child: AnimatedBuilder(
                 animation: starsCtrl,
-                builder: (_, __) => CustomPaint(
+                builder: (_, _) => CustomPaint(
                   painter: _StarsPainter(starsCtrl.value, accent),
                 ),
               ),
@@ -231,7 +231,7 @@ class _DialogBody extends StatelessWidget {
                 // Carte flottante
                 AnimatedBuilder(
                   animation: floatOffset,
-                  builder: (_, __) => Transform.translate(
+                  builder: (_, _) => Transform.translate(
                     offset: Offset(0, floatOffset.value),
                     child: _CardDisplay(reward: reward, accent: accent),
                   ),
@@ -505,7 +505,7 @@ class _CardDisplay extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, __, ___) => _CardPlaceholder(
+        errorBuilder: (_, _, _) => _CardPlaceholder(
           reward: reward,
           accent: accent,
         ),

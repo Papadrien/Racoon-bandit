@@ -129,14 +129,14 @@ class _AdButton extends StatelessWidget {
       ),
       child: TextButton.icon(
         onPressed: onPressed,
-        icon: Icon(
+        icon: const Icon(
           Icons.smart_display,
           size: 16,
           color: AppTheme.accent,
         ),
         label: Text(
           l10n.livesAdButton,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 11,
             color: AppTheme.accent,
             fontWeight: FontWeight.bold,

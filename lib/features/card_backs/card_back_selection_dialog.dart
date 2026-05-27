@@ -132,7 +132,7 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
                               width: 1.5,
                             ),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.style_rounded,
                             color: accent,
                             size: 20,
