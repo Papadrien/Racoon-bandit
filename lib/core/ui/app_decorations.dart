@@ -76,4 +76,20 @@ abstract class AppDecorations {
 
   /// Alias → [whiteSticker]. Pour les conteneurs de vies.
   static const BoxDecoration livesContainer = whiteSticker;
+
+  // ── Settings sub-screens ──────────────────────────────────────────────────
+
+  /// Décoration section settings — identique à [card], utilisée pour
+  /// les cartes de sous-écrans (ToggleTile, NavTile, PolicyCard).
+  static const BoxDecoration sectionCard = BoxDecoration(
+    color: AppColors.stickerWhite,
+    borderRadius: BorderRadius.all(Radius.circular(AppSpacing.radiusLarge)),
+    boxShadow: AppShadows.floating,
+  );
+
+  /// Icône badge settings — fond légèrement teinté, radius small.
+  static BoxDecoration settingsIconBadge(Color tint) => BoxDecoration(
+        color: tint,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+      );
 }

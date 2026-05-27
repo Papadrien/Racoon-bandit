@@ -11,6 +11,7 @@ import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../widgets/reward_unlock_dialog.dart';
+import 'widgets/settings_secondary_header.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -88,8 +89,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── AppBar custom sticker ─────────────────────────────
-                _SettingsAppBar(title: l10n.settingsTitle),
+                // ── Header secondaire unifié ──────────────────────────
+                SettingsSecondaryHeader(title: l10n.settingsTitle),
 
                 // ── Body scrollable ───────────────────────────────────
                 Expanded(
@@ -239,73 +240,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AppBar custom — sticker flottant style HUD
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SettingsAppBar extends StatelessWidget {
-  final String title;
-
-  const _SettingsAppBar({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.sm,
-        AppSpacing.md,
-        AppSpacing.xs,
-      ),
-      child: Row(
-        children: [
-          // Bouton retour sticker
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              width: AppSpacing.floatingButtonSize,
-              height: AppSpacing.floatingButtonSize,
-              decoration: BoxDecoration(
-                color: AppColors.stickerWhite,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-                boxShadow: AppShadows.floating,
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 18,
-                color: AppColors.textDark,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          // Titre sticker
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.stickerWhite,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-                boxShadow: AppShadows.floating,
-              ),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.textDark,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Section label — texte small caps discret

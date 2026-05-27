@@ -63,4 +63,11 @@ abstract class AppSpacing {
 
   /// Hauteur bouton flottant carré (icônes).
   static const double floatingButtonSize = 40.0;
+
+  // ── Lecture confortable (légal / texte long) ──────────────────────────────
+
+  /// Largeur de lecture confortable pour les textes longs sur mobile.
+  /// Clampée entre 240 et 560 dp selon la largeur d'écran disponible.
+  static double readingMaxWidth(double screenWidth, {double hPad = 48.0}) =>
+      (screenWidth - hPad).clamp(240.0, 560.0);
 }

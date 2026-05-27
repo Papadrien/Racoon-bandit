@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/ui/app_shadows.dart';
+import '../../core/ui/app_spacing.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../onboarding/onboarding_slide.dart';
 
@@ -112,14 +114,15 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
-      height: screenHeight * 0.92,
+      height: screenHeight * 0.94,
       decoration: const BoxDecoration(
         color: Color(0xFF121212),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXLarge)),
       ),
       child: SafeArea(
         bottom: true,
-        child: Column(
+        child: SingleChildScrollView(
+            child: Column(
           children: [
             // ── Handle + bouton fermer ─────────────────────────────────────
             Padding(
@@ -158,15 +161,15 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
 
             // ── Titre de la bottom sheet ───────────────────────────────────
             Text(
               l10n.chaosTutorialSheetTitle,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 2,
+                letterSpacing: 2.4,
                 color: Colors.white.withValues(alpha: 0.35),
               ),
             ),
@@ -248,12 +251,12 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
     final descSize = screenHeight < 650 ? 13.0 : 15.0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
       child: Center(
         child: Container(
           width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+          constraints: const BoxConstraints(maxWidth: 430),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           decoration: BoxDecoration(
             color: slide.cardColor.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(24),
@@ -261,43 +264,55 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
               color: slide.accentColor.withValues(alpha: 0.4),
               width: 1.5,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: slide.accentColor.withValues(alpha: 0.18),
-                blurRadius: 32,
-                spreadRadius: 2,
-              ),
-            ],
+            boxShadow: [...AppShadows.sticker, ...AppShadows.subtleGlow(slide.accentColor)],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                slide.emoji,
-                style: TextStyle(fontSize: emojiSize),
-              ),
-              SizedBox(height: screenHeight < 650 ? 16 : 24),
-              Text(
-                slide.title(context),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: titleSize,
-                  fontWeight: FontWeight.w900,
-                  color: slide.accentColor,
-                  letterSpacing: 0.5,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Text(
+                    slide.emoji,
+                    style: TextStyle(fontSize: emojiSize),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                slide.description(context),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: descSize,
-                  color: Colors.white.withValues(alpha: 0.85),
-                  height: 1.55,
+                SizedBox(height: screenHeight < 650 ? 16 : 24),
+                Text(
+                  slide.title(context),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: titleSize,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.1,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Container(
+                  width: 64,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: slide.accentColor,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  slide.description(context),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: descSize,
+                    color: Colors.white.withValues(alpha: 0.88),
+                    height: 1.55,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
