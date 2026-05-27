@@ -312,6 +312,7 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
       );
   }
 }
