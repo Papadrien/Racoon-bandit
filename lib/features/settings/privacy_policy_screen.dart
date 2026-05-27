@@ -215,10 +215,6 @@ class _PolicySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sw = MediaQuery.sizeOf(context).width;
-    // Largeur de lecture confortable — max ~560dp, jamais moins de 240dp
-    final maxW = (sw - 48).clamp(240.0, 560.0);
-
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
@@ -239,8 +235,7 @@ class _PolicySection extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.md),
           // Texte
-          SizedBox(
-            width: maxW - 36 - AppSpacing.md,
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

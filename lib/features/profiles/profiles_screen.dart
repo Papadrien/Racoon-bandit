@@ -270,23 +270,7 @@ class _ProfileCard extends StatelessWidget {
                       color: AppColors.textDark,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.xs,
-                    children: [
-                      _InfoChip(
-                        icon: Icons.palette_outlined,
-                        label: 'Style',
-                        tint: color,
-                      ),
-                      _InfoChip(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Profil',
-                        tint: AppTheme.primary,
-                      ),
-                    ],
-                  ),
+
                 ],
               ),
             ),
@@ -314,46 +298,7 @@ class _ProfileCard extends StatelessWidget {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color tint;
 
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-    required this.tint,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusXLarge),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: tint),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: tint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _ActionIconButton extends StatelessWidget {
   final IconData icon;

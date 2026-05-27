@@ -999,7 +999,8 @@ class _GameScreenState extends State<GameScreen>
   Widget _buildCenterArea(BoxConstraints constraints) {
     _computeCardSize(constraints);
 
-    final showBackgroundCard = _gameState.remainingCards > 1;
+    final showBackgroundCard =
+        _isAnimating ? _gameState.remainingCards > 0 : _gameState.remainingCards > 1;
     final titleFontSize = (constraints.maxWidth * 0.062).clamp(14.0, 22.0);
 
     return Column(

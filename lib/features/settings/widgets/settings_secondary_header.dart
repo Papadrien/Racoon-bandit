@@ -56,16 +56,8 @@ class SettingsSecondaryHeader extends StatelessWidget {
 
           // ── Titre centré (s'étend entre bouton retour et trailing) ─────
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.stickerWhite,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-                boxShadow: AppShadows.floating,
-              ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Text(
                 title.toUpperCase(),
                 style: const TextStyle(
