@@ -5,7 +5,6 @@ import 'core/navigation/app_router.dart';
 import 'core/services/analytics_service.dart';
 import 'core/services/audio_service.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/app_theme_provider.dart';
 import 'l10n/app_localizations.dart';
 
 /// Widget racine de l'application.
@@ -47,48 +46,38 @@ class _RaccoonBanditAppState extends State<RaccoonBanditApp>
 
   @override
   Widget build(BuildContext context) {
-    // Reconstruit MaterialApp quand l'accent change (changement de dos de carte)
-    return ListenableBuilder(
-      listenable: AppThemeProvider.instance,
-      builder: (context, _) {
-        return MaterialApp(
-          title: 'Raccoon Bandit',
-          debugShowCheckedModeBanner: false,
-          // ── Localisation FR/EN ─────────────────────────────────────────
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('fr'),
-            Locale('en'),
-          ],
-          // FR par défaut, EN si langue système anglaise, FR sinon
-          localeResolutionCallback: (locale, supportedLocales) {
-            if (locale == null) return const Locale('fr');
-            for (final supported in supportedLocales) {
-              if (supported.languageCode == locale.languageCode) {
-                return supported;
-              }
-            }
-            return const Locale('fr');
-          },
-          // ───────────────────────────────────────────────────────────────
-          theme: AppTheme.dark.copyWith(
-            colorScheme: AppTheme.dark.colorScheme.copyWith(
-              secondary: AppThemeProvider.instance.accent,
-            ),
-          ),
-          initialRoute: AppRoutes.splash,
-          onGenerateRoute: AppRouter.generateRoute,
-          // Observateur Analytics pour le suivi automatique des routes
-          navigatorObservers: [
-            _AnalyticsNavigatorObserver(),
-          ],
-        );
+    return MaterialApp(
+      title: 'Raccoon Bandit',
+      debugShowCheckedModeBanner: false,
+      // ── Localisation FR/EN ─────────────────────────────────────────
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('fr'),
+        Locale('en'),
+      ],
+      // FR par défaut, EN si langue système anglaise, FR sinon
+      localeResolutionCallback: (locale, supportedLocales) {
+        if (locale == null) return const Locale('fr');
+        for (final supported in supportedLocales) {
+          if (supported.languageCode == locale.languageCode) {
+            return supported;
+          }
+        }
+        return const Locale('fr');
       },
+      // ───────────────────────────────────────────────────────────────
+      theme: AppTheme.dark,
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRouter.generateRoute,
+      // Observateur Analytics pour le suivi automatique des routes
+      navigatorObservers: [
+        _AnalyticsNavigatorObserver(),
+      ],
     );
   }
 }
@@ -103,7 +92,6 @@ class _AnalyticsNavigatorObserver extends NavigatorObserver {
     AppRoutes.result: 'result',
     AppRoutes.profiles: 'profiles',
     AppRoutes.settings: 'settings',
-    AppRoutes.premium: 'premium',
     AppRoutes.privacyPolicy: 'privacy_policy',
   };
 

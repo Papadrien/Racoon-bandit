@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'app_theme_provider.dart';
 
 class AppTheme {
   AppTheme._();
@@ -25,9 +24,8 @@ class AppTheme {
   static bool isShortScreen(BuildContext context) =>
       MediaQuery.sizeOf(context).height < 640;
 
-  /// Couleur accent courante — change selon le dos équipé.
-  /// Utiliser [AppThemeProvider.instance.accent] pour réagir aux changements.
-  static Color get accent => AppThemeProvider.instance.accent;
+  /// Couleur accent (orange fixe).
+  static const Color accent = Color(0xFFFF6D00);
 
   static const Color background = Color(0xFFEECDAD);
 

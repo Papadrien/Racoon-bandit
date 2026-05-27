@@ -67,6 +67,9 @@ class _GameScreenState extends State<GameScreen>
   late final AnimationController _appearController;
   late final Animation<double> _appearOffset;
   late final Animation<double> _appearOpacity;
+  // Animation pulse sticker joueur actuel
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseScale;
 
   static const Map<CardType, AssetImage> _cardFaceProviders = {
     CardType.raccoon: AssetImage('assets/images/card_front_raccoon.png'),
@@ -119,6 +122,13 @@ class _GameScreenState extends State<GameScreen>
     );
     // Initialiser à 1 (carte visible) — on jouera l'animation à chaque pioche
     _appearController.value = 1.0;
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _pulseScale = Tween<double>(begin: 1.0, end: 1.07).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -128,6 +138,7 @@ class _GameScreenState extends State<GameScreen>
     _flipController.dispose();
     _slideController.dispose();
     _appearController.dispose();
+    _pulseController.dispose();
     // Vide la liste avant dispose pour éviter listeners dangling
     _animationsNotifier.value = [];
     _animationsNotifier.dispose();
@@ -692,7 +703,7 @@ class _GameScreenState extends State<GameScreen>
     _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
 
     final isCompact = maxWidth < 115;
-    final avatarSize = isCompact ? 30.0 : 38.0;
+    final avatarSize = isCompact ? 36.0 : 45.6;
     final avatarRingSize = avatarSize + 6.0;
     final nameFontSize = isCompact ? 10.0 : 12.0;
     final resourceIconSize = isCompact ? 13.0 : 15.0;
@@ -985,6 +996,19 @@ class _GameScreenState extends State<GameScreen>
                             ),
                           ),
                         ),
+                      // Sticker joueur actuel — visible uniquement sur le dos de la carte à piocher
+                      if (!backgroundCard && !showFront && !deckExhausted)
+                        Positioned(
+                          bottom: 10,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: ScaleTransition(
+                              scale: _pulseScale,
+                              child: _buildCurrentPlayerSticker(_gameState.currentPlayer),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -992,6 +1016,50 @@ class _GameScreenState extends State<GameScreen>
             ),
           ));
         },
+      ),
+    );
+  }
+
+  Widget _buildCurrentPlayerSticker(PlayerState player) {
+    final color = player.profileColor;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white, width: 2.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x55000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            player.emoji,
+            style: TextStyle(
+              fontSize: (_cardHeight * 0.11).clamp(16.0, 26.0),
+            ),
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              player.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: (_cardHeight * 0.07).clamp(11.0, 16.0),
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1044,22 +1112,7 @@ class _GameScreenState extends State<GameScreen>
             ],
           ),
         ),
-        const SizedBox(height: 10),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          child: _gameState.remainingCards == 0
-              ? const SizedBox.shrink()
-              : Container(
-                  key: ValueKey(_gameState.remainingCards),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: AppDecorations.floatingStickerR(AppSpacing.radiusSmall),
-                  child: Text(
-                    AppLocalizations.of(context)!.gameRemainingCards(_gameState.remainingCards),
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                ),
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 18),
         ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 36, maxHeight: 48),
           child: Text(
@@ -1122,7 +1175,26 @@ class _GameScreenState extends State<GameScreen>
               ),
             ),
           ),
-          const SizedBox(width: 48),
+          const Spacer(),
+          // Compteur cartes restantes — aligné à droite
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: _gameState.remainingCards == 0
+                ? const SizedBox.shrink()
+                : Container(
+                    key: ValueKey(_gameState.remainingCards),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.stickerWhite,
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                      boxShadow: AppShadows.floating,
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.gameRemainingCards(_gameState.remainingCards),
+                      style: const TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+          ),
         ],
       ),
     );

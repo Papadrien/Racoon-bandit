@@ -5,7 +5,6 @@ import '../../core/constants/app_assets.dart';
 import '../../core/models/card_back_config.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
-import '../../core/theme/app_theme_provider.dart';
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
@@ -66,10 +65,9 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: AppThemeProvider.instance,
-      builder: (context, _) {
-        final accent = AppThemeProvider.instance.accent;
+    const accent = Color(0xFFFF6D00);
+    return Builder(
+      builder: (context) {
         final unlockedIds = ProgressionService.progression.unlockedCardBackIds;
         final allBacks = ProgressionService.cardBacks;
         final totalGames = ProgressionService.progression.totalGamesPlayed;

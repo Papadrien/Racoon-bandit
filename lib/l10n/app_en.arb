@@ -224,7 +224,7 @@
   "@resultPinceCards": {
     "description": "Stat: bandit cards played"
   },
-  "resultRaccoonCards": "Raccoons played",
+  "resultRaccoonCards": "Raccoons drawn",
   "@resultRaccoonCards": {
     "description": "Stat: raccoon cards played"
   },

@@ -3,7 +3,6 @@ import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../core/models/card_back_config.dart';
 import '../core/services/progression_service.dart';
-import '../core/theme/app_theme_provider.dart';
 import '../core/ui/app_colors.dart';
 import '../core/ui/app_spacing.dart';
 
@@ -55,11 +54,8 @@ class _UnlockProgressWidgetState extends State<UnlockProgressWidget>
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: AppThemeProvider.instance,
-      builder: (context, _) {
-        final accent = AppThemeProvider.instance.accent;
-        final progression = ProgressionService.progression;
+    const accent = Color(0xFFFF6D00);
+    final progression = ProgressionService.progression;
         final totalGames = progression.totalGamesPlayed;
         final unlockedIds = progression.unlockedCardBackIds;
         final allBacks = ProgressionService.cardBacks;
@@ -100,8 +96,6 @@ class _UnlockProgressWidgetState extends State<UnlockProgressWidget>
           toGames: toGames,
           remaining: remaining,
         );
-      },
-    );
   }
 }
 

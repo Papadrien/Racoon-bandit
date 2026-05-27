@@ -11,7 +11,6 @@ import '../../core/services/life_system_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/app_theme_provider.dart';
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_spacing.dart';
@@ -177,13 +176,10 @@ class _HomeScreenState extends State<HomeScreen>
         _lifeSystemService.getRemainingRechargeDuration();
     final noLives = _lifeSystemService.currentLives <= 0;
 
-    return ListenableBuilder(
-      listenable: AppThemeProvider.instance,
-      builder: (context, _) => _buildScaffold(
-        context,
-        remainingDuration: remainingDuration,
-        noLives: noLives,
-      ),
+    return _buildScaffold(
+      context,
+      remainingDuration: remainingDuration,
+      noLives: noLives,
     );
   }
 
@@ -247,18 +243,6 @@ class _HomeScreenState extends State<HomeScreen>
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  _FloatingIconButton(
-                                    icon: Icons.workspace_premium,
-                                    color: AppTheme.accent,
-                                    tooltip: AppLocalizations.of(context)!
-                                        .tooltipPremium,
-                                    onPressed: () {
-                                      AudioService.instance.playButtonSound();
-                                      Navigator.pushNamed(
-                                          context, AppRoutes.premium);
-                                    },
-                                  ),
-                                  const SizedBox(width: AppSpacing.sm),
                                   _FloatingIconButton(
                                     icon: Icons.settings,
                                     color: AppColors.textMuted,

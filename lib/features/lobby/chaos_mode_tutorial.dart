@@ -266,7 +266,7 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
             boxShadow: [...AppShadows.sticker, ...AppShadows.subtleGlow(slide.accentColor)],
           ),
           child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
@@ -300,13 +300,16 @@ class _ChaosTutorialSlideCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  slide.description(context),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: descSize,
-                    color: Colors.white.withValues(alpha: 0.88),
-                    height: 1.55,
+                Flexible(
+                  child: Text(
+                    slide.description(context),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.fade,
+                    style: TextStyle(
+                      fontSize: descSize,
+                      color: Colors.white.withValues(alpha: 0.88),
+                      height: 1.55,
+                    ),
                   ),
                 ),
               ],

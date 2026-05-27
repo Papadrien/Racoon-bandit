@@ -704,27 +704,22 @@ class _StatsCard extends StatelessWidget {
           _StatGrid(
             stats: [
               _StatItem(
-                emoji: '🃏',
                 label: l10n.resultCardsPlayed,
                 value: '${stats.cardsPlayed}',
               ),
               _StatItem(
-                emoji: '🍎',
                 label: l10n.resultFoodGained,
                 value: '${stats.foodGained}',
               ),
               _StatItem(
-                emoji: '🥷',
                 label: l10n.resultFoodStolen,
                 value: '${stats.foodStolen}',
               ),
               _StatItem(
-                emoji: '🦀',
                 label: l10n.resultPinceCards,
                 value: '${stats.pinceCardsPlayed}',
               ),
               _StatItem(
-                emoji: '🦝',
                 label: l10n.resultRaccoonCards,
                 value: '${stats.raccoonCardsPlayed}',
               ),
@@ -737,11 +732,9 @@ class _StatsCard extends StatelessWidget {
 }
 
 class _StatItem {
-  final String emoji;
   final String label;
   final String value;
   const _StatItem({
-    required this.emoji,
     required this.label,
     required this.value,
   });
@@ -789,9 +782,7 @@ class _StatChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(item.emoji, style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: AppSpacing.xs),
-          Column(
+Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(

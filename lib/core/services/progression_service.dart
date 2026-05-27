@@ -6,7 +6,6 @@ import '../constants/app_assets.dart';
 import '../models/card_back_config.dart';
 import '../models/global_progression.dart';
 import '../models/reward_unlock.dart';
-import '../theme/app_theme_provider.dart';
 
 /// Service central de progression : déblocages de dos de cartes.
 ///
@@ -89,10 +88,6 @@ class ProgressionService {
       _progression = GlobalProgression.initial();
     }
 
-    // Initialise le thème sans notifier (premier chargement)
-    AppThemeProvider.instance.initFromCardBack(
-      _progression.selectedCardBackId,
-    );
   }
 
   static Future<void> save() async {
@@ -124,7 +119,6 @@ class ProgressionService {
     _progression = _progression.copyWith(selectedCardBackId: cardBackId);
     await save();
     // Met à jour le thème dynamiquement (notifie les listeners)
-    AppThemeProvider.instance.updateFromCardBack(cardBackId);
   }
 
   // ── Debug : tout débloquer ───────────────────────────────────────────────

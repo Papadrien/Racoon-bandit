@@ -4,7 +4,6 @@ import '../../features/game/game_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/lobby/lobby_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
-import '../../features/premium/premium_screen.dart';
 import '../../features/result/result_screen.dart';
 import '../../features/profiles/profiles_screen.dart';
 import '../../features/settings/settings_screen.dart';
@@ -20,7 +19,6 @@ class AppRoutes {
   static const String game = '/game';
   static const String result = '/result';
   static const String settings = '/settings';
-  static const String premium = '/premium';
   static const String profiles = '/profiles';
   static const String privacyPolicy = '/privacy-policy';
   // Onboarding — utilisé pour futurs tutoriels standalone
@@ -44,8 +42,6 @@ class AppRouter {
         return _fade(const ResultScreen(), routeSettings);
       case AppRoutes.settings:
         return _slide(const SettingsScreen(), routeSettings);
-      case AppRoutes.premium:
-        return _slide(const PremiumScreen(), routeSettings);
       case AppRoutes.profiles:
         return _slide(const ProfilesScreen(), routeSettings);
       case AppRoutes.privacyPolicy:
