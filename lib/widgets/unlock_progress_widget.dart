@@ -392,7 +392,7 @@ class _CardPreview extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.85),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.lock_rounded,
                           color: AppColors.textMuted,
                           size: 16,
@@ -510,7 +510,7 @@ class _AllUnlockedCard extends StatelessWidget {
               borderRadius:
                   BorderRadius.circular(AppSpacing.radiusMedium),
             ),
-            child: Text(
+            child: const Text(
               '⭐',
               style: TextStyle(fontSize: 22),
             ),

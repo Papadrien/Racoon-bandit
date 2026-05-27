@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../core/game/game_state.dart';
+import '../../core/models/player_state.dart';
 import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
@@ -324,11 +325,11 @@ class _StickerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final s in _stars) {
-      final x = size.width * (s[0] as double);
-      final y = size.height * (s[1] as double);
-      final sz = s[2] as double;
-      final speed = s[3] as double;
-      final phase = s[4] as double;
+      final x = size.width * s[0];
+      final y = size.height * s[1];
+      final sz = s[2];
+      final speed = s[3];
+      final phase = s[4];
 
       final pulse = 0.6 + 0.4 * math.sin((t * speed + phase) * 2 * math.pi);
       final opacity = 0.25 * pulse;
@@ -378,7 +379,7 @@ class _WinnerHero extends StatelessWidget {
     required this.constraints,
   });
 
-  final dynamic winner; // PlayerState
+  final PlayerState winner;
   final AppLocalizations l10n;
   final AnimationController controller;
   final BoxConstraints constraints;
@@ -412,11 +413,11 @@ class _WinnerHero extends StatelessWidget {
                 spreadRadius: 0,
                 offset: const Offset(0, 8),
               ),
-              BoxShadow(
+              const BoxShadow(
                 color: AppColors.shadowStandard,
                 blurRadius: 12,
                 spreadRadius: 0,
-                offset: const Offset(0, 3),
+                offset: Offset(0, 3),
               ),
             ],
           ),
@@ -524,7 +525,7 @@ class _AnimatedTrophy extends StatelessWidget {
 class _WinnerAvatar extends StatelessWidget {
   const _WinnerAvatar({required this.winner, required this.size});
 
-  final dynamic winner;
+  final PlayerState winner;
   final double size;
 
   @override
@@ -565,7 +566,7 @@ class _WinnerAvatar extends StatelessWidget {
 class _RankingCard extends StatelessWidget {
   const _RankingCard({required this.ranking, required this.constraints});
 
-  final List<dynamic> ranking;
+  final List<PlayerState> ranking;
   final BoxConstraints constraints;
 
   @override
@@ -607,7 +608,7 @@ class _RankingRow extends StatelessWidget {
   });
 
   final int rank;
-  final dynamic player;
+  final PlayerState player;
   final double avatarSize;
   final bool isWinner;
 
