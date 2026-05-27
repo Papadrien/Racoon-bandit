@@ -233,6 +233,10 @@
     "description": "Play again button on result screen"
   },
   "resultBackHome": "Back to home",
+  "resultRanking": "Rankings",
+  "@resultRanking": {
+    "description": "Section title for the rankings in the result screen"
+  },
   "@resultBackHome": {
     "description": "Back home button on result screen"
   },

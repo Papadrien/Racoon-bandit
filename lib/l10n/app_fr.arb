@@ -233,6 +233,10 @@
     "description": "Bouton rejouer sur l'écran résultats"
   },
   "resultBackHome": "Retour accueil",
+  "resultRanking": "Classement",
+  "@resultRanking": {
+    "description": "Titre de la section classement dans l'écran résultats"
+  },
   "@resultBackHome": {
     "description": "Bouton retour accueil sur l'écran résultats"
   },
