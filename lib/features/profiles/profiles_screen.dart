@@ -127,7 +127,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                         100,
                       ),
                       itemCount: _profiles.length,
-                      separatorBuilder: (_, _) =>
+                      separatorBuilder: (_, __) =>
                           const SizedBox(height: AppSpacing.md),
                       itemBuilder: (_, i) {
                         final profile = _profiles[i];
@@ -152,6 +152,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
       ),
     );
   }
+}
 
 class _EmptyProfilesState extends StatelessWidget {
   final VoidCallback onAdd;
@@ -210,8 +211,6 @@ class _EmptyProfilesState extends StatelessWidget {
             ],
           ),
         ),
-          ),
-        ],
       ),
     );
   }
@@ -276,7 +275,6 @@ class _ProfileCard extends StatelessWidget {
                       color: AppColors.textDark,
                     ),
                   ),
-
                 ],
               ),
             ),
@@ -299,14 +297,10 @@ class _ProfileCard extends StatelessWidget {
             ),
           ],
         ),
-          ),
-        ],
       ),
     );
   }
 }
-
-
 
 class _ActionIconButton extends StatelessWidget {
   final IconData icon;
@@ -335,8 +329,6 @@ class _ActionIconButton extends StatelessWidget {
           ),
           child: Icon(icon, color: color, size: 22),
         ),
-          ),
-        ],
       ),
     );
   }
