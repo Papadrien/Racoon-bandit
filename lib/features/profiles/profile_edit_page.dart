@@ -212,6 +212,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       ),
     );
   }
+}
 
 class _PreviewCard extends StatelessWidget {
   final String emoji;
