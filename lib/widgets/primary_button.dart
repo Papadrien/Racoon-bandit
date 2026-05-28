@@ -98,20 +98,7 @@ class _OrangeButtonInk extends StatelessWidget {
     stops: [0.0, 0.55, 1.0],
   );
 
-  static const _shadows = [
-    BoxShadow(
-      color: Color(0x55E16713),
-      blurRadius: 16,
-      spreadRadius: 0,
-      offset: Offset(0, 7),
-    ),
-    BoxShadow(
-      color: Color(0x28000000),
-      blurRadius: 4,
-      spreadRadius: 0,
-      offset: Offset(0, 2),
-    ),
-  ];
+  static const _shadows = <BoxShadow>[];
 
   @override
   Widget build(BuildContext context) {
@@ -128,9 +115,9 @@ class _OrangeButtonInk extends StatelessWidget {
             color: enabled
                 ? const Color(0xCCFFFFFF)
                 : const Color(0x55FFFFFF),
-            width: 2.5,
+            width: 4.0,
           ),
-          boxShadow: enabled ? _shadows : null,
+          boxShadow: null,
         ),
         child: InkWell(
           onTap: onTap,

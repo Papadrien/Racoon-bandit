@@ -12,21 +12,21 @@
   "@tooltipPremium": {
     "description": "Premium icon tooltip"
   },
-  "noLivesAdHint": "Watch a full ad to recover 1 life.",
+  "noLivesAdHint": "Watch an ad to get a new game immediately.",
   "@noLivesAdHint": {
-    "description": "Help text below ad button when no lives"
+    "description": "Hint below ad button — no game available"
   },
-  "watchAdButton": "Watch an ad",
+  "watchAdButton": "Get a game now",
   "@watchAdButton": {
-    "description": "Watch ad button label"
+    "description": "Label for watch ad button to get a game"
   },
   "adLoading": "Loading ad...",
   "@adLoading": {
     "description": "Ad button label while loading"
   },
-  "lifeEarned": "1 life earned!",
+  "lifeEarned": "Game ready!",
   "@lifeEarned": {
-    "description": "Snackbar when life earned via ad"
+    "description": "Snackbar game obtained via ad"
   },
   "lobbyTitle": "LOBBY",
   "@lobbyTitle": {
@@ -429,9 +429,9 @@
   "@premiumRestorePurchases": {
     "description": "Restore purchases button"
   },
-  "livesAdButton": "Ad +1",
+  "livesAdButton": "Game +1",
   "@livesAdButton": {
-    "description": "Ad +1 life button label in lives bar"
+    "description": "Label for ad +1 game button in indicator"
   },
   "onboardingSkip": "Skip",
   "onboardingNext": "Next",

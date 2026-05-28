@@ -452,13 +452,24 @@ class _WinnerHero extends StatelessWidget {
                   color: AppColors.orange.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
                 ),
-                child: Text(
-                  '${winner.foodCount} 🍎',
-                  style: TextStyle(
-                    fontSize: (constraints.maxWidth * 0.040).clamp(12.0, 16.0),
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.orange,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${winner.foodCount}',
+                      style: TextStyle(
+                        fontSize: (constraints.maxWidth * 0.040).clamp(12.0, 16.0),
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Image.asset(
+                      'assets/images/icon_food.png',
+                      width: 18,
+                      height: 18,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -521,15 +532,8 @@ class _WinnerAvatar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
+        color: Colors.white,
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.orange.withValues(alpha: 0.7),
-            AppColors.orange,
-          ],
-        ),
         boxShadow: AppShadows.subtleGlow(AppColors.orange),
       ),
       child: PlayerAvatar(
@@ -647,12 +651,23 @@ class _RankingRow extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            '${player.foodCount} 🍎',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: isWinner ? AppColors.orange : AppColors.textMuted,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${player.foodCount}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: isWinner ? AppColors.orange : AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Image.asset(
+                'assets/images/icon_food.png',
+                width: 16,
+                height: 16,
+              ),
+            ],
           ),
         ],
       ),

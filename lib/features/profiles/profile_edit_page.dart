@@ -10,6 +10,7 @@ import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../widgets/player_avatar.dart';
+import '../settings/widgets/settings_secondary_header.dart';
 
 class ProfileEditPage extends StatefulWidget {
   final PlayerProfile profile;
@@ -92,123 +93,125 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isNew
-              ? l10n.profileEditTitleNew
-              : l10n.profileEditTitleEdit,
-        ),
-        leading: const BackButton(),
-      ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return ListView(
-              padding: EdgeInsets.fromLTRB(
-                constraints.maxWidth < 360
-                    ? AppSpacing.hPadNarrow
-                    : AppSpacing.hPadNormal,
-                AppSpacing.xl,
-                constraints.maxWidth < 360
-                    ? AppSpacing.hPadNarrow
-                    : AppSpacing.hPadNormal,
-                120,
-              ),
-              children: [
-                _PreviewCard(
-                  emoji: _emoji,
-                  color: _color,
-                  name: _nameCtrl.text.trim().isEmpty
-                      ? l10n.profileEditNameLabel
-                      : _nameCtrl.text.trim(),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                _SectionCard(
-                  title: l10n.profileEditNameLabel,
-                  child: TextField(
-                    controller: _nameCtrl,
-                    onChanged: (_) => setState(() {}),
-                    textCapitalization: TextCapitalization.words,
-                    maxLength: 20,
-                    decoration: InputDecoration(
-                      hintText: l10n.profileEditNameLabel,
-                      filled: true,
-                      fillColor: AppTheme.background,
-                      counterText: '',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.radiusMedium,
-                        ),
-                        borderSide: BorderSide.none,
+        child: Column(
+          children: [
+            SettingsSecondaryHeader(
+              title: widget.isNew
+                  ? l10n.profileEditTitleNew
+                  : l10n.profileEditTitleEdit,
+            ),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      constraints.maxWidth < 360
+                          ? AppSpacing.hPadNarrow
+                          : AppSpacing.hPadNormal,
+                      AppSpacing.xl,
+                      constraints.maxWidth < 360
+                          ? AppSpacing.hPadNarrow
+                          : AppSpacing.hPadNormal,
+                      120,
+                    ),
+                    children: [
+                      _PreviewCard(
+                        emoji: _emoji,
+                        color: _color,
+                        name: _nameCtrl.text.trim().isEmpty
+                            ? l10n.profileEditNameLabel
+                            : _nameCtrl.text.trim(),
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                _SectionCard(
-                  title: l10n.profileEditSectionAvatar,
-                  child: Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
-                    children: _emojis.map((emoji) {
-                      final selected = emoji == _emoji;
+                      const SizedBox(height: AppSpacing.xl),
+                      _SectionCard(
+                        title: l10n.profileEditNameLabel,
+                        child: TextField(
+                          controller: _nameCtrl,
+                          onChanged: (_) => setState(() {}),
+                          textCapitalization: TextCapitalization.words,
+                          maxLength: 20,
+                          decoration: InputDecoration(
+                            hintText: l10n.profileEditNameLabel,
+                            filled: true,
+                            fillColor: AppTheme.background,
+                            counterText: '',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppSpacing.radiusMedium,
+                              ),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      _SectionCard(
+                        title: l10n.profileEditSectionAvatar,
+                        child: Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.sm,
+                          children: _emojis.map((emoji) {
+                            final selected = emoji == _emoji;
 
-                      return _EmojiButton(
-                        emoji: emoji,
-                        selected: selected,
-                        onTap: () {
-                          AudioService.instance.playButtonSound();
-                          setState(() => _emoji = emoji);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                _SectionCard(
-                  title: l10n.profileEditSectionColor,
-                  child: Wrap(
-                    spacing: AppSpacing.md,
-                    runSpacing: AppSpacing.md,
-                    children: _presetColors.map((color) {
-                      final selected =
-                          color.toARGB32() == _color.toARGB32();
+                            return _EmojiButton(
+                              emoji: emoji,
+                              selected: selected,
+                              onTap: () {
+                                AudioService.instance.playButtonSound();
+                                setState(() => _emoji = emoji);
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      _SectionCard(
+                        title: l10n.profileEditSectionColor,
+                        child: Wrap(
+                          spacing: AppSpacing.md,
+                          runSpacing: AppSpacing.md,
+                          children: _presetColors.map((color) {
+                            final selected =
+                                color.toARGB32() == _color.toARGB32();
 
-                      return _ColorButton(
-                        color: color,
-                        selected: selected,
-                        onTap: () {
-                          AudioService.instance.playButtonSound();
-                          setState(() => _color = color);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                SizedBox(
-                  height: AppSpacing.buttonHeightSecondary,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      AudioService.instance.playButtonSound();
-                      _save();
-                    },
-                    icon: const Icon(Icons.check_rounded),
-                    label: Text(
-                      widget.isNew
-                          ? l10n.profileEditButtonCreate
-                          : l10n.profileEditButtonSave,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
+                            return _ColorButton(
+                              color: color,
+                              selected: selected,
+                              onTap: () {
+                                AudioService.instance.playButtonSound();
+                                setState(() => _color = color);
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      SizedBox(
+                        height: AppSpacing.buttonHeightSecondary,
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            AudioService.instance.playButtonSound();
+                            _save();
+                          },
+                          icon: const Icon(Icons.check_rounded),
+                          label: Text(
+                            widget.isNew
+                                ? l10n.profileEditButtonCreate
+                                : l10n.profileEditButtonSave,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
 
 class _PreviewCard extends StatelessWidget {
   final String emoji;

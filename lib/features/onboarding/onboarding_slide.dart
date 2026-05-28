@@ -1,6 +1,8 @@
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/ui/app_colors.dart';
+
 /// Modèle d'une slide d'onboarding.
 ///
 /// Architecture modulaire : il suffit d'ajouter une entrée dans
@@ -14,6 +16,7 @@ class OnboardingSlide {
     required this.cardColor,
     this.accentColor = const Color(0xFF7C4DFF),
     this.cardImageAsset,
+    this.iconWidget,
   });
 
   /// Emoji illustrant la slide (fallback si pas d'image).
@@ -22,6 +25,9 @@ class OnboardingSlide {
   /// Chemin asset de l'image de la face avant de la carte (optionnel).
   /// Si renseigné, remplace l'emoji dans l'affichage onboarding.
   final String? cardImageAsset;
+
+  /// Widget personnalisé à afficher dans la card (priorité sur image et emoji).
+  final Widget? iconWidget;
 
   /// Titre court de la slide.
   final String Function(BuildContext context) title;
@@ -75,5 +81,39 @@ class OnboardingSlides {
       cardColor: const Color(0xFF0D47A1),
       accentColor: const Color(0xFF42A5F5),
     ),
+    OnboardingSlide(
+      emoji: '🏆',
+      title: (_) => 'Victoire',
+      description: (_) => 'Celui qui a le plus de nourriture à la fin de la pioche a gagné !',
+      cardColor: const Color(0xFF7B5800),
+      accentColor: const Color(0xFFFFB300),
+      iconWidget: _TrophyCardIcon(),
+    ),
   ];
+}
+
+/// Icône trophée pour la slide victoire — reprend le style du résultat screen.
+class _TrophyCardIcon extends StatelessWidget {
+  const _TrophyCardIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 80.0;
+    return Container(
+      width: size * 1.3,
+      height: size * 1.3,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            AppColors.orange.withValues(alpha: 0.22),
+            AppColors.orange.withValues(alpha: 0.0),
+          ],
+        ),
+      ),
+      child: const Center(
+        child: Text('🏆', style: TextStyle(fontSize: size)),
+      ),
+    );
+  }
 }

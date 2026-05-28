@@ -12,21 +12,21 @@
   "@tooltipPremium": {
     "description": "Tooltip icône Premium"
   },
-  "noLivesAdHint": "Regardez une publicité complète pour récupérer 1 vie.",
+  "noLivesAdHint": "Regardez une publicité pour préparer une nouvelle partie immédiatement.",
   "@noLivesAdHint": {
-    "description": "Aide sous bouton pub — plus de vies"
+    "description": "Aide sous bouton pub — aucune partie disponible"
   },
-  "watchAdButton": "Regarder une publicité",
+  "watchAdButton": "Préparer une partie",
   "@watchAdButton": {
-    "description": "Label bouton regarder une pub"
+    "description": "Label bouton regarder une pub pour obtenir une partie"
   },
   "adLoading": "Chargement de la publicité...",
   "@adLoading": {
     "description": "Label bouton pub en chargement"
   },
-  "lifeEarned": "1 vie gagnée !",
+  "lifeEarned": "Partie prête !",
   "@lifeEarned": {
-    "description": "Snackbar vie gagnée via pub"
+    "description": "Snackbar partie obtenue via pub"
   },
   "lobbyTitle": "SALON",
   "@lobbyTitle": {
@@ -429,9 +429,9 @@
   "@premiumRestorePurchases": {
     "description": "Bouton restaurer achats premium"
   },
-  "livesAdButton": "Pub +1",
+  "livesAdButton": "Partie +1",
   "@livesAdButton": {
-    "description": "Label bouton pub +1 vie dans la barre de vies"
+    "description": "Label bouton pub +1 partie dans l'indicateur"
   },
   "onboardingSkip": "Passer",
   "onboardingNext": "Suivant",

@@ -124,26 +124,35 @@ class TutorialSlideCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: slide.cardImageAsset != null
+              child: slide.iconWidget != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(24),
-                      child: Image.asset(
-                        slide.cardImageAsset!,
+                      child: SizedBox(
+                        width: compact ? 260 : 320,
                         height: compact ? 260 : 320,
-                        fit: BoxFit.cover,
+                        child: Center(child: slide.iconWidget),
                       ),
                     )
-                  : _EmojiDisplay(
-                      emoji: slide.emoji,
-                      compact: compact,
-                      accentColor: slide.accentColor,
-                    ),
+                  : slide.cardImageAsset != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: Image.asset(
+                            slide.cardImageAsset!,
+                            height: compact ? 260 : 320,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : _EmojiDisplay(
+                          emoji: slide.emoji,
+                          compact: compact,
+                          accentColor: slide.accentColor,
+                        ),
             ),
           ),
           const SizedBox(height: 28),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(28, 34, 28, 28),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
             decoration: BoxDecoration(
               color: const Color(0xFFFFFBF8),
               borderRadius: BorderRadius.circular(38),
@@ -156,18 +165,21 @@ class TutorialSlideCard extends StatelessWidget {
               ],
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   slide.title(context),
                   textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: compact ? 42 : 48,
+                    fontSize: compact ? 34 : 40,
                     fontWeight: FontWeight.w900,
                     color: slide.accentColor,
                     height: 1,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 Container(
                   width: 74,
                   height: 7,
@@ -176,13 +188,15 @@ class TutorialSlideCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 16),
                 Text(
                   slide.description(context),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFF2B2B2B),
-                    fontSize: 21,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: const Color(0xFF2B2B2B),
+                    fontSize: compact ? 16 : 18,
                     fontWeight: FontWeight.w700,
                     height: 1.35,
                   ),

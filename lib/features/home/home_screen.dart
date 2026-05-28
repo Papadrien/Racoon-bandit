@@ -14,7 +14,7 @@ import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_spacing.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
-import '../../widgets/lives_indicator.dart';
+import '../../widgets/game_ready_indicator.dart';
 import '../../widgets/raccoon_bandit_logo.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../../widgets/primary_button.dart';
@@ -231,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen>
                               if (!_isLoading)
                                 ScaleTransition(
                                   scale: _rewardAnimationController,
-                                  child: LivesIndicator(
+                                  child: GameReadyIndicator(
                                     lives: _lifeSystemService.currentLives,
                                     remainingDuration:
                                         remainingDuration ?? Duration.zero,
@@ -676,25 +676,6 @@ class _ButtonBodyPainter extends CustomPainter {
           ],
           stops: const [0.0, 1.0],
         ).createShader(glowRect),
-    );
-
-    // ── Reflet pill subtil en haut au centre ─────────────────────────────
-    final highlightW = size.width * 0.40;
-    final highlightH = size.height * 0.20;
-    final highlightRect = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height * 0.15),
-      width: highlightW,
-      height: highlightH,
-    );
-    canvas.drawOval(
-      highlightRect,
-      Paint()
-        ..shader = RadialGradient(
-          colors: [
-            Colors.white.withValues(alpha: 0.30),
-            Colors.white.withValues(alpha: 0.0),
-          ],
-        ).createShader(highlightRect),
     );
 
     // ── Ombre intérieure basse (relief 3D) ───────────────────────────────

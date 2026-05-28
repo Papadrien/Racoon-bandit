@@ -7,7 +7,7 @@ import '../core/ui/app_decorations.dart';
 import '../core/ui/app_shadows.dart';
 import '../core/ui/app_spacing.dart';
 
-/// Barre de statut en jeu : vies restantes, timer, bouton pub.
+/// Barre de statut en jeu : parties restantes, timer, bouton pub.
 ///
 /// Style : fond blanc sticker, ombres douces, cohérent avec la Home Screen.
 class LivesBar extends StatelessWidget {
@@ -68,11 +68,11 @@ class _LivesRow extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(right: AppSpacing.xs),
           child: Icon(
-            filled ? Icons.favorite : Icons.favorite_border,
-            size: 20,
+            filled ? Icons.circle_rounded : Icons.circle_outlined,
+            size: 14,
             color: filled
-                ? AppTheme.accent
-                : AppColors.textMuted.withValues(alpha: 0.4),
+                ? AppColors.orange.withValues(alpha: 0.85)
+                : AppColors.textMuted.withValues(alpha: 0.35),
           ),
         );
       }),

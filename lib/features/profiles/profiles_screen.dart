@@ -10,6 +10,7 @@ import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../widgets/player_avatar.dart';
+import '../settings/widgets/settings_secondary_header.dart';
 import 'profile_edit_page.dart';
 
 class ProfilesScreen extends StatefulWidget {
@@ -95,10 +96,6 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.profilesTitle),
-        leading: const BackButton(),
-      ),
       floatingActionButton: _profiles.isEmpty
           ? null
           : FloatingActionButton.extended(
@@ -111,43 +108,50 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
               label: Text(l10n.profilesAddTooltip),
               icon: const Icon(Icons.add_rounded),
             ),
-      body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          child: _profiles.isEmpty
-              ? _EmptyProfilesState(onAdd: _addProfile)
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg,
-                    AppSpacing.lg,
-                    AppSpacing.lg,
-                    100,
-                  ),
-                  itemCount: _profiles.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: AppSpacing.md),
-                  itemBuilder: (_, i) {
-                    final profile = _profiles[i];
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: SettingsSecondaryHeader(title: l10n.profilesTitle),
+          ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: _profiles.isEmpty
+                  ? _EmptyProfilesState(onAdd: _addProfile)
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        100,
+                      ),
+                      itemCount: _profiles.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: AppSpacing.md),
+                      itemBuilder: (_, i) {
+                        final profile = _profiles[i];
 
-                    return _ProfileCard(
-                      profile: profile,
-                      color: Color(profile.colorValue),
-                      onEdit: () {
-                        AudioService.instance.playButtonSound();
-                        _editProfile(profile);
+                        return _ProfileCard(
+                          profile: profile,
+                          color: Color(profile.colorValue),
+                          onEdit: () {
+                            AudioService.instance.playButtonSound();
+                            _editProfile(profile);
+                          },
+                          onDelete: () {
+                            AudioService.instance.playButtonSound();
+                            _deleteProfile(profile);
+                          },
+                        );
                       },
-                      onDelete: () {
-                        AudioService.instance.playButtonSound();
-                        _deleteProfile(profile);
-                      },
-                    );
-                  },
-                ),
-        ),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
-}
 
 class _EmptyProfilesState extends StatelessWidget {
   final VoidCallback onAdd;
@@ -206,6 +210,8 @@ class _EmptyProfilesState extends StatelessWidget {
             ],
           ),
         ),
+          ),
+        ],
       ),
     );
   }
@@ -293,6 +299,8 @@ class _ProfileCard extends StatelessWidget {
             ),
           ],
         ),
+          ),
+        ],
       ),
     );
   }
@@ -327,6 +335,8 @@ class _ActionIconButton extends StatelessWidget {
           ),
           child: Icon(icon, color: color, size: 22),
         ),
+          ),
+        ],
       ),
     );
   }
