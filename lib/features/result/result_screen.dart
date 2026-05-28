@@ -10,6 +10,7 @@ import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
@@ -406,20 +407,7 @@ class _WinnerHero extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.stickerWhite,
             borderRadius: BorderRadius.circular(AppSpacing.radiusXLarge),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.orange.withValues(alpha: 0.18),
-                blurRadius: 24,
-                spreadRadius: 0,
-                offset: const Offset(0, 8),
-              ),
-              const BoxShadow(
-                color: AppColors.shadowStandard,
-                blurRadius: 12,
-                spreadRadius: 0,
-                offset: Offset(0, 3),
-              ),
-            ],
+            boxShadow: AppShadows.accentGlow(AppColors.orange),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -542,13 +530,7 @@ class _WinnerAvatar extends StatelessWidget {
             AppColors.orange,
           ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.orange.withValues(alpha: 0.35),
-            blurRadius: 16,
-            spreadRadius: 2,
-          ),
-        ],
+        boxShadow: AppShadows.subtleGlow(AppColors.orange),
       ),
       child: PlayerAvatar(
         emoji: winner.emoji,
@@ -827,18 +809,7 @@ class _StickerCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.stickerWhite,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
+        boxShadow: AppShadows.floating,
       ),
       child: child,
     );

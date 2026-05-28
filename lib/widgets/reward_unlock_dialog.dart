@@ -8,6 +8,7 @@ import '../core/models/reward_unlock.dart';
 import '../core/services/audio_service.dart';
 import '../core/services/progression_service.dart';
 import '../core/ui/app_colors.dart';
+import '../core/ui/app_shadows.dart';
 import '../core/ui/app_spacing.dart';
 import 'primary_button.dart';
 
@@ -181,20 +182,7 @@ class _DialogBody extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background, // beige chaud — cohérent avec l'accueil
         borderRadius: BorderRadius.circular(AppSpacing.radiusXLarge),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.22),
-            blurRadius: 32,
-            spreadRadius: 0,
-            offset: const Offset(0, 8),
-          ),
-          const BoxShadow(
-            color: Color(0x40000000),
-            blurRadius: 20,
-            spreadRadius: 0,
-            offset: Offset(0, 6),
-          ),
-        ],
+        boxShadow: AppShadows.dialog(accent),
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -424,18 +412,7 @@ class _StickerBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.stickerWhite,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.20),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-          const BoxShadow(
-            color: AppColors.shadowStandard,
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: AppShadows.soft,
         border: Border.all(
           color: accent.withValues(alpha: 0.30),
           width: 1.5,
@@ -482,19 +459,7 @@ class _CardDisplay extends StatelessWidget {
       height: 196,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.35),
-            blurRadius: 28,
-            spreadRadius: 4,
-            offset: const Offset(0, 6),
-          ),
-          const BoxShadow(
-            color: AppColors.shadowStandard,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.accentGlowStrong(accent),
         border: Border.all(
           color: accent.withValues(alpha: 0.55),
           width: 2.5,

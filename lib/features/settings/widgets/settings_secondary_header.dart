@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/ui/app_colors.dart';
-import '../../../core/ui/app_shadows.dart';
+import '../../../core/ui/app_decorations.dart';
 import '../../../core/ui/app_spacing.dart';
 
 /// Header secondaire unifié — utilisé par tous les sous-écrans settings.
@@ -39,11 +39,7 @@ class SettingsSecondaryHeader extends StatelessWidget {
             child: Container(
               width: AppSpacing.floatingButtonSize,
               height: AppSpacing.floatingButtonSize,
-              decoration: BoxDecoration(
-                color: AppColors.stickerWhite,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-                boxShadow: AppShadows.floating,
-              ),
+              decoration: AppDecorations.floatingButton(),
               child: const Icon(
                 Icons.arrow_back_ios_new_rounded,
                 size: 18,

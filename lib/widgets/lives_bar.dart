@@ -4,6 +4,7 @@ import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 import '../core/ui/app_colors.dart';
 import '../core/ui/app_decorations.dart';
+import '../core/ui/app_shadows.dart';
 import '../core/ui/app_spacing.dart';
 
 /// Barre de statut en jeu : vies restantes, timer, bouton pub.
@@ -28,21 +29,15 @@ class LivesBar extends StatelessWidget {
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.sm + 2,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.stickerWhite,
-        border: Border(
+        border: const Border(
           bottom: BorderSide(
-            color: Color(0x14000000), // séparation subtile, non agressive
+            color: Color(0x14000000),
             width: 1,
           ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: AppShadows.soft,
       ),
       child: Row(
         children: [

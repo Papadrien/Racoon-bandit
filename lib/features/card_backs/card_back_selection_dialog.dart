@@ -83,21 +83,8 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
               decoration: BoxDecoration(
                 color: AppColors.backgroundLight,
                 borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(28)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 32,
-                    spreadRadius: 0,
-                    offset: const Offset(0, -4),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    spreadRadius: 0,
-                    offset: const Offset(0, -1),
-                  ),
-                ],
+                    const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXLarge)),
+                boxShadow: AppShadows.sticker,
               ),
               child: Column(
                 children: [
@@ -494,13 +481,7 @@ class _CardPreview extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.40),
-                    blurRadius: 6,
-                    spreadRadius: 0,
-                  ),
-                ],
+                boxShadow: AppShadows.subtleGlow(color),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

@@ -147,11 +147,20 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
   }
 
   Widget _buildParticleChild(String emoji) {
-    if (emoji == '__food__') {
-      return Image.asset('assets/images/icon_food.png', width: 42, height: 42);
-    }
-    if (emoji == '__trash__') {
-      return Image.asset('assets/images/icon_trash.png', width: 42, height: 42);
+    if (emoji == '__food__' || emoji == '__trash__') {
+      final asset = emoji == '__food__'
+          ? 'assets/images/icon_food.png'
+          : 'assets/images/icon_trash.png';
+      return Container(
+        width: 52,
+        height: 52,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        padding: const EdgeInsets.all(6),
+        child: Image.asset(asset, fit: BoxFit.contain),
+      );
     }
     return Text(emoji, style: const TextStyle(fontSize: 42));
   }
@@ -258,15 +267,10 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
             ),
           );
         },
-        child: Container(
+        child: SizedBox(
           width: 72,
           height: 72,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.25),
-            shape: BoxShape.circle,
-          ),
-          child: _buildParticleChild(widget.animation.emoji),
+          child: Center(child: _buildParticleChild(widget.animation.emoji)),
         ),
       ),
     );

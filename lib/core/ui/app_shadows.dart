@@ -82,4 +82,51 @@ abstract class AppShadows {
           offset: Offset.zero,
         ),
       ];
+
+  /// Glow accent + ombre neutre — panneaux héros, cartes gagnant.
+  static List<BoxShadow> accentGlow(Color color) => [
+        BoxShadow(
+          color: color.withValues(alpha: 0.18),
+          blurRadius: 24,
+          spreadRadius: 0,
+          offset: const Offset(0, 8),
+        ),
+        const BoxShadow(
+          color: Color(0x33000000),
+          blurRadius: 12,
+          spreadRadius: 0,
+          offset: Offset(0, 3),
+        ),
+      ];
+
+  /// Glow accent fort — carte dos dans dialog récompense.
+  static List<BoxShadow> accentGlowStrong(Color color) => [
+        BoxShadow(
+          color: color.withValues(alpha: 0.35),
+          blurRadius: 28,
+          spreadRadius: 4,
+          offset: const Offset(0, 6),
+        ),
+        const BoxShadow(
+          color: Color(0x33000000),
+          blurRadius: 12,
+          offset: Offset(0, 4),
+        ),
+      ];
+
+  /// Ombre dialog modal (reward, tutoriel).
+  static List<BoxShadow> dialog(Color accent) => [
+        BoxShadow(
+          color: accent.withValues(alpha: 0.22),
+          blurRadius: 32,
+          spreadRadius: 0,
+          offset: const Offset(0, 8),
+        ),
+        const BoxShadow(
+          color: Color(0x40000000),
+          blurRadius: 20,
+          spreadRadius: 0,
+          offset: Offset(0, 6),
+        ),
+      ];
 }

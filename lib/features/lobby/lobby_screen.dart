@@ -926,7 +926,7 @@ class _CardBackButtonState extends State<_CardBackButton>
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
                         border: Border.all(
                           color: accentColor.withValues(alpha: 0.30),
                           width: 1,
@@ -988,18 +988,7 @@ class _AnimatedCardPreview extends StatelessWidget {
         height: 74,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(7),
-          boxShadow: [
-            BoxShadow(
-              color: accentColor.withValues(alpha: 0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 6,
-              offset: const Offset(2, 3),
-            ),
-          ],
+          boxShadow: AppShadows.sticker,
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(7),
@@ -1084,7 +1073,7 @@ class _ProfilePickerSheetState extends State<_ProfilePickerSheet> {
           decoration: const BoxDecoration(
             color: AppColors.backgroundLight,
             borderRadius:
-                BorderRadius.vertical(top: Radius.circular(28)),
+                BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXLarge)),
             boxShadow: AppShadows.sticker,
           ),
           child: Column(
@@ -1119,7 +1108,7 @@ class _ProfilePickerSheetState extends State<_ProfilePickerSheet> {
                 child: _profiles.isEmpty
                     ? Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(AppSpacing.xl),
                           child: Text(
                             l10n.lobbyNoProfiles,
                             textAlign: TextAlign.center,

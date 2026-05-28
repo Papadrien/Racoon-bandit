@@ -4,6 +4,7 @@ import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../core/models/card_back_config.dart';
 import '../core/services/progression_service.dart';
 import '../core/ui/app_colors.dart';
+import '../core/ui/app_shadows.dart';
 import '../core/ui/app_spacing.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -134,18 +135,7 @@ class _ProgressCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.stickerWhite,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
+        boxShadow: AppShadows.floating,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,13 +262,7 @@ class _ProgressBar extends StatelessWidget {
                         accent,
                       ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: accent.withValues(alpha: 0.30),
-                        blurRadius: 6,
-                        spreadRadius: 0,
-                      ),
-                    ],
+                    boxShadow: AppShadows.subtleGlow(accent),
                   ),
                 ),
               ),
@@ -322,15 +306,7 @@ class _CardPreview extends StatelessWidget {
           height: _h,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
-            boxShadow: [
-              BoxShadow(
-                color: isLocked
-                    ? AppColors.shadowSoft
-                    : accent.withValues(alpha: 0.25),
-                blurRadius: isLocked ? 4 : 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            boxShadow: isLocked ? AppShadows.soft : AppShadows.subtleGlow(accent),
           ),
           child: Stack(
             fit: StackFit.expand,
@@ -406,12 +382,7 @@ class _CardPreview extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: accent,
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: accent.withValues(alpha: 0.4),
-                          blurRadius: 4,
-                        ),
-                      ],
+                      boxShadow: AppShadows.subtleGlow(accent),
                     ),
                     child: const Icon(
                       Icons.check_rounded,
@@ -482,18 +453,7 @@ class _AllUnlockedCard extends StatelessWidget {
           color: accent.withValues(alpha: 0.30),
           width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.12),
-            blurRadius: 18,
-            offset: const Offset(0, 4),
-          ),
-          const BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: AppShadows.soft,
       ),
       child: Row(
         children: [

@@ -706,7 +706,7 @@ class _GameScreenState extends State<GameScreen>
     final avatarSize = isCompact ? 36.0 : 45.6;
     final avatarRingSize = avatarSize + 6.0;
     final nameFontSize = isCompact ? 10.0 : 12.0;
-    final resourceIconSize = isCompact ? 13.0 : 15.0;
+    final resourceIconSize = isCompact ? 18.0 : 20.0;
 
     // ── Zones à hauteur fixe pour stabiliser le layout ──────────────
     // Zone ressources : 2 runs max × (iconSize + runSpacing) + spacing inter-section
@@ -801,16 +801,23 @@ class _GameScreenState extends State<GameScreen>
                     width: maxWidth,
                     child: Wrap(
                       alignment: WrapAlignment.center,
-                      spacing: 2,
-                      runSpacing: 2,
+                      spacing: 3,
+                      runSpacing: 3,
                       children: player.foodCount > 0
                           ? List.generate(
                               player.foodCount.clamp(0, 8),
-                              (_) => Image.asset(
-                                'assets/images/icon_food.png',
+                              (_) => Container(
                                 width: resourceIconSize,
                                 height: resourceIconSize,
-                                fit: BoxFit.contain,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: const EdgeInsets.all(2),
+                                child: Image.asset(
+                                  'assets/images/icon_food.png',
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             )
                           : const [],
@@ -823,15 +830,22 @@ class _GameScreenState extends State<GameScreen>
                       width: maxWidth,
                       child: Wrap(
                         alignment: WrapAlignment.center,
-                        spacing: 2,
-                        runSpacing: 2,
+                        spacing: 3,
+                        runSpacing: 3,
                         children: List.generate(
                           player.trashCount.clamp(0, 6),
-                          (_) => Image.asset(
-                            'assets/images/icon_trash.png',
+                          (_) => Container(
                             width: resourceIconSize,
-                            height: resourceIconSize * 1.2,
-                            fit: BoxFit.contain,
+                            height: resourceIconSize,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(2),
+                            child: Image.asset(
+                              'assets/images/icon_trash.png',
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       ),
@@ -1022,44 +1036,22 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _buildCurrentPlayerSticker(PlayerState player) {
     final color = player.profileColor;
+    const double size = 44.0;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      width: size + 6,
+      height: size + 6,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white, width: 2.5),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x55000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
+        shape: BoxShape.circle,
+        color: AppColors.stickerWhite,
+        border: Border.all(color: color, width: 2.5),
+        boxShadow: AppShadows.subtleGlow(color),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            player.emoji,
-            style: TextStyle(
-              fontSize: (_cardHeight * 0.11).clamp(16.0, 26.0),
-            ),
-          ),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-              player.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: (_cardHeight * 0.07).clamp(11.0, 16.0),
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
-        ],
+      child: Center(
+        child: PlayerAvatar(
+          emoji: player.emoji,
+          color: color,
+          size: size,
+        ),
       ),
     );
   }
