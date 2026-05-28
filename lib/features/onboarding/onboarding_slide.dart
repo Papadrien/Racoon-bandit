@@ -87,7 +87,7 @@ class OnboardingSlides {
       description: (_) => 'Celui qui a le plus de nourriture à la fin de la pioche a gagné !',
       cardColor: const Color(0xFF7B5800),
       accentColor: const Color(0xFFFFB300),
-      iconWidget: _TrophyCardIcon(),
+      iconWidget: const _TrophyCardIcon(),
     ),
   ];
 }

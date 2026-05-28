@@ -24,12 +24,6 @@ class GameReadyIndicator extends StatelessWidget {
     required this.remainingDuration,
   });
 
-  String _formatDuration(Duration d) {
-    final minutes = d.inMinutes.remainder(60);
-    final seconds = d.inSeconds.remainder(60);
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
-
   bool get _hasGame => lives > 0;
 
   @override
@@ -40,7 +34,7 @@ class GameReadyIndicator extends StatelessWidget {
         vertical: AppSpacing.sm,
       ),
       decoration: AppDecorations.whiteSticker,
-      child: _hasGame ? _ReadyState() : _WaitingState(remainingDuration),
+      child: _hasGame ? const _ReadyState() : _WaitingState(remainingDuration),
     );
   }
 }
@@ -55,16 +49,15 @@ class _ReadyState extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Icône douce — étoile/soleil cozy, sans référence à des vies/cœurs
         Icon(
           Icons.auto_awesome_rounded,
           size: 16,
           color: AppColors.orange.withValues(alpha: 0.85),
         ),
         const SizedBox(width: AppSpacing.xs + 2),
-        Text(
+        const Text(
           'Partie prête',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textDark,
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -95,9 +88,9 @@ class _WaitingState extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
+        const Text(
           'Nouvelle partie dans',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textMuted,
             fontSize: 11,
             fontWeight: FontWeight.w500,

@@ -80,10 +80,10 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
           snapSizes: const [0.68, 0.94],
           builder: (_, scrollController) {
             return Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.backgroundLight,
                 borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXLarge)),
+                    BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXLarge)),
                 boxShadow: AppShadows.sticker,
               ),
               child: Column(

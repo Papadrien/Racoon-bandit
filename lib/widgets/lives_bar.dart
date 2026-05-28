@@ -29,9 +29,9 @@ class LivesBar extends StatelessWidget {
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.sm + 2,
       ),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.stickerWhite,
-        border: const Border(
+        border: Border(
           bottom: BorderSide(
             color: Color(0x14000000),
             width: 1,

@@ -98,7 +98,6 @@ class _OrangeButtonInk extends StatelessWidget {
     stops: [0.0, 0.55, 1.0],
   );
 
-  static const _shadows = <BoxShadow>[];
 
   @override
   Widget build(BuildContext context) {
