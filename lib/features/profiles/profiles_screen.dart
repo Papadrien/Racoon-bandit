@@ -96,6 +96,7 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       floatingActionButton: _profiles.isEmpty
           ? null
           : FloatingActionButton.extended(

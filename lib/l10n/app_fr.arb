@@ -16,7 +16,7 @@
   "@noLivesAdHint": {
     "description": "Aide sous bouton pub — aucune partie disponible"
   },
-  "watchAdButton": "Préparer une partie",
+  "watchAdButton": "Regarder une pub",
   "@watchAdButton": {
     "description": "Label bouton regarder une pub pour obtenir une partie"
   },

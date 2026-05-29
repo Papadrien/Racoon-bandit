@@ -201,12 +201,12 @@ class _HomeScreenState extends State<HomeScreen>
             // ── Stickers décoratifs en fond ──────────────────────────────
             const Positioned.fill(child: _BackgroundStickers()),
 
-            // ── Hero image — directement depuis l'asset, sans effets artificiels
-            const Positioned.fill(
-              child: Align(
-                alignment: Alignment.center,
-                child: _HeroImage(),
-              ),
+            // ── Hero image — positionné à hauteur fixe, juste au-dessus du bouton Jouer
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: MediaQuery.sizeOf(context).height * 0.10 + AppSpacing.buttonHeight + AppSpacing.lg,
+              child: const _HeroImage(),
             ),
 
             // ── Top bar (SafeArea) ────────────────────────────────────────
@@ -759,95 +759,140 @@ class _BackgroundStickers extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       children: [
         // ════════════════════════════════════════════════════════════════
-        // BANDE HAUTE (h * 0.00 → h * 0.22) — logo / top-bar
-        // Sapin haut-gauche ancré dans le coin, cabane haut-droite lisible
+        // BANDE HAUTE — logo / top-bar
         // ════════════════════════════════════════════════════════════════
 
-        // Sapin haut-gauche — grand, ancré dans le coin
+        // Sapin haut-gauche — ancré dans le coin
         _Sticker(
           asset: _pine,
-          size: w * 0.30,
+          size: w * 0.28,
           left: -w * 0.05,
-          top: h * 0.03,
+          top: h * 0.01,
           angle: -0.06,
         ),
 
-        // Cabane haut-droite — espacée du bord, ne gêne pas la top-bar
+        // Pomme de pin haut-centre-gauche
+        _Sticker(
+          asset: _cone,
+          size: w * 0.09,
+          left: w * 0.27,
+          top: h * 0.02,
+          angle: 0.15,
+        ),
+
+        // Cabane haut-droite
         _Sticker(
           asset: _cabin,
-          size: w * 0.20,
-          right: w * 0.03,
-          top: h * 0.07,
+          size: w * 0.18,
+          right: w * 0.02,
+          top: h * 0.04,
           angle: 0.05,
         ),
 
         // ════════════════════════════════════════════════════════════════
-        // BANDE MILIEU-HAUT (h * 0.22 → h * 0.55) — zone héros
-        // Éléments discrets sur les bords, laissent respirer le raccoon
+        // BANDE MILIEU-HAUT — zone héros
         // ════════════════════════════════════════════════════════════════
 
-        // Pomme de pin gauche milieu — petite, accent discret
+        // Pomme de pin gauche
         _Sticker(
           asset: _cone,
-          size: w * 0.11,
-          left: w * 0.04,
-          top: h * 0.38,
+          size: w * 0.09,
+          left: w * 0.02,
+          top: h * 0.27,
           angle: -0.20,
         ),
 
-        // Sapin droite milieu — rogné côté droit, crée une coulisse
+        // Sapin droite milieu-haut
         _Sticker(
           asset: _pine,
-          size: w * 0.25,
-          right: -w * 0.06,
-          top: h * 0.30,
+          size: w * 0.22,
+          right: -w * 0.05,
+          top: h * 0.22,
           angle: 0.08,
         ),
 
         // ════════════════════════════════════════════════════════════════
-        // BANDE MILIEU-BAS (h * 0.55 → h * 0.78) — zone bouton Jouer
-        // Symétrie légèrement brisée pour naturel
+        // BANDE MILIEU — centre écran
         // ════════════════════════════════════════════════════════════════
 
-        // Sapin gauche milieu-bas — ancrage bord gauche
+        // Sapin gauche milieu
         _Sticker(
           asset: _pine,
-          size: w * 0.22,
+          size: w * 0.19,
           left: -w * 0.03,
-          top: h * 0.57,
+          top: h * 0.44,
           angle: -0.04,
         ),
 
-        // Pomme de pin droite milieu-bas — accent asymétrique
+        // Pomme de pin droite milieu
         _Sticker(
           asset: _cone,
-          size: w * 0.12,
-          right: w * 0.05,
-          top: h * 0.60,
+          size: w * 0.10,
+          right: w * 0.03,
+          top: h * 0.45,
           angle: 0.18,
         ),
 
         // ════════════════════════════════════════════════════════════════
-        // BANDE BASSE (h * 0.78 → h * 1.00) — pied d'écran
-        // Cabane bas-gauche + sapin bas-droit pour clore la composition
+        // BANDE MILIEU-BAS — zone bouton Jouer
         // ════════════════════════════════════════════════════════════════
 
-        // Cabane bas-gauche — lisible, légèrement inclinée
+        // Cabane gauche milieu-bas
         _Sticker(
           asset: _cabin,
-          size: w * 0.24,
+          size: w * 0.17,
           left: w * 0.02,
-          top: h * 0.80,
+          top: h * 0.60,
+          angle: -0.04,
+        ),
+
+        // Sapin droite milieu-bas
+        _Sticker(
+          asset: _pine,
+          size: w * 0.20,
+          right: -w * 0.04,
+          top: h * 0.57,
+          angle: 0.06,
+        ),
+
+        // Pomme de pin gauche milieu-bas
+        _Sticker(
+          asset: _cone,
+          size: w * 0.08,
+          left: w * 0.22,
+          top: h * 0.65,
+          angle: -0.10,
+        ),
+
+        // ════════════════════════════════════════════════════════════════
+        // BANDE BASSE — pied d'écran
+        // ════════════════════════════════════════════════════════════════
+
+        // Cabane bas-gauche
+        _Sticker(
+          asset: _cabin,
+          size: w * 0.21,
+          left: w * 0.01,
+          top: h * 0.76,
           angle: -0.05,
         ),
 
-        // Sapin bas-droit — rogné en bas, équilibre bas de page
+        // Sapin bas-droit
         _Sticker(
           asset: _pine,
-          size: w * 0.26,
+          size: w * 0.23,
           right: -w * 0.04,
-          top: h * 0.76,
+          top: h * 0.73,
           angle: 0.06,
+        ),
+
+        // Pomme de pin bas-centre
+        _Sticker(
+          asset: _cone,
+          size: w * 0.09,
+          right: w * 0.26,
+          top: h * 0.85,
+          angle: 0.22,
         ),
       ],
     );

@@ -16,7 +16,7 @@
   "@noLivesAdHint": {
     "description": "Hint below ad button — no game available"
   },
-  "watchAdButton": "Get a game now",
+  "watchAdButton": "Watch an ad",
   "@watchAdButton": {
     "description": "Label for watch ad button to get a game"
   },

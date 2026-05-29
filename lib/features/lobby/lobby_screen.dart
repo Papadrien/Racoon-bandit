@@ -18,6 +18,7 @@ import '../profiles/profile_edit_page.dart';
 import '../../core/models/card_back_config.dart';
 // import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
+import '../../core/services/rewarded_ad_service.dart';
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_shadows.dart';
@@ -40,10 +41,52 @@ class _LobbyScreenState extends State<LobbyScreen> {
   late List<PlayerProfile?> _selectedProfiles;
   bool _chaosModeEnabled = false;
 
+  // ── Système de vies ────────────────────────────────────────────────────────
+  final LifeSystemService _lifeSystemService = LifeSystemService();
+  Timer? _livesTimer;
+  bool _isRewardLoading = false;
+
+  bool get _noLives => _lifeSystemService.currentLives <= 0;
+
   @override
   void initState() {
     super.initState();
     _initFromSaved();
+    _initLives();
+  }
+
+  Future<void> _initLives() async {
+    await _lifeSystemService.load();
+    if (_noLives) RewardedAdService.instance.preloadAd();
+    if (mounted) setState(() {});
+
+    _livesTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      await _lifeSystemService.updateLivesFromTime();
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _watchAdForLife() async {
+    if (_isRewardLoading) return;
+    setState(() => _isRewardLoading = true);
+
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    await RewardedAdService.instance.showRewardedLifeAd(
+      onRewardEarned: () async {
+        await _lifeSystemService.restoreLife();
+        if (!mounted) return;
+        setState(() {});
+        messenger.showSnackBar(SnackBar(content: Text(l10n.lifeEarned)));
+      },
+      onError: (message) {
+        if (!mounted) return;
+        messenger.showSnackBar(SnackBar(content: Text(message)));
+      },
+    );
+
+    if (mounted) setState(() => _isRewardLoading = false);
   }
 
   void _initFromSaved() {
@@ -139,9 +182,17 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   bool get _canStart =>
-      _playerCount >= 2 && _selectedProfiles.every((p) => p != null);
+      _playerCount >= 2 &&
+      _selectedProfiles.every((p) => p != null) &&
+      !_noLives;
 
   bool _navigationInProgress = false;
+
+  @override
+  void dispose() {
+    _livesTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _startGame() async {
     if (_playerCount < 2) return;
@@ -265,11 +316,40 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                   const Spacer(),
                                   const SizedBox(height: AppSpacing.xl),
 
-                                  // ── Bouton démarrer ──────────────────────
-                                  PrimaryButton(
-                                    label: AppLocalizations.of(context)!.lobbyStart,
-                                    onPressed: _canStart ? _startGame : null,
-                                  ),
+                                  // ── Bouton démarrer / regarder pub ───────
+                                  if (_noLives) ...[
+                                    OrangeButton(
+                                      label: _isRewardLoading
+                                          ? AppLocalizations.of(context)!.adLoading
+                                          : AppLocalizations.of(context)!.watchAdButton,
+                                      icon: _isRewardLoading
+                                          ? null
+                                          : Icons.ondemand_video_rounded,
+                                      onPressed: _isRewardLoading ? null : _watchAdForLife,
+                                      isLoading: _isRewardLoading,
+                                      height: AppSpacing.buttonHeightSecondary,
+                                      fontSize: 15,
+                                      letterSpacing: 1.5,
+                                    ),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.sm,
+                                      ),
+                                      child: Text(
+                                        AppLocalizations.of(context)!.noLivesAdHint,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: AppColors.textMuted,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ] else
+                                    PrimaryButton(
+                                      label: AppLocalizations.of(context)!.lobbyStart,
+                                      onPressed: _canStart ? _startGame : null,
+                                    ),
                                   const SizedBox(height: AppSpacing.lg),
 
                                   // ── Mode Pagaille ────────────────────────

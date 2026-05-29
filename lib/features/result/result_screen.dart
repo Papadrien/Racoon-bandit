@@ -536,10 +536,25 @@ class _WinnerAvatar extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: AppShadows.subtleGlow(AppColors.orange),
       ),
-      child: PlayerAvatar(
-        emoji: winner.emoji,
-        color: winner.profileColor,
-        size: size,
+      // Fond blanc forcé sur l'avatar du gagnant : on recrée le cercle
+      // manuellement pour remplacer la couleur de profil par blanc.
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: winner.profileColor,
+            width: size * 0.04,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            winner.emoji,
+            style: TextStyle(fontSize: size * 0.48),
+          ),
+        ),
       ),
     );
   }
@@ -707,10 +722,12 @@ class _StatsCard extends StatelessWidget {
               _StatItem(
                 label: l10n.resultFoodGained,
                 value: '${stats.foodGained}',
+                iconAsset: 'assets/images/icon_food.png',
               ),
               _StatItem(
                 label: l10n.resultFoodStolen,
                 value: '${stats.foodStolen}',
+                iconAsset: 'assets/images/icon_food.png',
               ),
               _StatItem(
                 label: l10n.resultPinceCards,
@@ -731,9 +748,12 @@ class _StatsCard extends StatelessWidget {
 class _StatItem {
   final String label;
   final String value;
+  /// Chemin asset optionnel affiché à côté de la valeur (ex: icon_food.png).
+  final String? iconAsset;
   const _StatItem({
     required this.label,
     required this.value,
+    this.iconAsset,
   });
 }
 
@@ -782,13 +802,27 @@ class _StatChip extends StatelessWidget {
 Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                item.value,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                  color: AppColors.textDark,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    item.value,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  if (item.iconAsset != null) ...[
+                    const SizedBox(width: 4),
+                    Image.asset(
+                      item.iconAsset!,
+                      width: 14,
+                      height: 14,
+                    ),
+                  ],
+                ],
               ),
               Text(
                 item.label,

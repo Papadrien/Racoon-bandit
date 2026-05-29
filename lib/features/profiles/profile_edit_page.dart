@@ -93,6 +93,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
