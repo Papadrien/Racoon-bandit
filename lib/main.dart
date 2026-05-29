@@ -11,5 +11,8 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  imageCache.maximumSize = 200;
+  imageCache.maximumSizeBytes = 150 << 20;
+
   runApp(const RaccoonBanditApp());
 }
