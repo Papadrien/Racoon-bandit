@@ -1068,10 +1068,11 @@ class _AnimatedCardPreview extends StatelessWidget {
         height: 74,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(7),
+          border: Border.all(color: Colors.white, width: 3.0),
           boxShadow: AppShadows.sticker,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(7),
+          borderRadius: BorderRadius.circular(4),
           child: Image.asset(
             assetPath,
             fit: BoxFit.cover,

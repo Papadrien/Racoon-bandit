@@ -1038,12 +1038,10 @@ class _GameScreenState extends State<GameScreen>
                 height: _cardHeight,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(_cardRadius),
-                  border: (!backgroundCard && showFront && _revealedCard != null)
-                      ? Border.all(
-                          color: Colors.white,
-                          width: 7.0,
-                        )
-                      : null,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 7.0,
+                  ),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(_cardRadius - 7.0),
@@ -1088,10 +1086,7 @@ class _GameScreenState extends State<GameScreen>
                         ),
                       // Sticker joueur actuel — visible uniquement sur le dos de la carte à piocher
                       if (!backgroundCard && !showFront && !deckExhausted)
-                        Positioned(
-                          bottom: 10,
-                          left: 0,
-                          right: 0,
+                        Positioned.fill(
                           child: Center(
                             child: ScaleTransition(
                               scale: _pulseScale,
@@ -1112,7 +1107,7 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _buildCurrentPlayerSticker(PlayerState player) {
     final color = player.profileColor;
-    const double size = 44.0;
+    const double size = 48.4;
     return Container(
       width: size + 6,
       height: size + 6,
