@@ -69,9 +69,7 @@ class _GameScreenState extends State<GameScreen>
   late final AnimationController _appearController;
   late final Animation<double> _appearOffset;
   late final Animation<double> _appearOpacity;
-  // Animation pulse sticker joueur actuel
-  late final AnimationController _pulseController;
-  late final Animation<double> _pulseScale;
+
 
   static const Map<CardType, AssetImage> _cardFaceProviders = {
     CardType.raccoon: AssetImage('assets/images/card_front_raccoon.png'),
@@ -124,13 +122,6 @@ class _GameScreenState extends State<GameScreen>
     );
     // Initialiser à 1 (carte visible) — on jouera l'animation à chaque pioche
     _appearController.value = 1.0;
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-    _pulseScale = Tween<double>(begin: 1.0, end: 1.07).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
   }
 
   @override
@@ -140,7 +131,6 @@ class _GameScreenState extends State<GameScreen>
     _flipController.dispose();
     _slideController.dispose();
     _appearController.dispose();
-    _pulseController.dispose();
     // Vide la liste avant dispose pour éviter listeners dangling
     _animationsNotifier.value = [];
     _animationsNotifier.dispose();
