@@ -56,6 +56,8 @@ class _GameScreenState extends State<GameScreen>
   int? _lastResolvedPlayerId;
   // Nom du joueur affiché pendant l'animation (pour ne pas sauter visuellement)
   String? _displayPlayerName;
+  // Joueur affiché sur le sticker de la carte à piocher (ne change qu'après le slide)
+  PlayerState? _deckStickerPlayer;
 
   bool _showingPinceOverlay = false;
   List<PlayerState> _pinceTargets = [];
@@ -101,18 +103,18 @@ class _GameScreenState extends State<GameScreen>
     super.initState();
     _flipController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 420),
     );
     _animationsNotifier = ValueNotifier<List<GameplayOverlayAnimation>>([]);
     _overlayCoordinator = GameplayOverlayCoordinator(_animationsNotifier);
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 275),
+      duration: const Duration(milliseconds: 330),
     );
-    // Animation d'apparition de carte : 180ms, très rapide et premium
+    // Animation d'apparition de carte : 216ms (+20%)
     _appearController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 180),
+      duration: const Duration(milliseconds: 216),
     );
     _appearOffset = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(parent: _appearController, curve: Curves.easeOut),
@@ -188,6 +190,7 @@ class _GameScreenState extends State<GameScreen>
     _navigationInProgress = false;
 
     _displayPlayerName = null;
+    _deckStickerPlayer = null;
     _initialized = true;
     unawaited(WakelockService.enable());
   }
@@ -423,6 +426,8 @@ class _GameScreenState extends State<GameScreen>
     // Capturer le nom avant l'avancée du tour pour l'afficher pendant l'animation
     final String currentPlayerNameSnapshot = _gameState.currentPlayer.name;
     final foodCountBeforeDraw = _gameState.currentPlayer.foodCount;
+    // Capturer le joueur pour le sticker sur la carte (ne changera qu'après le slide)
+    final PlayerState currentPlayerSnapshot = _gameState.currentPlayer;
 
     final result = _gameState.drawCard();
     final card = _gameState.revealedCard;
@@ -430,6 +435,7 @@ class _GameScreenState extends State<GameScreen>
     setState(() {
       _revealedCard = card;
       _displayPlayerName = currentPlayerNameSnapshot;
+      _deckStickerPlayer = currentPlayerSnapshot;
     });
 
     // Précharger agressivement les faces avant avant le flip
@@ -518,7 +524,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Future<void> _finishCardAnimation({int extraDelay = 0}) async {
-    final waitMs = 700 + extraDelay;
+    final waitMs = 840 + (extraDelay * 1.2).round();
     await Future<void>.delayed(Duration(milliseconds: waitMs));
 
     if (!mounted || _disposed) return;
@@ -531,6 +537,7 @@ class _GameScreenState extends State<GameScreen>
       _revealedCard = null;
       _isAnimating = false;
       _displayPlayerName = null;
+      _deckStickerPlayer = null;
     });
 
     _flipController.reset();
@@ -686,7 +693,7 @@ class _GameScreenState extends State<GameScreen>
         return;
       case CardType.banquet:
         _overlayCoordinator.playFoodGain(start: start, end: playerCenter);
-        Future.delayed(const Duration(milliseconds: 120), () {
+        Future.delayed(const Duration(milliseconds: 144), () {
           if (mounted) {
             _overlayCoordinator.playFoodGain(start: start, end: playerCenter);
           }
@@ -792,7 +799,7 @@ class _GameScreenState extends State<GameScreen>
     const double avatarOverlap = 8.0;
 
     // Hauteur de la carte sticker (fixe, indépendante du contenu)
-    final cardInnerHeight = isCompact ? 32.0 : 38.0;
+    final cardInnerHeight = isCompact ? 25.6 : 30.4; // -20%
 
     return SizedBox(
       width: maxWidth,
@@ -882,14 +889,9 @@ class _GameScreenState extends State<GameScreen>
                       children: player.foodCount > 0
                           ? List.generate(
                               player.foodCount.clamp(0, 8),
-                              (_) => Container(
+                              (_) => SizedBox(
                                 width: resourceIconSize,
                                 height: resourceIconSize,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: const EdgeInsets.all(2),
                                 child: Image.asset(
                                   'assets/images/icon_food.png',
                                   fit: BoxFit.contain,
@@ -910,14 +912,9 @@ class _GameScreenState extends State<GameScreen>
                         runSpacing: 3,
                         children: List.generate(
                           player.trashCount.clamp(0, 6),
-                          (_) => Container(
+                          (_) => SizedBox(
                             width: resourceIconSize,
                             height: resourceIconSize,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            padding: const EdgeInsets.all(2),
                             child: Image.asset(
                               'assets/images/icon_trash.png',
                               fit: BoxFit.contain,
@@ -1088,9 +1085,8 @@ class _GameScreenState extends State<GameScreen>
                       if (!backgroundCard && !showFront && !deckExhausted)
                         Positioned.fill(
                           child: Center(
-                            child: ScaleTransition(
-                              scale: _pulseScale,
-                              child: _buildCurrentPlayerSticker(_gameState.currentPlayer),
+                            child: _buildCurrentPlayerSticker(
+                              _deckStickerPlayer ?? _gameState.currentPlayer,
                             ),
                           ),
                         ),
@@ -1107,7 +1103,7 @@ class _GameScreenState extends State<GameScreen>
 
   Widget _buildCurrentPlayerSticker(PlayerState player) {
     final color = player.profileColor;
-    const double size = 48.4;
+    const double size = 62.9; // 48.4 * 1.30
     return Container(
       width: size + 6,
       height: size + 6,

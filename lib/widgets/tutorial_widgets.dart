@@ -128,8 +128,8 @@ class TutorialSlideCard extends StatelessWidget {
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(24),
                       child: SizedBox(
-                        width: compact ? 260 : 320,
-                        height: compact ? 260 : 320,
+                        width: compact ? 180 : 220,
+                        height: compact ? 180 : 220,
                         child: Center(child: slide.iconWidget),
                       ),
                     )
@@ -138,7 +138,7 @@ class TutorialSlideCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(24),
                           child: Image.asset(
                             slide.cardImageAsset!,
-                            height: compact ? 260 : 320,
+                            height: compact ? 180 : 220,
                             fit: BoxFit.cover,
                           ),
                         )
@@ -149,10 +149,10 @@ class TutorialSlideCard extends StatelessWidget {
                         ),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 22),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             decoration: BoxDecoration(
               color: const Color(0xFFFFFBF8),
               borderRadius: BorderRadius.circular(38),
@@ -173,32 +173,33 @@ class TutorialSlideCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: compact ? 34 : 40,
+                    fontSize: compact ? 22 : 26,
                     fontWeight: FontWeight.w900,
                     color: slide.accentColor,
-                    height: 1,
+                    height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Container(
-                  width: 74,
-                  height: 7,
+                  width: 60,
+                  height: 5,
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF7A00),
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 Text(
                   slide.description(context),
                   textAlign: TextAlign.center,
-                  maxLines: 4,
+                  maxLines: 6,
                   overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                   style: TextStyle(
                     color: const Color(0xFF2B2B2B),
-                    fontSize: compact ? 16 : 18,
-                    fontWeight: FontWeight.w700,
-                    height: 1.35,
+                    fontSize: compact ? 13 : 15,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -224,12 +225,12 @@ class _EmojiDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final emojiSize = compact ? 64.0 : 80.0;
+    final emojiSize = compact ? 48.0 : 60.0;
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: Container(
-        width: compact ? 260.0 : 320.0,
-        height: compact ? 260.0 : 320.0,
+        width: compact ? 180.0 : 220.0,
+        height: compact ? 180.0 : 220.0,
         color: accentColor.withValues(alpha: 0.12),
         alignment: Alignment.center,
         child: Text(emoji, style: TextStyle(fontSize: emojiSize)),

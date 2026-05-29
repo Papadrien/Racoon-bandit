@@ -205,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen>
             Positioned(
               left: 0,
               right: 0,
-              bottom: MediaQuery.sizeOf(context).height * 0.10 + AppSpacing.buttonHeight + AppSpacing.lg,
+              bottom: MediaQuery.sizeOf(context).height * 0.20 + AppSpacing.buttonHeight + AppSpacing.lg,
               child: const _HeroImage(),
             ),
 

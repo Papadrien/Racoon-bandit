@@ -151,14 +151,9 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
       final asset = emoji == '__food__'
           ? 'assets/images/icon_food.png'
           : 'assets/images/icon_trash.png';
-      return Container(
+      return SizedBox(
         width: 52,
         height: 52,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-        padding: const EdgeInsets.all(6),
         child: Image.asset(asset, fit: BoxFit.contain),
       );
     }
@@ -327,7 +322,7 @@ class GameplayOverlayCoordinator {
       emoji: '__food__',
       start: fromTarget,
       end: toThief,
-      duration: const Duration(milliseconds: 750),
+      duration: const Duration(milliseconds: 900),
       beginScale: 1.6,
       endScale: 1.0,
     );
@@ -356,14 +351,14 @@ class GameplayOverlayCoordinator {
       );
 
       final emoji = _foodEmojis[i % _foodEmojis.length];
-      final delay = Duration(milliseconds: i * 65);
+      final delay = Duration(milliseconds: i * 78);
 
       _addRaw(GameplayOverlayAnimation(
         id: _counter++,
         emoji: emoji,
         start: particleStart,
         end: cardCenter,
-        duration: const Duration(milliseconds: 950),
+        duration: const Duration(milliseconds: 1140),
         beginScale: 1.8,
         endScale: 0.2,
         type: OverlayAnimationType.raccoonDevour,
@@ -386,11 +381,11 @@ class GameplayOverlayCoordinator {
         emoji: emojis[i % emojis.length],
         start: center,
         end: center, // non utilisé pour fridgeImpact
-        duration: const Duration(milliseconds: 420),
+        duration: const Duration(milliseconds: 504),
         beginScale: 1.6,
         endScale: 0.3,
         type: OverlayAnimationType.fridgeImpact,
-        delay: Duration(milliseconds: i * 18),
+        delay: Duration(milliseconds: i * 22),
         angle: angle,
       ));
     }
@@ -405,7 +400,7 @@ class GameplayOverlayCoordinator {
     required String emoji,
     required Offset origin,
     required Offset target,
-    Duration duration = const Duration(milliseconds: 1200),
+    Duration duration = const Duration(milliseconds: 1440),
   }) {
     _add(
       emoji: emoji,
@@ -423,7 +418,7 @@ class GameplayOverlayCoordinator {
     required String emoji,
     required Offset start,
     required Offset end,
-    Duration duration = const Duration(milliseconds: 650),
+    Duration duration = const Duration(milliseconds: 780),
     double beginScale = 2.2,
     double endScale = 0.7,
     OverlayAnimationType type = OverlayAnimationType.travelTo,
