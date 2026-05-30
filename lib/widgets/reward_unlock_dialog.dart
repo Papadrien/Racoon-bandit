@@ -469,15 +469,17 @@ class _CardDisplay extends StatelessWidget {
           width: 3.0,
         ),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Image.asset(
-        assetPath,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        errorBuilder: (_, _, _) => _CardPlaceholder(
-          reward: reward,
-          accent: accent,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge - 3),
+        child: Image.asset(
+          assetPath,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, _, _) => _CardPlaceholder(
+            reward: reward,
+            accent: accent,
+          ),
         ),
       ),
     );

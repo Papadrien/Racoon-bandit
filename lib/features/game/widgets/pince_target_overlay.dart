@@ -78,11 +78,11 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _fadeAnimation,
-      // Backdrop semi-transparent chaud, cohérent avec le fond beige du jeu
+      // Backdrop semi-transparent couvrant tout l'écran
       child: Material(
         color: AppColors.textDark.withValues(alpha: 0.55),
-        child: SafeArea(
-          child: Center(
+        child: Center(
+          child: SafeArea(
             child: ScaleTransition(
               scale: _scaleAnimation,
               child: _buildCard(context),

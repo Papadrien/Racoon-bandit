@@ -338,12 +338,29 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: AppSpacing.sm,
                                       ),
-                                      child: Text(
-                                        AppLocalizations.of(context)!.noLivesAdHint,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: AppColors.textMuted,
-                                          fontSize: 13,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.md,
+                                          vertical: AppSpacing.sm,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                                          boxShadow: const [
+                                            BoxShadow(
+                                              color: Color(0x14000000),
+                                              blurRadius: 8,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          AppLocalizations.of(context)!.noLivesAdHint,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: AppColors.textMuted,
+                                            fontSize: 13,
+                                          ),
                                         ),
                                       ),
                                     ),
