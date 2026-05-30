@@ -76,12 +76,13 @@ class NavigationGuard {
     BuildContext context,
     String routeName, {
     required bool mounted,
+    required bool navigationInProgress,
     RoutePredicate? predicate,
     Object? arguments,
     String debugTag = 'Nav',
   }) {
-    if (!mounted) {
-      log(debugTag, 'safePushAndClear($routeName) — ignored: not mounted');
+    if (!mounted || navigationInProgress) {
+      log(debugTag, 'safePushAndClear($routeName) — ignored');
       return;
     }
     log(debugTag, 'safePushAndClear → $routeName');

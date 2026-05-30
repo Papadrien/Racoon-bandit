@@ -257,8 +257,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {
         if (kDebugMode && didPop) {
-          // ignore: avoid_print
-          print('[LobbyScreen] back pressed — retour home');
+          debugPrint('[LobbyScreen] back pressed — retour home');
         }
       },
       child: Scaffold(

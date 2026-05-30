@@ -94,8 +94,8 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
   }
 
   Widget _buildCard(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final maxCardHeight = screenHeight * 0.80;
 
     // Responsive horizontal margin : plus serré sur petits écrans
@@ -205,7 +205,7 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
   }
 
   Widget _buildTargetTile(BuildContext context, PlayerState target) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final isNarrow = screenWidth < 360;
 
     // Taille avatar responsive

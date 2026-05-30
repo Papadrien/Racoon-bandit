@@ -44,13 +44,6 @@ enum SoundEffect {
 
   /// Alias legacy → frigo
   trash,
-
-  /// Son de fin de partie (futur)
-  gameOver,
-
-  banquet,
-  babyRaccoon,
-  vacuum,
 }
 
 /// Service audio centralisé. Utiliser [AudioService.instance].
@@ -73,8 +66,8 @@ class AudioService {
     SoundEffect.gainNourriture: 'sounds/gain_nourriture.mp3',
     SoundEffect.pince:         'sounds/bandit.mp3',
     SoundEffect.raccoon:        'sounds/raccoon.mp3',
-    SoundEffect.frigo:          'sounds/fridge_block.mp3',
-    SoundEffect.fridgeBlock:    'sounds/frigo.mp3',
+    SoundEffect.frigo:          'sounds/frigo.mp3',
+    SoundEffect.fridgeBlock:    'sounds/fridge_block.mp3',
     SoundEffect.popupRecompense:'sounds/popup_recompense.mp3',
     SoundEffect.button:         'sounds/button_click.mp3',
 
@@ -83,10 +76,6 @@ class AudioService {
     SoundEffect.cardPlayed:'sounds/gain_nourriture.mp3',
     SoundEffect.steal:     'sounds/raccoon.mp3',
     SoundEffect.trash:     'sounds/frigo.mp3',
-    SoundEffect.gameOver:  'sounds/popup_recompense.mp3',
-    SoundEffect.banquet: 'sounds/gain_nourriture.mp3',
-    SoundEffect.babyRaccoon: 'sounds/raccoon.mp3',
-    SoundEffect.vacuum: 'sounds/bandit.mp3',
   };
 
   /// Sons préchargés au démarrage (sons les plus fréquents en gameplay).
@@ -159,9 +148,6 @@ class AudioService {
   void playFoodSound()    => playSfx(SoundEffect.gainNourriture);
   void playFrigoSound()    => playSfx(SoundEffect.frigo);
   void playFridgeBlockSound() => playSfx(SoundEffect.fridgeBlock);
-  void playBanquetSound() => playSfx(SoundEffect.banquet);
-  void playBabyRaccoonSound() => playSfx(SoundEffect.babyRaccoon);
-  void playVacuumSound() => playSfx(SoundEffect.vacuum);
 
   /// Libère toutes les ressources audio (appel optionnel à la fermeture).
   Future<void> dispose() async {
@@ -171,10 +157,6 @@ class AudioService {
     _preloaded.clear();
     _preloadDone = false;
   }
-
-  /// Réservé pour usage futur (musique d'ambiance).
-  /// Séparer musique / SFX : volume indépendant possible ici.
-  void stopAll() {}
 
   // ── Lecture interne ────────────────────────────────────────────────────────
 

@@ -419,27 +419,36 @@ class _CardPreview extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Image (désaturée si verrouillée)
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
-          child: ColorFiltered(
-            colorFilter: isUnlocked
-                ? const ColorFilter.mode(
-                    Colors.transparent, BlendMode.multiply)
-                : const ColorFilter.matrix([
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0,      0,      0,      0.38, 0,
-                  ]),
-            child: Image.asset(
-              assetPath,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              errorBuilder: (_, a, b) => Container(
+        // Image (désaturée si verrouillée) avec contour blanc
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+            border: Border.all(
+              color: Colors.white,
+              width: 2.5,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMedium - 2),
+            child: ColorFiltered(
+              colorFilter: isUnlocked
+                  ? const ColorFilter.mode(
+                      Colors.transparent, BlendMode.multiply)
+                  : const ColorFilter.matrix([
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0,      0,      0,      0.38, 0,
+                    ]),
+              child: Image.asset(
+                assetPath,
+                fit: BoxFit.cover,
                 width: double.infinity,
-                color: fallbackColor.withValues(alpha: isUnlocked ? 0.25 : 0.10),
+                height: double.infinity,
+                errorBuilder: (_, a, b) => Container(
+                  width: double.infinity,
+                  color: fallbackColor.withValues(alpha: isUnlocked ? 0.25 : 0.10),
+                ),
               ),
             ),
           ),

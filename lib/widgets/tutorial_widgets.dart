@@ -134,12 +134,28 @@ class TutorialSlideCard extends StatelessWidget {
                       ),
                     )
                   : slide.cardImageAsset != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: Image.asset(
-                            slide.cardImageAsset!,
-                            height: compact ? 180 : 220,
-                            fit: BoxFit.cover,
+                      ? Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 3,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x33000000),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(22),
+                            child: Image.asset(
+                              slide.cardImageAsset!,
+                              height: compact ? 180 : 220,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         )
                       : _EmojiDisplay(

@@ -618,7 +618,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   double _playerVerticalBias(int playerIndex) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = MediaQuery.sizeOf(context).height;
     final unit = screenHeight * 0.04;
     final totalPlayers = _gameState.players.length;
 

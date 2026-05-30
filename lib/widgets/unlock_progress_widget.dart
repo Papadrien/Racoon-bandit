@@ -306,6 +306,10 @@ class _CardPreview extends StatelessWidget {
           height: _h,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+            border: Border.all(
+              color: Colors.white,
+              width: 2,
+            ),
             boxShadow: isLocked ? AppShadows.soft : AppShadows.subtleGlow(accent),
           ),
           child: Stack(
@@ -313,7 +317,7 @@ class _CardPreview extends StatelessWidget {
             children: [
               // Image (désaturée si verrouillée)
               ClipRRect(
-                borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSmall - 2),
                 child: ColorFiltered(
                   colorFilter: isLocked
                       ? const ColorFilter.matrix([
@@ -343,7 +347,7 @@ class _CardPreview extends StatelessWidget {
               if (isLocked)
                 ClipRRect(
                   borderRadius:
-                      BorderRadius.circular(AppSpacing.radiusSmall),
+                      BorderRadius.circular(AppSpacing.radiusSmall - 2),
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

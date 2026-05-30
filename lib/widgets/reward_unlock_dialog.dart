@@ -461,8 +461,8 @@ class _CardDisplay extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
         boxShadow: AppShadows.accentGlowStrong(accent),
         border: Border.all(
-          color: accent.withValues(alpha: 0.55),
-          width: 2.5,
+          color: Colors.white,
+          width: 3,
         ),
       ),
       clipBehavior: Clip.antiAlias,
