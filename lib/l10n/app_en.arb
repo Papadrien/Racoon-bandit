@@ -112,7 +112,7 @@
   "@chaosSlide1Title": {
     "description": "Slide 1 title chaos tutorial"
   },
-  "chaosSlide1Desc": "Special cards are added to the deck.\nMore surprises, more chaos!",
+  "chaosSlide1Desc": "Special cards are added to the game. More surprises, more chaos!",
   "@chaosSlide1Desc": {
     "description": "Slide 1 description chaos tutorial"
   },
@@ -120,7 +120,7 @@
   "@chaosSlide2Title": {
     "description": "Slide 2 title chaos tutorial"
   },
-  "chaosSlide2Desc": "Draw this card? You gain 2 food at once.\nNice draw!",
+  "chaosSlide2Desc": "You gain 2 food at once!",
   "@chaosSlide2Desc": {
     "description": "Slide 2 description chaos tutorial"
   },
@@ -128,7 +128,7 @@
   "@chaosSlide3Title": {
     "description": "Slide 3 title chaos tutorial"
   },
-  "chaosSlide3Desc": "A hungry little raccoon steals 2 food.\nLess dangerous than its big brother, but it still hurts.",
+  "chaosSlide3Desc": "A hungry little raccoon steals 2 food.",
   "@chaosSlide3Desc": {
     "description": "Slide 3 description chaos tutorial"
   },
@@ -136,17 +136,9 @@
   "@chaosSlide4Title": {
     "description": "Slide 4 title chaos tutorial"
   },
-  "chaosSlide4Desc": "This card steals 1 food from EVERY player.\nAbsolute chaos!",
+  "chaosSlide4Desc": "Steals 1 food from everyone!",
   "@chaosSlide4Desc": {
     "description": "Slide 4 description chaos tutorial"
-  },
-  "chaosSlide5Title": "Ready for chaos?",
-  "@chaosSlide5Title": {
-    "description": "Slide 5 title chaos tutorial"
-  },
-  "chaosSlide5Desc": "This mode is more unpredictable.\nFun for the family, surprising every game!",
-  "@chaosSlide5Desc": {
-    "description": "Slide 5 description chaos tutorial"
   },
   "gameQuitDialogTitle": "Quit the game?",
   "@gameQuitDialogTitle": {

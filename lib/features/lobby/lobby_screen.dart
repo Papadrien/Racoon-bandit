@@ -178,7 +178,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   Future<void> _openChaosTutorial() async {
     AudioService.instance.playButtonSound();
-    await ChaosTutorial.show(context);
+    final activated = await ChaosTutorial.show(context);
+    if (activated && mounted) {
+      setState(() => _chaosModeEnabled = true);
+    }
   }
 
   bool get _canStart =>

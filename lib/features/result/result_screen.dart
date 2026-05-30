@@ -9,8 +9,6 @@ import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
-import '../../core/services/life_system_service.dart';
-import '../../core/services/rewarded_ad_service.dart';
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
@@ -37,8 +35,6 @@ class _ResultScreenState extends State<ResultScreen>
   late final AnimationController _starsCtrl;
 
   bool _navigationInProgress = false;
-  bool _isRewardLoading = false;
-  final LifeSystemService _lifeSystemService = LifeSystemService();
 
   static const String _tag = 'ResultScreen';
 
@@ -65,12 +61,6 @@ class _ResultScreenState extends State<ResultScreen>
     )..repeat();
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _showRewardPopups());
-    _lifeSystemService.load().then((_) {
-      if (_lifeSystemService.currentLives <= 0) {
-        RewardedAdService.instance.preloadAd();
-      }
-      if (mounted) setState(() {});
-    });
   }
 
   @override
@@ -185,20 +175,6 @@ class _ResultScreenState extends State<ResultScreen>
 
                           // ── Actions ───────────────────────────────────────
                           const SizedBox(height: AppSpacing.sm),
-                          if (_lifeSystemService.currentLives <= 0) ...[
-                            OrangeButton(
-                              label: _isRewardLoading
-                                  ? AppLocalizations.of(context)!.adLoading
-                                  : AppLocalizations.of(context)!.watchAdButton,
-                              icon: _isRewardLoading ? null : Icons.ondemand_video_rounded,
-                              onPressed: _isRewardLoading ? null : _watchAdForLife,
-                              isLoading: _isRewardLoading,
-                              height: AppSpacing.buttonHeightSecondary,
-                              fontSize: 15,
-                              letterSpacing: 1.5,
-                            ),
-                            const SizedBox(height: AppSpacing.sm),
-                          ],
                           PrimaryButton(
                             label: l10n.resultPlayAgain,
                             onPressed: _goLobby,
@@ -232,29 +208,6 @@ class _ResultScreenState extends State<ResultScreen>
       AppRoutes.lobby,
       (r) => r.settings.name == AppRoutes.home,
     );
-  }
-
-  Future<void> _watchAdForLife() async {
-    if (_isRewardLoading || !mounted) return;
-    setState(() => _isRewardLoading = true);
-
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = AppLocalizations.of(context)!;
-
-    await RewardedAdService.instance.showRewardedLifeAd(
-      onRewardEarned: () async {
-        await _lifeSystemService.restoreLife();
-        if (!mounted) return;
-        setState(() {});
-        messenger.showSnackBar(SnackBar(content: Text(l10n.lifeEarned)));
-      },
-      onError: (message) {
-        if (!mounted) return;
-        messenger.showSnackBar(SnackBar(content: Text(message)));
-      },
-    );
-
-    if (mounted) setState(() => _isRewardLoading = false);
   }
 
   void _goHome() {

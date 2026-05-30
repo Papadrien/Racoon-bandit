@@ -46,13 +46,6 @@ class ChaosTutorialSlides {
           cardColor: const Color(0xFF1A0D2E),
           accentColor: const Color(0xFF7C4DFF),
         ),
-        OnboardingSlide(
-          emoji: '🎲',
-          title: (_) => l10n.chaosSlide5Title,
-          description: (_) => l10n.chaosSlide5Desc,
-          cardColor: const Color(0xFF1A1A2E),
-          accentColor: const Color(0xFFFF9800),
-        ),
       ];
 }
 
@@ -63,14 +56,16 @@ class ChaosTutorial extends StatefulWidget {
   const ChaosTutorial({super.key});
 
   /// Ouvre le tutoriel dans une bottom sheet plein écran.
-  static Future<void> show(BuildContext context) {
-    return showModalBottomSheet<void>(
+  /// Retourne `true` si l'utilisateur a cliqué "C'est parti !" (dernière slide).
+  static Future<bool> show(BuildContext context) async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       enableDrag: false,
       builder: (_) => const ChaosTutorial(),
     );
+    return result ?? false;
   }
 
   @override
@@ -95,7 +90,7 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
     HapticService.trigger(HapticType.selection);
     AudioService.instance.playSfx(SoundEffect.button);
     if (_isLast) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } else {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 420),

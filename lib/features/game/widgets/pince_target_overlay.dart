@@ -160,10 +160,12 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
               shape: BoxShape.circle,
               boxShadow: AppShadows.floating,
             ),
-            child: const Center(
-              child: Text(
-                '🥷',
-                style: TextStyle(fontSize: 30),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/card_front_pince.png',
+                fit: BoxFit.cover,
+                width: 60,
+                height: 60,
               ),
             ),
           ),

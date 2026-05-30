@@ -112,7 +112,7 @@
   "@chaosSlide1Title": {
     "description": "Titre slide 1 tutoriel chaos"
   },
-  "chaosSlide1Desc": "Des cartes spéciales s'ajoutent au paquet.\nPlus de surprises, plus de chaos !",
+  "chaosSlide1Desc": "Des cartes spéciales s'ajoutent au jeu. Plus de surprises, plus de pagaille !",
   "@chaosSlide1Desc": {
     "description": "Description slide 1 tutoriel chaos"
   },
@@ -120,7 +120,7 @@
   "@chaosSlide2Title": {
     "description": "Titre slide 2 tutoriel chaos"
   },
-  "chaosSlide2Desc": "Tu pioches cette carte ? Tu gagnes 2 nourritures d'un coup.\nBonne pioche !",
+  "chaosSlide2Desc": "Tu gagnes 2 nourritures d'un coup !",
   "@chaosSlide2Desc": {
     "description": "Description slide 2 tutoriel chaos"
   },
@@ -128,7 +128,7 @@
   "@chaosSlide3Title": {
     "description": "Titre slide 3 tutoriel chaos"
   },
-  "chaosSlide3Desc": "Un petit raton affamé te vole 2 nourritures.\nMoins dangereux que son grand frère, mais ça fait mal.",
+  "chaosSlide3Desc": "Un petit raton affamé te vole 2 nourritures.",
   "@chaosSlide3Desc": {
     "description": "Description slide 3 tutoriel chaos"
   },
@@ -136,17 +136,9 @@
   "@chaosSlide4Title": {
     "description": "Titre slide 4 tutoriel chaos"
   },
-  "chaosSlide4Desc": "Cette carte vole 1 nourriture à CHAQUE joueur.\nLe chaos absolu !",
+  "chaosSlide4Desc": "Vole 1 nourriture à tout le monde !",
   "@chaosSlide4Desc": {
     "description": "Description slide 4 tutoriel chaos"
-  },
-  "chaosSlide5Title": "Prêt pour le chaos ?",
-  "@chaosSlide5Title": {
-    "description": "Titre slide 5 tutoriel chaos"
-  },
-  "chaosSlide5Desc": "Ce mode est plus imprévisible.\nRigolo en famille, surprenant à chaque partie !",
-  "@chaosSlide5Desc": {
-    "description": "Description slide 5 tutoriel chaos"
   },
   "gameQuitDialogTitle": "Quitter la partie ?",
   "@gameQuitDialogTitle": {

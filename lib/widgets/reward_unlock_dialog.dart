@@ -465,8 +465,8 @@ class _CardDisplay extends StatelessWidget {
           ...AppShadows.sticker,
         ],
         border: Border.all(
-          color: accent.withValues(alpha: 0.35),
-          width: 2.0,
+          color: Colors.white,
+          width: 3.0,
         ),
       ),
       clipBehavior: Clip.antiAlias,
