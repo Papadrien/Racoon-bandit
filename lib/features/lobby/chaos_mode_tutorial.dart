@@ -21,6 +21,8 @@ class ChaosTutorialSlides {
         ),
         OnboardingSlide(
           emoji: '🍎',
+          cardImageAsset: 'assets/images/icon_food.png',
+          cardFrontColor: const Color(0xFF7CB87A),
           title: (_) => l10n.chaosSlide2Title,
           description: (_) => l10n.chaosSlide2Desc,
           cardColor: const Color(0xFF1B3A1B),
@@ -28,6 +30,8 @@ class ChaosTutorialSlides {
         ),
         OnboardingSlide(
           emoji: '🦝',
+          cardImageAsset: 'assets/images/card_front_raccoon.png',
+          cardFrontColor: const Color(0xFFFFAB40),
           title: (_) => l10n.chaosSlide3Title,
           description: (_) => l10n.chaosSlide3Desc,
           cardColor: const Color(0xFF37474F),
@@ -35,6 +39,8 @@ class ChaosTutorialSlides {
         ),
         OnboardingSlide(
           emoji: '🌀',
+          cardImageAsset: 'assets/images/card_front_banquet.png',
+          cardFrontColor: const Color(0xFFEF5350),
           title: (_) => l10n.chaosSlide4Title,
           description: (_) => l10n.chaosSlide4Desc,
           cardColor: const Color(0xFF1A0D2E),
@@ -42,6 +48,8 @@ class ChaosTutorialSlides {
         ),
         OnboardingSlide(
           emoji: '🎲',
+          cardImageAsset: 'assets/images/card_front_baby_raccoon.png',
+          cardFrontColor: const Color(0xFFBA68C8),
           title: (_) => l10n.chaosSlide5Title,
           description: (_) => l10n.chaosSlide5Desc,
           cardColor: const Color(0xFF1A1A2E),

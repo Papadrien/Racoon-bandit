@@ -22,6 +22,7 @@ import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
+import '../../widgets/card_front_widget.dart';
 import '../../widgets/player_avatar.dart';
 import 'widgets/pince_target_overlay.dart';
 import 'widgets/gameplay_overlay_animation_manager.dart';
@@ -69,15 +70,6 @@ class _GameScreenState extends State<GameScreen>
   late final AnimationController _appearController;
   late final Animation<double> _appearOffset;
   late final Animation<double> _appearOpacity;
-
-
-  static const Map<CardType, AssetImage> _cardFaceProviders = {
-    CardType.raccoon: AssetImage('assets/images/card_front_raccoon.png'),
-    CardType.trash: AssetImage('assets/images/card_front_trash.png'),
-    CardType.food: AssetImage('assets/images/card_front_food.png'),
-    CardType.pince: AssetImage('assets/images/card_front_pince.png'),
-    CardType.vacuum: AssetImage('assets/images/card_front_vacuum.png'),
-  };
 
   bool _resultScreenOpened = false;
 
@@ -140,12 +132,10 @@ class _GameScreenState extends State<GameScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Précache les faces des cartes pour éviter le délai lors du retournement.
-    precacheImage(const AssetImage('assets/images/card_front_raccoon.png'), context);
-    precacheImage(const AssetImage('assets/images/card_front_trash.png'), context);
-    precacheImage(const AssetImage('assets/images/card_front_food.png'), context);
-    precacheImage(const AssetImage('assets/images/card_front_pince.png'), context);
-    precacheImage(const AssetImage('assets/images/card_front_vacuum.png'), context);
+    // Précache les icônes sticker des faces de cartes.
+    for (final type in CardType.values) {
+      precacheImage(AssetImage(AppAssets.cardFrontIcon(type)), context);
+    }
     if (!_initialized) {
       _restoreOrInitGame();
     }
@@ -428,10 +418,10 @@ class _GameScreenState extends State<GameScreen>
       _deckStickerPlayer = currentPlayerSnapshot;
     });
 
-    // Précharger agressivement les faces avant avant le flip
-    // afin d'éviter tout délai visible pendant la rotation.
-    if (card != null && _cardFaceProviders.containsKey(card.type)) {
-      await precacheImage(_cardFaceProviders[card.type]!, context);
+    // Précharger l'icône avant le flip afin d'éviter tout délai visible.
+
+    if (card != null) {
+      await precacheImage(AssetImage(AppAssets.cardFrontIcon(card.type)), context);
     }
 
     await _flipController.forward(from: 0);
@@ -1038,39 +1028,11 @@ class _GameScreenState extends State<GameScreen>
                       Positioned.fill(
                         child: isBack || backgroundCard
                             ? _buildCardBackWidget()
-                            : (showFront && _revealedCard?.type == CardType.raccoon)
-                                ? Image(image: _cardFaceProviders[CardType.raccoon]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
-                                : (showFront && _revealedCard?.type == CardType.trash)
-                                    ? Image(image: _cardFaceProviders[CardType.trash]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
-                                    : (showFront && _revealedCard?.type == CardType.food)
-                                        ? Image(image: _cardFaceProviders[CardType.food]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
-                                        : ((showFront && _revealedCard?.type == CardType.pince) || (showFront && _revealedCard?.type == CardType.vacuum))
-                                            ? Image(image: _cardFaceProviders[_revealedCard!.type]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
-                                            : ColoredBox(
-                                                color: _revealedCard?.color ?? Colors.deepPurple,
-                                              ),
+                            : (showFront && _revealedCard != null)
+                                ? CardFrontWidget(cardType: _revealedCard!.type)
+                                : const ColoredBox(color: Colors.deepPurple),
                       ),
-                      if (!backgroundCard &&
-                          !(showFront && (_revealedCard?.type == CardType.raccoon || _revealedCard?.type == CardType.trash || _revealedCard?.type == CardType.food || _revealedCard?.type == CardType.pince || _revealedCard?.type == CardType.vacuum)))
-                        Center(
-                          child: Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..rotateY(showFront ? math.pi : 0),
-                            child: FittedBox(
-                              child: Text(
-                                deckExhausted
-                                    ? ''
-                                    : showFront && _revealedCard != null
-                                        ? _revealedCard!.emoji
-                                        : '',
-                                style: TextStyle(
-                                  fontSize: (_cardHeight * 0.26).clamp(42.0, 68.0),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                      // Emoji overlay supprimé — le CardFrontWidget remplace l'affichage
                       // Sticker joueur actuel — visible uniquement sur le dos de la carte à piocher
                       if (!backgroundCard && !showFront && !deckExhausted)
                         Positioned.fill(

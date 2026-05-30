@@ -40,6 +40,8 @@ flutter:
     - assets/images/card_front_food.png
     - assets/images/card_front_pince.png
     - assets/images/card_front_vacuum.png
+    - assets/images/card_front_banquet.png
+    - assets/images/card_front_baby_raccoon.png
     - assets/images/icon_trash.png
     - assets/images/icon_food.png
     - assets/images/sticker_pine_cone.png

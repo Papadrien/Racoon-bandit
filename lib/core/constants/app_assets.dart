@@ -1,7 +1,40 @@
 import 'package:flutter/material.dart';
 
+import '../models/card_type.dart';
+
 class AppAssets {
   AppAssets._();
+
+  // ── Faces avant de cartes ────────────────────────────────────────────────
+  static const cardFrontFood       = 'assets/images/icon_food.png';
+  static const cardFrontTrash      = 'assets/images/icon_trash.png';
+  static const cardFrontRaccoon    = 'assets/images/card_front_raccoon.png';
+  static const cardFrontPince      = 'assets/images/card_front_pince.png';
+  static const cardFrontVacuum     = 'assets/images/card_front_vacuum.png';
+  static const cardFrontBanquet    = 'assets/images/card_front_banquet.png';
+  static const cardFrontBabyRaccoon = 'assets/images/card_front_baby_raccoon.png';
+
+  /// Chemin de l'icône sticker pour une face avant de carte.
+  static String cardFrontIcon(CardType type) => switch (type) {
+    CardType.food        => cardFrontFood,
+    CardType.trash       => cardFrontTrash,
+    CardType.raccoon     => cardFrontRaccoon,
+    CardType.pince       => cardFrontPince,
+    CardType.vacuum      => cardFrontVacuum,
+    CardType.banquet     => cardFrontBanquet,
+    CardType.babyRaccoon => cardFrontBabyRaccoon,
+  };
+
+  /// Couleur de fond unique pour chaque face avant de carte.
+  static Color cardFrontColor(CardType type) => switch (type) {
+    CardType.food        => const Color(0xFF7CB87A),
+    CardType.trash       => const Color(0xFF78909C),
+    CardType.raccoon     => const Color(0xFFFFAB40),
+    CardType.pince       => const Color(0xFF7C4DFF),
+    CardType.vacuum      => const Color(0xFF29B6F6),
+    CardType.banquet     => const Color(0xFFEF5350),
+    CardType.babyRaccoon => const Color(0xFFBA68C8),
+  };
 
   // ── Dos de cartes (assets définitifs) ───────────────────────────────────
   static const cardBackPurple = 'assets/images/cards/card_back_purple.png';

@@ -135,7 +135,10 @@ class TutorialSlideCard extends StatelessWidget {
                     )
                   : slide.cardImageAsset != null
                       ? Container(
+                          width: compact ? 180 : 220,
+                          height: compact ? 180 : 220,
                           decoration: BoxDecoration(
+                            color: slide.cardFrontColor ?? const Color(0xFF78909C),
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
                               color: Colors.white,
@@ -151,10 +154,13 @@ class TutorialSlideCard extends StatelessWidget {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(22),
-                            child: Image.asset(
-                              slide.cardImageAsset!,
-                              height: compact ? 180 : 220,
-                              fit: BoxFit.cover,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Image.asset(
+                                slide.cardImageAsset!,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.high,
+                              ),
                             ),
                           ),
                         )

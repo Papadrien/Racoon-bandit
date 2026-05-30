@@ -16,15 +16,19 @@ class OnboardingSlide {
     required this.cardColor,
     this.accentColor = const Color(0xFF7C4DFF),
     this.cardImageAsset,
+    this.cardFrontColor,
     this.iconWidget,
   });
 
   /// Emoji illustrant la slide (fallback si pas d'image).
   final String emoji;
 
-  /// Chemin asset de l'image de la face avant de la carte (optionnel).
-  /// Si renseigné, remplace l'emoji dans l'affichage onboarding.
+  /// Chemin asset de l'icône sticker (optionnel).
+  /// Si renseigné avec [cardFrontColor], affiche fond coloré + sticker centré.
   final String? cardImageAsset;
+
+  /// Couleur de fond pour le mode sticker (utilisé avec [cardImageAsset]).
+  final Color? cardFrontColor;
 
   /// Widget personnalisé à afficher dans la card (priorité sur image et emoji).
   final Widget? iconWidget;
@@ -51,7 +55,8 @@ class OnboardingSlides {
   static final List<OnboardingSlide> all = [
     OnboardingSlide(
       emoji: '🍎',
-      cardImageAsset: 'assets/images/card_front_food.png',
+      cardImageAsset: 'assets/images/icon_food.png',
+      cardFrontColor: const Color(0xFF7CB87A),
       title: (context) => AppLocalizations.of(context)!.onboardingFoodTitle,
       description: (context) => AppLocalizations.of(context)!.onboardingFoodDesc,
       cardColor: const Color(0xFF1B5E20),
@@ -60,6 +65,7 @@ class OnboardingSlides {
     OnboardingSlide(
       emoji: '🥷',
       cardImageAsset: 'assets/images/card_front_pince.png',
+      cardFrontColor: const Color(0xFF7C4DFF),
       title: (context) => AppLocalizations.of(context)!.onboardingPinceTitle,
       description: (context) => AppLocalizations.of(context)!.onboardingPinceDesc,
       cardColor: const Color(0xFF1A237E),
@@ -68,6 +74,7 @@ class OnboardingSlides {
     OnboardingSlide(
       emoji: '🦝',
       cardImageAsset: 'assets/images/card_front_raccoon.png',
+      cardFrontColor: const Color(0xFFFFAB40),
       title: (context) => AppLocalizations.of(context)!.onboardingRaccoonTitle,
       description: (context) => AppLocalizations.of(context)!.onboardingRaccoonDesc,
       cardColor: const Color(0xFF37474F),
@@ -75,7 +82,8 @@ class OnboardingSlides {
     ),
     OnboardingSlide(
       emoji: '🧊',
-      cardImageAsset: 'assets/images/card_front_trash.png',
+      cardImageAsset: 'assets/images/icon_trash.png',
+      cardFrontColor: const Color(0xFF78909C),
       title: (context) => AppLocalizations.of(context)!.onboardingTrashTitle,
       description: (context) => AppLocalizations.of(context)!.onboardingTrashDesc,
       cardColor: const Color(0xFF0D47A1),
