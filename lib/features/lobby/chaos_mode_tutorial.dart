@@ -48,8 +48,6 @@ class ChaosTutorialSlides {
         ),
         OnboardingSlide(
           emoji: '🎲',
-          cardImageAsset: 'assets/images/card_front_baby_raccoon.png',
-          cardFrontColor: const Color(0xFFBA68C8),
           title: (_) => l10n.chaosSlide5Title,
           description: (_) => l10n.chaosSlide5Desc,
           cardColor: const Color(0xFF1A1A2E),

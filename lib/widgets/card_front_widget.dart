@@ -12,6 +12,7 @@ class CardFrontWidget extends StatelessWidget {
     super.key,
     required this.cardType,
     this.borderRadius,
+    this.flipHorizontal = false,
   });
 
   final CardType cardType;
@@ -19,10 +20,24 @@ class CardFrontWidget extends StatelessWidget {
   /// BorderRadius appliqué au fond coloré (optionnel, sinon zéro).
   final BorderRadius? borderRadius;
 
+  /// Si true, applique un miroir horizontal à l'icône sticker.
+  final bool flipHorizontal;
+
   @override
   Widget build(BuildContext context) {
     final color = AppAssets.cardFrontColor(cardType);
     final icon  = AppAssets.cardFrontIcon(cardType);
+
+    Widget image = Image.asset(
+      icon,
+      fit: BoxFit.contain,
+      gaplessPlayback: true,
+      filterQuality: FilterQuality.high,
+    );
+
+    if (flipHorizontal) {
+      image = Transform.scale(scaleX: -1, child: image);
+    }
 
     return ClipRRect(
       borderRadius: borderRadius ?? BorderRadius.zero,
@@ -31,12 +46,7 @@ class CardFrontWidget extends StatelessWidget {
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Image.asset(
-              icon,
-              fit: BoxFit.contain,
-              gaplessPlayback: true,
-              filterQuality: FilterQuality.high,
-            ),
+            child: image,
           ),
         ),
       ),

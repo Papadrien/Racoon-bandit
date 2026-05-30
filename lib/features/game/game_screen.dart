@@ -1029,7 +1029,7 @@ class _GameScreenState extends State<GameScreen>
                         child: isBack || backgroundCard
                             ? _buildCardBackWidget()
                             : (showFront && _revealedCard != null)
-                                ? CardFrontWidget(cardType: _revealedCard!.type)
+                                ? CardFrontWidget(cardType: _revealedCard!.type, flipHorizontal: true)
                                 : const ColoredBox(color: Colors.deepPurple),
                       ),
                       // Emoji overlay supprimé — le CardFrontWidget remplace l'affichage
