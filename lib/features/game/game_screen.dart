@@ -736,15 +736,15 @@ class _GameScreenState extends State<GameScreen>
         return;
       case CardType.banquet:
         HapticService.trigger(HapticType.medium);
-        AudioService.instance.playBanquetSound();
+        AudioService.instance.playSfx(SoundEffect.gainNourriture);
         return;
       case CardType.babyRaccoon:
         HapticService.trigger(HapticType.medium);
-        AudioService.instance.playBabyRaccoonSound();
+        AudioService.instance.playSfx(SoundEffect.raccoon);
         return;
       case CardType.vacuum:
         HapticService.trigger(HapticType.heavy);
-        AudioService.instance.playVacuumSound();
+        AudioService.instance.playSfx(SoundEffect.pince);
         return;
     }
   }

@@ -40,7 +40,7 @@ class _RaccoonBanditAppState extends State<RaccoonBanditApp>
     // (évite sons bloqués ou erreurs audio système)
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
-      AudioService.instance.stopAll();
+      // AudioService gère le cycle via dispose() à la fermeture définitive
     }
   }
 
