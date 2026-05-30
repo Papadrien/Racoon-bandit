@@ -9,7 +9,7 @@ class LivesIndicator extends StatelessWidget {
   final int lives;
   final Duration remainingDuration;
 
-  static const int _maxLives = 3;
+  static const int _maxLives = 1;
 
   const LivesIndicator({
     super.key,

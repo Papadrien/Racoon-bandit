@@ -62,6 +62,13 @@ class _GameScreenState extends State<GameScreen>
 
   bool _showingPinceOverlay = false;
   List<PlayerState> _pinceTargets = [];
+
+  /// Snapshot des stocks (nourriture + poubelles) capturés avant drawCard/resolve.
+  /// Utilisés pour afficher les anciennes valeurs pendant les particules,
+  /// jusqu'au début du slide de retrait de la carte.
+  Map<int, int> _snapshotFoodCounts = {};
+  Map<int, int> _snapshotTrashCounts = {};
+  bool _useStockSnapshot = false;
   bool _quitDialogOpen = false;
 
   late final AnimationController _flipController;
@@ -161,6 +168,9 @@ class _GameScreenState extends State<GameScreen>
     _isAnimating = false;
     _showingPinceOverlay = false;
     _pinceTargets = [];
+    _snapshotFoodCounts = {};
+    _snapshotTrashCounts = {};
+    _useStockSnapshot = false;
     _pendingPinceCallback = null;
     _revealedCard = null;
     _effectText = '';
@@ -409,6 +419,14 @@ class _GameScreenState extends State<GameScreen>
     // Capturer le joueur pour le sticker sur la carte (ne changera qu'après le slide)
     final PlayerState currentPlayerSnapshot = _gameState.currentPlayer;
 
+    // Snapshot des stocks avant l'effet — affichage figé pendant les particules.
+    final Map<int, int> foodSnapshot = {
+      for (final p in _gameState.players) p.id: p.foodCount,
+    };
+    final Map<int, int> trashSnapshot = {
+      for (final p in _gameState.players) p.id: p.trashCount,
+    };
+
     final result = _gameState.drawCard();
     final card = _gameState.revealedCard;
 
@@ -430,6 +448,18 @@ class _GameScreenState extends State<GameScreen>
     if (result.needsTargetSelection) {
       await _handleTargetSelection(card, result.pendingTargetCardType ?? CardType.pince);
       return;
+    }
+
+    // Activer le snapshot pour les cas de gain/vol (pas raccoon-poubelle cassée,
+    // pas raccoon normal, pas bébé raton).
+    final bool shouldFreezeStocks = _shouldFreezeStocksForCard(card, result);
+    if (shouldFreezeStocks && !mounted) return;
+    if (shouldFreezeStocks) {
+      setState(() {
+        _snapshotFoodCounts = foodSnapshot;
+        _snapshotTrashCounts = trashSnapshot;
+        _useStockSnapshot = true;
+      });
     }
 
     _playOverlayAnimations(card, result, foodCountBeforeDraw: foodCountBeforeDraw);
@@ -465,6 +495,14 @@ class _GameScreenState extends State<GameScreen>
 
     if (!mounted || _disposed) return;
 
+    // Snapshot avant résolution pour les cas pince/aspiro avec sélection.
+    final Map<int, int> foodSnapshot = {
+      for (final p in _gameState.players) p.id: p.foodCount,
+    };
+    final Map<int, int> trashSnapshot = {
+      for (final p in _gameState.players) p.id: p.trashCount,
+    };
+
     final resolution = targetCardType == CardType.pince
         ? _gameState.resolvePince(target)
         : _gameState.resolveTargetedSpecial(targetCardType, target);
@@ -474,6 +512,12 @@ class _GameScreenState extends State<GameScreen>
       _pinceTargets = [];
       _pendingPinceCallback = null;
       _effectText = resolution.message;
+      // Activer le snapshot uniquement si un vol effectif a eu lieu.
+      if (resolution.foodStolen) {
+        _snapshotFoodCounts = foodSnapshot;
+        _snapshotTrashCounts = trashSnapshot;
+        _useStockSnapshot = true;
+      }
     });
 
     // Son bandit joué uniquement en cas de vol effectif
@@ -487,6 +531,27 @@ class _GameScreenState extends State<GameScreen>
     );
 
     await _finishCardAnimation();
+  }
+
+  /// Détermine si on doit figer les stocks pendant les particules.
+  /// Retourne true pour : gain nourriture, gain poubelle, vol pince/aspiro auto.
+  /// Retourne false pour : poubelle cassée par raccoon, vol par raccoon/bébé raton.
+  bool _shouldFreezeStocksForCard(GameCard? card, CardResolution result) {
+    if (card == null) return false;
+    switch (card.type) {
+      case CardType.food:
+      case CardType.trash:
+      case CardType.banquet:
+        return true;
+      case CardType.vacuum:
+        return result.foodStolen;
+      case CardType.pince:
+        // Pince auto (1 cible, pas de sélection) avec vol effectif.
+        return !result.needsTargetSelection && result.foodStolen;
+      case CardType.raccoon:
+      case CardType.babyRaccoon:
+        return false;
+    }
   }
 
   void _playPinceStealAnimation({
@@ -508,6 +573,16 @@ class _GameScreenState extends State<GameScreen>
     await Future<void>.delayed(Duration(milliseconds: waitMs));
 
     if (!mounted || _disposed) return;
+
+    // Libérer le snapshot juste avant le slide : les stocks réels s'affichent
+    // pendant que la carte quitte l'écran.
+    if (_useStockSnapshot) {
+      setState(() {
+        _useStockSnapshot = false;
+        _snapshotFoodCounts = {};
+        _snapshotTrashCounts = {};
+      });
+    }
 
     await _slideController.forward(from: 0);
 
@@ -765,6 +840,14 @@ class _GameScreenState extends State<GameScreen>
     _foodZoneKeys.putIfAbsent(player.id, GlobalKey.new);
     _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
 
+    // Utiliser les snapshots pendant les particules pour les cas concernés.
+    final int displayFoodCount = _useStockSnapshot
+        ? (_snapshotFoodCounts[player.id] ?? player.foodCount)
+        : player.foodCount;
+    final int displayTrashCount = _useStockSnapshot
+        ? (_snapshotTrashCounts[player.id] ?? player.trashCount)
+        : player.trashCount;
+
     final isCompact = maxWidth < 115;
     final avatarSize = isCompact ? 36.0 : 45.6;
     final avatarRingSize = avatarSize + 6.0;
@@ -866,9 +949,9 @@ class _GameScreenState extends State<GameScreen>
                       alignment: WrapAlignment.center,
                       spacing: 3,
                       runSpacing: 3,
-                      children: player.foodCount > 0
+                      children: displayFoodCount > 0
                           ? List.generate(
-                              player.foodCount.clamp(0, 8),
+                              displayFoodCount.clamp(0, 8),
                               (_) => SizedBox(
                                 width: resourceIconSize,
                                 height: resourceIconSize,
@@ -881,7 +964,7 @@ class _GameScreenState extends State<GameScreen>
                           : const [],
                     ),
                   ),
-                  if (player.trashCount > 0) ...[
+                  if (displayTrashCount > 0) ...[
                     const SizedBox(height: 2),
                     SizedBox(
                       key: _fridgeZoneKeys[player.id],
@@ -891,7 +974,7 @@ class _GameScreenState extends State<GameScreen>
                         spacing: 3,
                         runSpacing: 3,
                         children: List.generate(
-                          player.trashCount.clamp(0, 6),
+                          displayTrashCount.clamp(0, 6),
                           (_) => SizedBox(
                             width: resourceIconSize,
                             height: resourceIconSize,

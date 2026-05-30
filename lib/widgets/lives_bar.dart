@@ -14,7 +14,7 @@ class LivesBar extends StatelessWidget {
   final int lives;
   final VoidCallback? onAdBonus;
 
-  static const int maxLives = 3;
+  static const int maxLives = 1;
 
   const LivesBar({
     super.key,
