@@ -430,10 +430,19 @@ class _GameScreenState extends State<GameScreen>
     final result = _gameState.drawCard();
     final card = _gameState.revealedCard;
 
+    // Activer le snapshot immédiatement (avant le flip) pour les cas de gain/vol,
+    // afin d'éviter que les stocks réels s'affichent brièvement avant les particules.
+    final bool shouldFreezeStocks = _shouldFreezeStocksForCard(card, result);
+
     setState(() {
       _revealedCard = card;
       _displayPlayerName = currentPlayerNameSnapshot;
       _deckStickerPlayer = currentPlayerSnapshot;
+      if (shouldFreezeStocks) {
+        _snapshotFoodCounts = foodSnapshot;
+        _snapshotTrashCounts = trashSnapshot;
+        _useStockSnapshot = true;
+      }
     });
 
     // Précharger l'icône avant le flip afin d'éviter tout délai visible.
@@ -448,18 +457,6 @@ class _GameScreenState extends State<GameScreen>
     if (result.needsTargetSelection) {
       await _handleTargetSelection(card, result.pendingTargetCardType ?? CardType.pince);
       return;
-    }
-
-    // Activer le snapshot pour les cas de gain/vol (pas raccoon-poubelle cassée,
-    // pas raccoon normal, pas bébé raton).
-    final bool shouldFreezeStocks = _shouldFreezeStocksForCard(card, result);
-    if (shouldFreezeStocks && !mounted) return;
-    if (shouldFreezeStocks) {
-      setState(() {
-        _snapshotFoodCounts = foodSnapshot;
-        _snapshotTrashCounts = trashSnapshot;
-        _useStockSnapshot = true;
-      });
     }
 
     _playOverlayAnimations(card, result, foodCountBeforeDraw: foodCountBeforeDraw);
@@ -1082,6 +1079,11 @@ class _GameScreenState extends State<GameScreen>
           final appearDy = (backgroundCard || isFlipping) ? 0.0 : _appearOffset.value * 10.0;
           final appearAlpha = (backgroundCard || isFlipping) ? 1.0 : _appearOpacity.value;
 
+          // Masquer complètement la carte principale quand le paquet est épuisé.
+          if (deckExhausted && !backgroundCard) {
+            return const SizedBox.shrink();
+          }
+
           return Opacity(
             opacity: nearEdge ? 0.0 : appearAlpha,
             child: Transform.translate(
@@ -1113,7 +1115,7 @@ class _GameScreenState extends State<GameScreen>
                             ? _buildCardBackWidget()
                             : (showFront && _revealedCard != null)
                                 ? CardFrontWidget(cardType: _revealedCard!.type, flipHorizontal: true)
-                                : const ColoredBox(color: Colors.deepPurple),
+                                : const SizedBox.shrink(),
                       ),
                       // Emoji overlay supprimé — le CardFrontWidget remplace l'affichage
                       // Sticker joueur actuel — visible uniquement sur le dos de la carte à piocher

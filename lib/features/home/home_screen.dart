@@ -382,12 +382,29 @@ class _PlayButtonArea extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm + 2),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: Text(
-                AppLocalizations.of(context)!.noLivesAdHint,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 13,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x14000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.noLivesAdHint,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ),

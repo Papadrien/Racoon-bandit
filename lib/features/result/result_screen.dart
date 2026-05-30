@@ -185,7 +185,7 @@ class _ResultScreenState extends State<ResultScreen>
 
                           // ── Actions ───────────────────────────────────────
                           const SizedBox(height: AppSpacing.sm),
-                          if (_lifeSystemService.currentLives <= 0)
+                          if (_lifeSystemService.currentLives <= 0) ...[
                             OrangeButton(
                               label: _isRewardLoading
                                   ? AppLocalizations.of(context)!.adLoading
@@ -196,12 +196,13 @@ class _ResultScreenState extends State<ResultScreen>
                               height: AppSpacing.buttonHeightSecondary,
                               fontSize: 15,
                               letterSpacing: 1.5,
-                            )
-                          else
-                            PrimaryButton(
-                              label: l10n.resultPlayAgain,
-                              onPressed: _goLobby,
                             ),
+                            const SizedBox(height: AppSpacing.sm),
+                          ],
+                          PrimaryButton(
+                            label: l10n.resultPlayAgain,
+                            onPressed: _goLobby,
+                          ),
                           TextButton(
                             onPressed: () {
                               AudioService.instance.playButtonSound();
