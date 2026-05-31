@@ -509,5 +509,9 @@
   "pinces": "Pinces",
   "@pinces": {
     "description": "Nom de la carte Pince (pluriel)"
+  },
+  "adError": "Une erreur est survenue, veuillez réessayer.",
+  "@adError": {
+    "description": "Snackbar erreur pub rewarded"
   }
 }

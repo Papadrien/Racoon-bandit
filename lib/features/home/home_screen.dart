@@ -149,9 +149,9 @@ class _HomeScreenState extends State<HomeScreen>
           SnackBar(content: Text(l10n.lifeEarned)),
         );
       },
-      onError: (message) {
+      onError: (_) {
         if (!mounted) return;
-        messenger.showSnackBar(SnackBar(content: Text(message)));
+        messenger.showSnackBar(SnackBar(content: Text(l10n.adError)));
       },
     );
 

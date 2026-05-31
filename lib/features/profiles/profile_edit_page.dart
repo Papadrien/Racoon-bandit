@@ -10,6 +10,7 @@ import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../widgets/player_avatar.dart';
+import '../../widgets/primary_button.dart';
 import '../settings/widgets/settings_secondary_header.dart';
 
 class ProfileEditPage extends StatefulWidget {
@@ -188,20 +189,18 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xl),
-                      SizedBox(
+                      OrangeButton(
+                        label: widget.isNew
+                            ? l10n.profileEditButtonCreate
+                            : l10n.profileEditButtonSave,
+                        icon: Icons.check_rounded,
+                        onPressed: () {
+                          AudioService.instance.playButtonSound();
+                          _save();
+                        },
                         height: AppSpacing.buttonHeightSecondary,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            AudioService.instance.playButtonSound();
-                            _save();
-                          },
-                          icon: const Icon(Icons.check_rounded),
-                          label: Text(
-                            widget.isNew
-                                ? l10n.profileEditButtonCreate
-                                : l10n.profileEditButtonSave,
-                          ),
-                        ),
+                        fontSize: 15,
+                        letterSpacing: 1.5,
                       ),
                     ],
                   );

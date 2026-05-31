@@ -509,5 +509,9 @@
   "pinces": "Pinces",
   "@pinces": {
     "description": "Pince card name (plural)"
+  },
+  "adError": "An error occurred, please try again.",
+  "@adError": {
+    "description": "Rewarded ad error snackbar"
   }
 }

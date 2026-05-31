@@ -10,6 +10,7 @@ import '../../core/ui/app_decorations.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../widgets/player_avatar.dart';
+import '../../widgets/primary_button.dart';
 import '../settings/widgets/settings_secondary_header.dart';
 import 'profile_edit_page.dart';
 
@@ -198,16 +199,16 @@ class _EmptyProfilesState extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () {
-                    AudioService.instance.playButtonSound();
-                    onAdd();
-                  },
-                  icon: const Icon(Icons.add_rounded),
-                  label: Text(l10n.profilesAddTooltip),
-                ),
+              OrangeButton(
+                label: l10n.profilesAddTooltip,
+                icon: Icons.add_rounded,
+                onPressed: () {
+                  AudioService.instance.playButtonSound();
+                  onAdd();
+                },
+                height: AppSpacing.buttonHeightSecondary,
+                fontSize: 15,
+                letterSpacing: 1.5,
               ),
             ],
           ),

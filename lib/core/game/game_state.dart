@@ -118,7 +118,7 @@ class GameState {
 
         return CardResolution(
           message: stolen > 0
-              ? 'Le bébé raton grignote $stolen nourriture${stolen > 1 ? 's' : ''} de ${target.name} !'
+              ? 'Le bébé raton dévore $stolen nourriture${stolen > 1 ? \'s\' : \'\'} chez ${target.name} !'
               : 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
           targetPlayerId: target.id,
           foodStolen: stolen > 0,
@@ -201,7 +201,7 @@ class GameState {
           }
           return CardResolution(
             message: removed > 0
-                ? 'Le bébé raton grignote $removed nourriture${removed > 1 ? 's' : ''} de ${player.name} !'
+                ? 'Le bébé raton dévore $removed nourriture${removed > 1 ? \'s\' : \'\'} chez ${player.name} !'
                 : 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
             targetPlayerId: player.id,
             foodStolen: removed > 0,
@@ -220,9 +220,15 @@ class GameState {
           final target = validTargets.first;
           final removed = _removeFood(target, 2);
 
+          if (remainingDeck.isEmpty) {
+            _markGameOver();
+          } else {
+            _advance();
+          }
+
           return CardResolution(
             message: removed > 0
-                ? 'Le bébé raton grignote $removed nourriture${removed > 1 ? 's' : ''} de ${target.name} !'
+                ? 'Le bébé raton dévore $removed nourriture${removed > 1 ? \'s\' : \'\'} chez ${target.name} !'
                 : 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
             targetPlayerId: target.id,
             foodStolen: removed > 0,
@@ -257,8 +263,8 @@ class GameState {
         final validTargets = pinceValidTargets();
 
         if (validTargets.isEmpty) {
-          return const CardResolution(
-            message: 'La pince cherche une cible… mais personne n\'a de nourriture !',
+          return CardResolution(
+            message: '${players[currentPlayerIndex].name} cherche une cible… mais personne n\'a de nourriture !',
           );
         }
 

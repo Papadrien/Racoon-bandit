@@ -544,6 +544,7 @@ class _LockedOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final required = config.requiredGames;
     final progress = required > 0
         ? (totalGames / required).clamp(0.0, 1.0)
@@ -575,7 +576,7 @@ class _LockedOverlay extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            '$remaining partie${remaining > 1 ? 's' : ''}',
+            l10n.cardBacksGamesCount(remaining),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: AppColors.textDark,

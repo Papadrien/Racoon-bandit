@@ -1011,7 +1011,17 @@ class _CardBackButtonState extends State<_CardBackButton>
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      config.name,
+                      () {
+                        final l10n = AppLocalizations.of(context)!;
+                        return switch (config.id) {
+                          'purple' => l10n.cardBackNamePurple,
+                          'blue'   => l10n.cardBackNameBlue,
+                          'green'  => l10n.cardBackNameGreen,
+                          'pink'   => l10n.cardBackNamePink,
+                          'yellow' => l10n.cardBackNameYellow,
+                          _        => config.id,
+                        };
+                      }(),
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
