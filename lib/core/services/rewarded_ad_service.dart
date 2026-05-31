@@ -124,9 +124,17 @@ class RewardedAdService {
   }
 
   String get _adUnitId {
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'ca-app-pub-3940256099942544/5354046379';
+    if (kDebugMode) {
+      // IDs de test Google
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        return 'ca-app-pub-3940256099942544/5354046379';
+      }
+      return 'ca-app-pub-3940256099942544/6978759866';
     }
-    return 'ca-app-pub-3940256099942544/6978759866';
+    // IDs de production
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'ca-app-pub-7203301690798915/2347010041';
+    }
+    return 'ca-app-pub-7203301690798915/4781601694';
   }
 }

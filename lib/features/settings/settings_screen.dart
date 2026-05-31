@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../app.dart';
+import '../../core/game/game_state.dart';
+import '../../core/models/player_state.dart';
+import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/models/reward_unlock.dart';
 import '../../core/services/onboarding_service.dart';
@@ -47,6 +50,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await Navigator.pushNamed(context, AppRoutes.onboarding);
   }
 
+  Future<void> _debugSimulateFinishedGame() async {
+    if (!context.mounted) return;
+
+    final players = [
+      PlayerState(id: 1, name: 'Alice', emoji: '🦝', colorValue: 0xFF7C4DFF, foodCount: 5, trashCount: 2),
+      PlayerState(id: 2, name: 'Bob', emoji: '🐼', colorValue: 0xFFFF6D00, foodCount: 3, trashCount: 1),
+      PlayerState(id: 3, name: 'Clara', emoji: '🦊', colorValue: 0xFF00BCD4, foodCount: 1, trashCount: 3),
+    ];
+
+    final fakeState = GameState(players: players);
+    fakeState.sessionStats.cardsPlayed = 18;
+    fakeState.sessionStats.foodGained = 9;
+    fakeState.sessionStats.foodStolen = 3;
+    fakeState.sessionStats.pinceCardsPlayed = 3;
+    fakeState.sessionStats.raccoonCardsPlayed = 2;
+
+    final args = ResultScreenArgs(gameState: fakeState);
+
+    if (!context.mounted) return;
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.result,
+      arguments: args,
+    );
+  }
+
   Future<void> _debugSimulateReward() async {
     if (!context.mounted) return;
     const fakeReward = RewardUnlock(
@@ -54,7 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       name: 'Dos Bleu',
       type: RewardType.cardBack,
       assetPath: 'assets/images/cards/card_back_blue.png',
-      unlockHint: 'Débloqué après 5 parties jouées !',
+      requiredGames: 5,
     );
     await RewardUnlockDialog.showAll(context, [fakeReward]);
   }
@@ -184,6 +213,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               icon: Icons.emoji_events_outlined,
                               label: 'Simuler récompense',
                               onTap: _debugSimulateReward,
+                            ),
+                            _CardDivider(
+                              color: Colors.orange.withValues(alpha: 0.2),
+                            ),
+                            _DebugTile(
+                              icon: Icons.flag_rounded,
+                              label: 'Simuler partie terminée',
+                              onTap: _debugSimulateFinishedGame,
                             ),
                             _CardDivider(
                               color: Colors.orange.withValues(alpha: 0.2),

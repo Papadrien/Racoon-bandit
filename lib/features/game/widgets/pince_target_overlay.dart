@@ -78,9 +78,9 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _fadeAnimation,
-      // Backdrop semi-transparent couvrant tout l'écran
+      // Backdrop transparent — ombres portées sur la card suffisent
       child: Material(
-        color: AppColors.textDark.withValues(alpha: 0.55),
+        color: Colors.transparent,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -117,7 +117,19 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
       decoration: BoxDecoration(
         color: AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(AppSpacing.radiusXLarge),
-        boxShadow: AppShadows.sticker,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x40000000),
+            blurRadius: 32,
+            spreadRadius: 4,
+            offset: Offset(0, 12),
+          ),
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppSpacing.radiusXLarge),

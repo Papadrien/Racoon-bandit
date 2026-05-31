@@ -446,5 +446,68 @@
   "defaultLabel": "Défaut",
   "newCardBackUnlocked": "NOUVEAU DOS DÉBLOQUÉ",
   "tryButton": "ESSAYER",
-  "laterButton": "Plus tard"
+  "laterButton": "Plus tard",
+  "gameReadyLabel": "Partie prête",
+  "@gameReadyLabel": {
+    "description": "Indicateur — une partie est disponible"
+  },
+  "gameReadyWaiting": "Nouvelle partie dans",
+  "@gameReadyWaiting": {
+    "description": "Indicateur — en attente de recharge"
+  },
+  "cardBackNamePurple": "Violet",
+  "@cardBackNamePurple": {
+    "description": "Nom du dos de carte violet"
+  },
+  "cardBackNameBlue": "Bleu",
+  "@cardBackNameBlue": {
+    "description": "Nom du dos de carte bleu"
+  },
+  "cardBackNameGreen": "Vert",
+  "@cardBackNameGreen": {
+    "description": "Nom du dos de carte vert"
+  },
+  "cardBackNamePink": "Rose",
+  "@cardBackNamePink": {
+    "description": "Nom du dos de carte rose"
+  },
+  "cardBackNameYellow": "Jaune",
+  "@cardBackNameYellow": {
+    "description": "Nom du dos de carte jaune"
+  },
+  "cardBacksGamesCount": "{count, plural, one{{count} partie} other{{count} parties}}",
+  "@cardBacksGamesCount": {
+    "description": "Compteur de parties dans la bottom sheet des dos de cartes",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unlockAfterGames": "{count, plural, one{Débloqué après {count} partie jouée !} other{Débloqué après {count} parties jouées !}}",
+  "@unlockAfterGames": {
+    "description": "Hint de déblocage dans la popup de récompense",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesRemainingProgress": "{count, plural, one{{count} partie restante} other{{count} parties restantes}}",
+  "@gamesRemainingProgress": {
+    "description": "Parties restantes dans l'encart de progression sur l'écran de résultats",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pince": "Pince",
+  "@pince": {
+    "description": "Nom de la carte Pince (singulier)"
+  },
+  "pinces": "Pinces",
+  "@pinces": {
+    "description": "Nom de la carte Pince (pluriel)"
+  }
 }

@@ -7,6 +7,18 @@ import '../core/ui/app_colors.dart';
 import '../core/ui/app_shadows.dart';
 import '../core/ui/app_spacing.dart';
 
+String _localizedCardBackName(BuildContext context, String id) {
+  final l10n = AppLocalizations.of(context)!;
+  return switch (id) {
+    'purple' => l10n.cardBackNamePurple,
+    'blue'   => l10n.cardBackNameBlue,
+    'green'  => l10n.cardBackNameGreen,
+    'pink'   => l10n.cardBackNamePink,
+    'yellow' => l10n.cardBackNameYellow,
+    _        => id,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // UnlockProgressWidget — progression vers le prochain dos de carte
 // ─────────────────────────────────────────────────────────────────────────────
@@ -184,8 +196,8 @@ class _ProgressCard extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       remaining == 0
-                          ? '$totalGames / $toGames parties'
-                          : '$remaining partie${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}',
+                          ? l10n.gamesPlayed(totalGames)
+                          : l10n.gamesRemainingProgress(remaining),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 10,
@@ -402,7 +414,7 @@ class _CardPreview extends StatelessWidget {
 
         // Label
         Text(
-          targetGames != null ? '$targetGames' : config.name,
+          targetGames != null ? '$targetGames' : _localizedCardBackName(context, config.id),
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w700,

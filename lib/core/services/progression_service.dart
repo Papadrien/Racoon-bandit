@@ -162,9 +162,7 @@ class ProgressionService {
         name: cardBack.name,
         type: RewardType.cardBack,
         assetPath: AppAssets.cardBackAsset(cardBack.id),
-        unlockHint: 'Débloqué après ${cardBack.requiredGames} '
-            'partie${cardBack.requiredGames > 1 ? 's' : ''} jouée'
-            '${cardBack.requiredGames > 1 ? 's' : ''} !',
+        requiredGames: cardBack.requiredGames,
       ));
     }
 

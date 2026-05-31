@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/ui/app_colors.dart';
 import '../core/ui/app_decorations.dart';
 import '../core/ui/app_spacing.dart';
+import '../l10n/app_localizations.dart';
 
 /// Indicateur d'état de partie — concept "Partie prête" / "Nouvelle partie dans".
 ///
@@ -55,9 +56,9 @@ class _ReadyState extends StatelessWidget {
           color: AppColors.orange.withValues(alpha: 0.85),
         ),
         const SizedBox(width: AppSpacing.xs + 2),
-        const Text(
-          'Partie prête',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.gameReadyLabel,
+          style: const TextStyle(
             color: AppColors.textDark,
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -88,9 +89,9 @@ class _WaitingState extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
-          'Nouvelle partie dans',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.gameReadyWaiting,
+          style: const TextStyle(
             color: AppColors.textMuted,
             fontSize: 11,
             fontWeight: FontWeight.w500,

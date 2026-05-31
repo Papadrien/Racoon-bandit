@@ -118,8 +118,8 @@ class GameState {
 
         return CardResolution(
           message: stolen > 0
-              ? '${target.name} perd $stolen nourriture${stolen > 1 ? 's' : ''}'
-              : 'Aucune nourriture à voler',
+              ? 'Le bébé raton grignote $stolen nourriture${stolen > 1 ? 's' : ''} de ${target.name} !'
+              : 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
           targetPlayerId: target.id,
           foodStolen: stolen > 0,
         );
@@ -144,7 +144,7 @@ class GameState {
     }
 
     return CardResolution(
-      message: '${player.name} vole 1 nourriture à ${target.name}',
+      message: '${player.name} sort la pince et vole une nourriture à ${target.name} !',
       targetPlayerId: target.id,
       foodStolen: true,
     );
@@ -159,17 +159,17 @@ class GameState {
     switch (card.type) {
       case CardType.food:
         _gainFood(player, 1);
-        return CardResolution(message: '${player.name} gagne 1 nourriture');
+        return CardResolution(message: '${player.name} ramasse 1 nourriture');
 
       case CardType.trash:
         player.trashCount++;
-        return CardResolution(message: '${player.name} pose une poubelle sécurisée');
+        return CardResolution(message: '${player.name} sécurise sa poubelle');
 
       case CardType.raccoon:
         if (player.trashCount > 0) {
           player.trashCount--;
           return CardResolution(
-            message: 'Le Raccoon est bloqué par une poubelle sécurisée !',
+            message: 'Le raton est repoussé par la poubelle sécurisée !',
             targetPlayerId: player.id,
             trashDestroyed: true,
           );
@@ -179,7 +179,7 @@ class GameState {
         sessionStats.foodStolen += player.foodCount;
         player.foodCount = 0;
         return CardResolution(
-          message: 'Le raton mange toute la nourriture de ${player.name}',
+          message: 'Le raton dévore toute la nourriture de ${player.name} !',
           targetPlayerId: player.id,
           foodStolen: true,
         );
@@ -187,7 +187,7 @@ class GameState {
       case CardType.banquet:
         _gainFood(player, 2);
         return CardResolution(
-          message: '${player.name} gagne 2 nourritures',
+          message: '${player.name} festoie et gagne 2 nourritures !',
         );
 
       case CardType.babyRaccoon:
@@ -201,8 +201,8 @@ class GameState {
           }
           return CardResolution(
             message: removed > 0
-                ? '${player.name} perd $removed nourriture${removed > 1 ? 's' : ''}'
-                : 'Aucune nourriture à retirer',
+                ? 'Le bébé raton grignote $removed nourriture${removed > 1 ? 's' : ''} de ${player.name} !'
+                : 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
             targetPlayerId: player.id,
             foodStolen: removed > 0,
           );
@@ -212,7 +212,7 @@ class GameState {
 
         if (validTargets.isEmpty) {
           return const CardResolution(
-            message: 'Aucune nourriture à retirer',
+            message: 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
           );
         }
 
@@ -221,8 +221,9 @@ class GameState {
           final removed = _removeFood(target, 2);
 
           return CardResolution(
-            message:
-                '${target.name} perd $removed nourriture${removed > 1 ? 's' : ''}',
+            message: removed > 0
+                ? 'Le bébé raton grignote $removed nourriture${removed > 1 ? 's' : ''} de ${target.name} !'
+                : 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
             targetPlayerId: target.id,
             foodStolen: removed > 0,
           );
@@ -246,8 +247,8 @@ class GameState {
 
         return CardResolution(
           message: stolenTotal > 0
-              ? '${player.name} vole $stolenTotal nourriture${stolenTotal > 1 ? 's' : ''}'
-              : 'Aucune nourriture à aspirer',
+              ? '${player.name} aspire $stolenTotal nourriture${stolenTotal > 1 ? 's' : ''} chez les autres !'
+              : 'L\'aspirateur tourne à vide… personne n\'a de nourriture !',
           foodStolen: stolenTotal > 0,
         );
 
@@ -257,7 +258,7 @@ class GameState {
 
         if (validTargets.isEmpty) {
           return const CardResolution(
-            message: 'Personne à voler…',
+            message: 'La pince cherche une cible… mais personne n\'a de nourriture !',
           );
         }
 
@@ -267,7 +268,7 @@ class GameState {
           _removeFood(target, 1);
           sessionStats.foodStolen++;
           return CardResolution(
-            message: '${player.name} vole 1 nourriture à ${target.name}',
+            message: '${player.name} sort la pince et vole une nourriture à ${target.name} !',
             targetPlayerId: target.id,
             foodStolen: true,
           );

@@ -18,6 +18,18 @@ import 'primary_button.dart';
 
 Color _accentForId(String id) => AppAssets.cardBackFallbackColor(id);
 
+String _localizedCardBackName(BuildContext context, String id) {
+  final l10n = AppLocalizations.of(context)!;
+  return switch (id) {
+    'purple' => l10n.cardBackNamePurple,
+    'blue'   => l10n.cardBackNameBlue,
+    'green'  => l10n.cardBackNameGreen,
+    'pink'   => l10n.cardBackNamePink,
+    'yellow' => l10n.cardBackNameYellow,
+    _        => id,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Popup principale
 // ─────────────────────────────────────────────────────────────────────────────
@@ -229,7 +241,7 @@ class _DialogBody extends StatelessWidget {
 
                 // Nom du dos
                 Text(
-                  reward.name,
+                  _localizedCardBackName(context, reward.id),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -242,7 +254,18 @@ class _DialogBody extends StatelessWidget {
                 ),
 
                 // Hint de déblocage
-                if (reward.unlockHint != null) ...[
+                if (reward.requiredGames != null && reward.requiredGames! > 0) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    l10n.unlockAfterGames(reward.requiredGames!),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                ] else if (reward.unlockHint != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     reward.unlockHint!,
@@ -516,7 +539,7 @@ class _CardPlaceholder extends StatelessWidget {
             Icon(Icons.style_rounded, color: accent, size: 44),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              reward.name,
+              _localizedCardBackName(context, reward.id),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: accent,

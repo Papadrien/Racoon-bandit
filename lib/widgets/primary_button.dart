@@ -87,14 +87,14 @@ class _OrangeButtonInk extends StatelessWidget {
   static const _gradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF9C6FFF), AppColors.violet, Color(0xFF5A2FD6)],
+    colors: [AppColors.orangeLight, AppColors.orange, AppColors.orangeDark],
     stops: [0.0, 0.55, 1.0],
   );
 
   static const _gradientDisabled = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFB89FE0), Color(0xFF9070C0), Color(0xFF6B50A0)],
+    colors: [Color(0xFFE8A06A), Color(0xFFBB7040), Color(0xFF8A4E25)],
     stops: [0.0, 0.55, 1.0],
   );
 
@@ -111,9 +111,7 @@ class _OrangeButtonInk extends StatelessWidget {
           gradient: enabled ? _gradient : _gradientDisabled,
           borderRadius: br,
           border: Border.all(
-            color: enabled
-                ? const Color(0xCCFFFFFF)
-                : const Color(0x55FFFFFF),
+            color: Colors.white,
             width: 4.0,
           ),
           boxShadow: null,

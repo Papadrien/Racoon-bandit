@@ -446,5 +446,68 @@
   "defaultLabel": "Default",
   "newCardBackUnlocked": "NEW CARD BACK UNLOCKED",
   "tryButton": "TRY",
-  "laterButton": "Later"
+  "laterButton": "Later",
+  "gameReadyLabel": "Game ready",
+  "@gameReadyLabel": {
+    "description": "Indicator — a game is available"
+  },
+  "gameReadyWaiting": "Next game in",
+  "@gameReadyWaiting": {
+    "description": "Indicator — waiting for recharge"
+  },
+  "cardBackNamePurple": "Purple",
+  "@cardBackNamePurple": {
+    "description": "Purple card back name"
+  },
+  "cardBackNameBlue": "Blue",
+  "@cardBackNameBlue": {
+    "description": "Blue card back name"
+  },
+  "cardBackNameGreen": "Green",
+  "@cardBackNameGreen": {
+    "description": "Green card back name"
+  },
+  "cardBackNamePink": "Pink",
+  "@cardBackNamePink": {
+    "description": "Pink card back name"
+  },
+  "cardBackNameYellow": "Yellow",
+  "@cardBackNameYellow": {
+    "description": "Yellow card back name"
+  },
+  "cardBacksGamesCount": "{count, plural, one{{count} game} other{{count} games}}",
+  "@cardBacksGamesCount": {
+    "description": "Games count in card backs bottom sheet",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unlockAfterGames": "{count, plural, one{Unlocked after {count} game played!} other{Unlocked after {count} games played!}}",
+  "@unlockAfterGames": {
+    "description": "Unlock hint in reward popup",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesRemainingProgress": "{count, plural, one{{count} game remaining} other{{count} games remaining}}",
+  "@gamesRemainingProgress": {
+    "description": "Games remaining in result screen progress widget",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pince": "Pince",
+  "@pince": {
+    "description": "Pince card name (singular)"
+  },
+  "pinces": "Pinces",
+  "@pinces": {
+    "description": "Pince card name (plural)"
+  }
 }

@@ -9,6 +9,18 @@ import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
 
+String _localizedCardBackName(BuildContext context, String id) {
+  final l10n = AppLocalizations.of(context)!;
+  return switch (id) {
+    'purple' => l10n.cardBackNamePurple,
+    'blue'   => l10n.cardBackNameBlue,
+    'green'  => l10n.cardBackNameGreen,
+    'pink'   => l10n.cardBackNamePink,
+    'yellow' => l10n.cardBackNameYellow,
+    _        => id,
+  };
+}
+
 /// Bottom sheet de sélection du dos de carte — style premium cohérent
 /// avec le Design System beige/sticker de l'app (Home, Lobby).
 ///
@@ -614,7 +626,7 @@ class _CardFooter extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            config.name,
+            _localizedCardBackName(context, config.id),
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -625,17 +637,7 @@ class _CardFooter extends StatelessWidget {
                       : AppColors.textMuted.withValues(alpha: 0.50),
             ),
           ),
-          if (!isUnlocked && !config.unlockedByDefault) ...[
-            const SizedBox(height: 2),
-            Text(
-              AppLocalizations.of(context)!.requiredGames(config.requiredGames),
-              style: TextStyle(
-                fontSize: 9,
-                color: AppColors.textMuted.withValues(alpha: 0.55),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+
           if (isUnlocked && !isEquipped) ...[
             const SizedBox(height: 4),
             Text(

@@ -11,6 +11,7 @@ class RewardUnlock {
     required this.type,
     this.assetPath,
     this.unlockHint,
+    this.requiredGames,
   });
 
   final String id;
@@ -23,4 +24,7 @@ class RewardUnlock {
   /// Message contextuel expliquant comment ce déblocage a été obtenu.
   /// Ex : "Débloqué après 5 parties jouées !"
   final String? unlockHint;
+
+  /// Nombre de parties requises pour débloquer (utilisé pour le hint localisé).
+  final int? requiredGames;
 }
