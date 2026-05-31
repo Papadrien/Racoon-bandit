@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -6,6 +7,12 @@ import 'core/services/analytics_service.dart';
 import 'core/services/audio_service.dart';
 import 'core/theme/app_theme.dart';
 import 'l10n/app_localizations.dart';
+
+/// Notifier pour forcer une locale en mode debug.
+/// Null = comportement par défaut (résolution système).
+final ValueNotifier<Locale?> debugLocaleOverride = kDebugMode
+    ? ValueNotifier<Locale?>(null)
+    : ValueNotifier<Locale?>(null);
 
 /// Widget racine de l'application.
 ///
@@ -46,38 +53,45 @@ class _RaccoonBanditAppState extends State<RaccoonBanditApp>
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Raccoon Bandit',
-      debugShowCheckedModeBanner: false,
-      // ── Localisation FR/EN ─────────────────────────────────────────
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('fr'),
-        Locale('en'),
-      ],
-      // FR par défaut, EN si langue système anglaise, FR sinon
-      localeResolutionCallback: (locale, supportedLocales) {
-        if (locale == null) return const Locale('fr');
-        for (final supported in supportedLocales) {
-          if (supported.languageCode == locale.languageCode) {
-            return supported;
-          }
-        }
-        return const Locale('fr');
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: debugLocaleOverride,
+      builder: (context, overrideLocale, _) {
+        return MaterialApp(
+          title: 'Raccoon Bandit',
+          debugShowCheckedModeBanner: false,
+          // ── Localisation FR/EN ─────────────────────────────────────────
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('fr'),
+            Locale('en'),
+          ],
+          locale: overrideLocale,
+          // FR par défaut, EN si langue système anglaise, FR sinon
+          localeResolutionCallback: (locale, supportedLocales) {
+            if (overrideLocale != null) return overrideLocale;
+            if (locale == null) return const Locale('fr');
+            for (final supported in supportedLocales) {
+              if (supported.languageCode == locale.languageCode) {
+                return supported;
+              }
+            }
+            return const Locale('fr');
+          },
+          // ───────────────────────────────────────────────────────────────
+          theme: AppTheme.dark,
+          initialRoute: AppRoutes.splash,
+          onGenerateRoute: AppRouter.generateRoute,
+          // Observateur Analytics pour le suivi automatique des routes
+          navigatorObservers: [
+            _AnalyticsNavigatorObserver(),
+          ],
+        );
       },
-      // ───────────────────────────────────────────────────────────────
-      theme: AppTheme.dark,
-      initialRoute: AppRoutes.splash,
-      onGenerateRoute: AppRouter.generateRoute,
-      // Observateur Analytics pour le suivi automatique des routes
-      navigatorObservers: [
-        _AnalyticsNavigatorObserver(),
-      ],
     );
   }
 }

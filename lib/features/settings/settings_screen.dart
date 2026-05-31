@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
+import '../../app.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/models/reward_unlock.dart';
 import '../../core/services/onboarding_service.dart';
@@ -212,6 +213,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 );
                               },
                             ),
+                            _CardDivider(
+                              color: Colors.orange.withValues(alpha: 0.2),
+                            ),
+                            _DebugLanguageSelector(),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.xxl),
@@ -629,3 +634,108 @@ class _SettingsBackgroundStickers extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sélecteur de langue (debug uniquement)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DebugLanguageSelector extends StatelessWidget {
+  const _DebugLanguageSelector();
+
+  static const _locales = [
+    _LocaleOption(locale: null, label: 'Système (auto)'),
+    _LocaleOption(locale: Locale('fr'), label: 'Français (fr)'),
+    _LocaleOption(locale: Locale('en'), label: 'English (en)'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: debugLocaleOverride,
+      builder: (context, current, _) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.language_rounded,
+                    color: Colors.orange,
+                    size: 18,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const Text(
+                    'Langue de l\'application',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
+                children: _locales.map((option) {
+                  final isSelected = option.locale?.languageCode ==
+                      current?.languageCode;
+                  return GestureDetector(
+                    onTap: () {
+                      debugLocaleOverride.value = option.locale;
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.xs + 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.orange.withValues(alpha: 0.15)
+                            : AppColors.backgroundLight,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                        border: Border.all(
+                          color: isSelected
+                              ? Colors.orange
+                              : AppColors.shadowSubtle,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Text(
+                        option.label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? Colors.orange
+                              : AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LocaleOption {
+  final Locale? locale;
+  final String label;
+
+  const _LocaleOption({required this.locale, required this.label});
+}
+

@@ -81,13 +81,23 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
       // Backdrop semi-transparent couvrant tout l'écran
       child: Material(
         color: AppColors.textDark.withValues(alpha: 0.55),
-        child: Center(
-          child: SafeArea(
-            child: ScaleTransition(
-              scale: _scaleAnimation,
-              child: _buildCard(context),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Tap outside to dismiss (optional: could be removed)
+            GestureDetector(
+              onTap: () {}, // absorb taps on backdrop
+              behavior: HitTestBehavior.opaque,
             ),
-          ),
+            Center(
+              child: SafeArea(
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: _buildCard(context),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -151,23 +161,12 @@ class _PinceTargetOverlayState extends State<PinceTargetOverlay>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Icône bandit dans un cercle sticker blanc
-          Container(
-            width: 60,
-            height: 60,
-            decoration: const BoxDecoration(
-              color: AppColors.stickerWhite,
-              shape: BoxShape.circle,
-              boxShadow: AppShadows.floating,
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/card_front_pince.png',
-                fit: BoxFit.cover,
-                width: 60,
-                height: 60,
-              ),
-            ),
+          // Logo pince sans vignette ronde — image pleine taille
+          Image.asset(
+            'assets/images/card_front_pince.png',
+            fit: BoxFit.contain,
+            width: 72,
+            height: 72,
           ),
           const SizedBox(height: AppSpacing.md),
           Text(

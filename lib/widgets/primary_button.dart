@@ -196,7 +196,125 @@ class _ButtonContent extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PrimaryButton — alias de compatibilité → OrangeButton avec fontSize réduit.
+// WatchAdButton — bouton "Regarder une pub", violet, contour blanc pur.
+//
+// Intentionnellement distinct de PrimaryButton (boutons de jeu)
+// pour indiquer visuellement qu'il s'agit d'une action pub.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class WatchAdButton extends StatelessWidget {
+  const WatchAdButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.height = AppSpacing.buttonHeightSecondary,
+    this.fontSize = 15,
+    this.letterSpacing = 1.5,
+    this.isLoading = false,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final double height;
+  final double fontSize;
+  final double letterSpacing;
+  final bool isLoading;
+
+  static const _radius = AppSpacing.radiusXLarge;
+
+  static const _gradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF9C6FFF), AppColors.violet, Color(0xFF5A2FD6)],
+    stops: [0.0, 0.55, 1.0],
+  );
+
+  static const _gradientDisabled = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFB89FE0), Color(0xFF9070C0), Color(0xFF6B50A0)],
+    stops: [0.0, 0.55, 1.0],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null && !isLoading;
+    final br = BorderRadius.circular(_radius);
+
+    return SizedBox(
+      width: double.infinity,
+      height: height,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: br,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: enabled ? _gradient : _gradientDisabled,
+            borderRadius: br,
+            border: Border.all(
+              color: Colors.white, // blanc pur, sans alpha
+              width: 4.0,
+            ),
+          ),
+          child: InkWell(
+            onTap: enabled
+                ? () {
+                    HapticService.trigger(HapticType.selection);
+                    AudioService.instance.playSfx(SoundEffect.button);
+                    onPressed!();
+                  }
+                : null,
+            borderRadius: br,
+            splashColor: Colors.white24,
+            highlightColor: Colors.white10,
+            child: isLoading
+                ? const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (icon != null) ...[
+                          Icon(icon, color: Colors.white, size: fontSize + 2),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(
+                          label.toUpperCase(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: fontSize,
+                            letterSpacing: letterSpacing,
+                            shadows: const [
+                              Shadow(
+                                color: Color(0x55000000),
+                                offset: Offset(0, 2),
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
 //
 // Conservé pour ne pas casser les imports existants (lobby, result).
 // ─────────────────────────────────────────────────────────────────────────────

@@ -320,7 +320,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
                                   // ── Bouton démarrer / regarder pub ───────
                                   if (_noLives) ...[
-                                    OrangeButton(
+                                    WatchAdButton(
                                       label: _isRewardLoading
                                           ? AppLocalizations.of(context)!.adLoading
                                           : AppLocalizations.of(context)!.watchAdButton,

@@ -466,11 +466,11 @@ class _CardDisplay extends StatelessWidget {
         ],
         border: Border.all(
           color: Colors.white,
-          width: 3.0,
+          width: 6.0,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge - 3),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge - 6),
         child: Image.asset(
           assetPath,
           fit: BoxFit.cover,

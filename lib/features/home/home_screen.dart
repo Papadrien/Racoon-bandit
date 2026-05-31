@@ -388,7 +388,7 @@ class _PlayButtonArea extends StatelessWidget {
                   vertical: AppSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.88),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
                   boxShadow: const [
                     BoxShadow(
@@ -450,7 +450,7 @@ class _RewardAdButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return OrangeButton(
+    return WatchAdButton(
       label: isLoading ? l10n.adLoading : l10n.watchAdButton,
       icon: isLoading ? null : Icons.ondemand_video_rounded,
       onPressed: isLoading ? null : onPressed,
