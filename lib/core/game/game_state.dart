@@ -118,7 +118,7 @@ class GameState {
 
         return CardResolution(
           message: stolen > 0
-              ? 'Le bébé raton dévore $stolen nourriture${stolen > 1 ? \'s\' : \'\'} chez ${target.name} !'
+              ? "Le bébé raton dévore $stolen nourriture${stolen > 1 ? 's' : ''} chez ${target.name} !"
               : 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
           targetPlayerId: target.id,
           foodStolen: stolen > 0,
@@ -201,7 +201,7 @@ class GameState {
           }
           return CardResolution(
             message: removed > 0
-                ? 'Le bébé raton dévore $removed nourriture${removed > 1 ? \'s\' : \'\'} chez ${player.name} !'
+                ? "Le bébé raton dévore $removed nourriture${removed > 1 ? 's' : ''} chez ${player.name} !"
                 : 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
             targetPlayerId: player.id,
             foodStolen: removed > 0,
@@ -228,7 +228,7 @@ class GameState {
 
           return CardResolution(
             message: removed > 0
-                ? 'Le bébé raton dévore $removed nourriture${removed > 1 ? \'s\' : \'\'} chez ${target.name} !'
+                ? "Le bébé raton dévore $removed nourriture${removed > 1 ? 's' : ''} chez ${target.name} !"
                 : 'Le bébé raton cherche de la nourriture… mais il n\'y en a pas !',
             targetPlayerId: target.id,
             foodStolen: removed > 0,

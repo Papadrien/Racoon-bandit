@@ -253,7 +253,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _CardDivider(
                               color: Colors.orange.withValues(alpha: 0.2),
                             ),
-                            _DebugLanguageSelector(),
+                            const _DebugLanguageSelector(),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.xxl),
@@ -698,15 +698,15 @@ class _DebugLanguageSelector extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.language_rounded,
                     color: Colors.orange,
                     size: 18,
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  const Text(
+                  SizedBox(width: AppSpacing.sm),
+                  Text(
                     'Langue de l\'application',
                     style: TextStyle(
                       fontSize: 14,
