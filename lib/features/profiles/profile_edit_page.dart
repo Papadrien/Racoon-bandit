@@ -112,15 +112,16 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       colorValue: _color.toARGB32(),
     );
 
+    final navigator = Navigator.of(context);
+
     if (widget.isNew) {
       await PlayerProfilesService.createProfile(updated);
     } else {
       await PlayerProfilesService.updateProfile(updated);
     }
 
-    if (mounted) {
-      Navigator.pop(context, true);
-    }
+    if (!mounted) return;
+    navigator.pop(true);
   }
 
   @override
@@ -139,7 +140,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         body: SafeArea(
         child: Column(
           children: [
-            SettingsSecondaryHeader(onBackPressed: () async { final discard = await _confirmDiscard(); if (discard && context.mounted) Navigator.pop(context,false); }, 
+            SettingsSecondaryHeader(
               title: widget.isNew
                   ? l10n.profileEditTitleNew
                   : l10n.profileEditTitleEdit,
