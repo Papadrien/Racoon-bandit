@@ -377,46 +377,6 @@
   "@settingsVersionLabel": {
     "description": "Label version en bas de settings"
   },
-  "privacyTitle": "CONFIDENTIALITÉ",
-  "@privacyTitle": {
-    "description": "Titre AppBar politique confidentialité"
-  },
-  "privacyHeading": "Politique de confidentialité",
-  "@privacyHeading": {
-    "description": "Titre principal écran confidentialité"
-  },
-  "privacyAppName": "Raccoon Bandit",
-  "@privacyAppName": {
-    "description": "Nom app sous le titre confidentialité"
-  },
-  "privacySection1Title": "Collecte de données",
-  "@privacySection1Title": {
-    "description": "Titre section collecte données"
-  },
-  "privacySection1Content": "Raccoon Bandit ne collecte aucune donnée personnelle. Toutes les données de jeu sont stockées localement sur votre appareil.",
-  "@privacySection1Content": {
-    "description": "Contenu section collecte données"
-  },
-  "privacySection2Title": "Publicités",
-  "@privacySection2Title": {
-    "description": "Titre section publicités"
-  },
-  "privacySection2Content": "L'application peut afficher des publicités via Google AdMob. Ces publicités peuvent utiliser des identifiants anonymisés conformément à la politique de Google.",
-  "@privacySection2Content": {
-    "description": "Contenu section publicités"
-  },
-  "privacySection3Title": "Contact",
-  "@privacySection3Title": {
-    "description": "Titre section contact"
-  },
-  "privacySection3Content": "Pour toute question concernant la confidentialité, vous pouvez nous contacter via la page de l'application sur le Google Play Store.",
-  "@privacySection3Content": {
-    "description": "Contenu section contact"
-  },
-  "privacyComingSoon": "Politique de confidentialité complète à venir",
-  "@privacyComingSoon": {
-    "description": "Note placeholder politique confidentialité"
-  },
   "premiumTitle": "PREMIUM",
   "@premiumTitle": {
     "description": "Titre AppBar premium"
@@ -533,46 +493,120 @@
   "gameEffectGameOver": "Fin de partie",
   "gameEffectFoodGained": "{playerName} ramasse 1 nourriture",
   "@gameEffectFoodGained": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectTrashSecured": "{playerName} sécurise sa poubelle",
   "@gameEffectTrashSecured": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectRaccoonBlocked": "Le raton est repoussé par la poubelle sécurisée !",
   "gameEffectRaccoonDevours": "Le raton dévore toute la nourriture de {playerName} !",
   "@gameEffectRaccoonDevours": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectBanquet": "{playerName} festoie et gagne 2 nourritures !",
   "@gameEffectBanquet": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectBabyRaccoonDevours": "Le bébé raton dévore {count} nourriture{count, plural, one{} other{s}} chez {targetName} !",
   "@gameEffectBabyRaccoonDevours": {
     "placeholders": {
-      "count": { "type": "int" },
-      "targetName": { "type": "String" }
+      "count": {
+        "type": "int"
+      },
+      "targetName": {
+        "type": "String"
+      }
     }
   },
   "gameEffectBabyRaccoonEmpty": "Le bébé raton cherche de la nourriture… mais il n'y en a pas !",
   "gameEffectVacuumSteals": "{playerName} aspire {count} nourriture{count, plural, one{} other{s}} chez les autres !",
   "@gameEffectVacuumSteals": {
     "placeholders": {
-      "playerName": { "type": "String" },
-      "count": { "type": "int" }
+      "playerName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
     }
   },
   "gameEffectVacuumEmpty": "L'aspirateur tourne à vide… personne n'a de nourriture !",
   "gameEffectPinceNoTarget": "{playerName} cherche une cible… mais personne n'a de nourriture !",
   "@gameEffectPinceNoTarget": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectPinceSteal": "{playerName} sort la pince et vole une nourriture à {targetName} !",
   "@gameEffectPinceSteal": {
     "placeholders": {
-      "playerName": { "type": "String" },
-      "targetName": { "type": "String" }
+      "playerName": {
+        "type": "String"
+      },
+      "targetName": {
+        "type": "String"
+      }
     }
-  }
+  },
+  "privacyTitle": "CONFIDENTIALITÉ",
+  "@privacyTitle": {},
+  "privacyScreenTitle": "Politique de confidentialité",
+  "@privacyScreenTitle": {},
+  "privacyIntroTitle": "Introduction",
+  "@privacyIntroTitle": {},
+  "privacyIntroContent": "Raccoon Bandit est un jeu de cartes familial conçu pour être simple, amusant et accessible aux enfants comme aux adultes. La protection de votre vie privée est importante pour nous.",
+  "@privacyIntroContent": {},
+  "privacyDataTitle": "Données collectées",
+  "@privacyDataTitle": {},
+  "privacyDataContent": "Raccoon Bandit ne demande pas et ne collecte pas directement de données personnelles permettant d'identifier un utilisateur (nom, adresse, téléphone). Des services tiers intégrés peuvent collecter automatiquement des informations techniques anonymisées.",
+  "@privacyDataContent": {},
+  "privacyAdsTitle": "Publicités",
+  "@privacyAdsTitle": {},
+  "privacyAdsContent": "L'application peut afficher des publicités récompensées via Google AdMob.",
+  "@privacyAdsContent": {},
+  "privacyPurchasesTitle": "Achats intégrés",
+  "@privacyPurchasesTitle": {},
+  "privacyPurchasesContent": "L'application propose un achat optionnel permettant de débloquer le mode Premium et de supprimer les publicités.",
+  "@privacyPurchasesContent": {},
+  "privacyAnalyticsTitle": "Statistiques et analyses",
+  "@privacyAnalyticsTitle": {},
+  "privacyAnalyticsContent": "Raccoon Bandit utilise Firebase Analytics afin de recueillir des statistiques anonymisées sur l'utilisation de l'application.",
+  "@privacyAnalyticsContent": {},
+  "privacyChildrenTitle": "Enfants et protection des données",
+  "@privacyChildrenTitle": {},
+  "privacyChildrenContent": "Raccoon Bandit est conçu pour un usage familial. Nous ne collectons pas sciemment de données personnelles concernant des enfants.",
+  "@privacyChildrenContent": {},
+  "privacyThirdPartyTitle": "Services tiers",
+  "@privacyThirdPartyTitle": {},
+  "privacyThirdPartyContent": "Google AdMob · Google Play Billing / App Store IAP · Firebase Analytics",
+  "@privacyThirdPartyContent": {},
+  "privacyGdprTitle": "Vos droits (RGPD)",
+  "@privacyGdprTitle": {},
+  "privacyGdprContent": "Pour toute demande relative à vos données, contactez-nous à :",
+  "@privacyGdprContent": {},
+  "privacyContactEmail": "papadrien.prepa@gmail.com",
+  "@privacyContactEmail": {},
+  "privacyUpdatesTitle": "Modifications",
+  "@privacyUpdatesTitle": {},
+  "privacyUpdatesContent": "Cette politique peut être mise à jour à tout moment. Nous vous invitons à la consulter régulièrement.",
+  "@privacyUpdatesContent": {}
 }

@@ -377,46 +377,6 @@
   "@settingsVersionLabel": {
     "description": "Version label at bottom of settings"
   },
-  "privacyTitle": "PRIVACY",
-  "@privacyTitle": {
-    "description": "AppBar title privacy policy"
-  },
-  "privacyHeading": "Privacy Policy",
-  "@privacyHeading": {
-    "description": "Main heading on privacy screen"
-  },
-  "privacyAppName": "Raccoon Bandit",
-  "@privacyAppName": {
-    "description": "App name under privacy heading"
-  },
-  "privacySection1Title": "Data Collection",
-  "@privacySection1Title": {
-    "description": "Data collection section title"
-  },
-  "privacySection1Content": "Raccoon Bandit does not collect any personal data. All game data is stored locally on your device.",
-  "@privacySection1Content": {
-    "description": "Data collection section content"
-  },
-  "privacySection2Title": "Ads",
-  "@privacySection2Title": {
-    "description": "Ads section title"
-  },
-  "privacySection2Content": "The app may display ads via Google AdMob. These ads may use anonymised identifiers in accordance with Google's policy.",
-  "@privacySection2Content": {
-    "description": "Ads section content"
-  },
-  "privacySection3Title": "Contact",
-  "@privacySection3Title": {
-    "description": "Contact section title"
-  },
-  "privacySection3Content": "For any questions about privacy, you can contact us via the app's page on the Google Play Store.",
-  "@privacySection3Content": {
-    "description": "Contact section content"
-  },
-  "privacyComingSoon": "Full privacy policy coming soon",
-  "@privacyComingSoon": {
-    "description": "Privacy policy placeholder note"
-  },
   "premiumTitle": "PREMIUM",
   "@premiumTitle": {
     "description": "AppBar title premium"
@@ -533,46 +493,120 @@
   "gameEffectGameOver": "Game over",
   "gameEffectFoodGained": "{playerName} picks up 1 food",
   "@gameEffectFoodGained": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectTrashSecured": "{playerName} secures a bin",
   "@gameEffectTrashSecured": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectRaccoonBlocked": "The raccoon is repelled by the secured bin!",
   "gameEffectRaccoonDevours": "The raccoon devours all of {playerName}'s food!",
   "@gameEffectRaccoonDevours": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectBanquet": "{playerName} feasts and gains 2 food!",
   "@gameEffectBanquet": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectBabyRaccoonDevours": "The baby raccoon devours {count} food from {targetName}!",
   "@gameEffectBabyRaccoonDevours": {
     "placeholders": {
-      "count": { "type": "int" },
-      "targetName": { "type": "String" }
+      "count": {
+        "type": "int"
+      },
+      "targetName": {
+        "type": "String"
+      }
     }
   },
   "gameEffectBabyRaccoonEmpty": "The baby raccoon looks for food… but there is none!",
   "gameEffectVacuumSteals": "{playerName} vacuums up {count} food from the others!",
   "@gameEffectVacuumSteals": {
     "placeholders": {
-      "playerName": { "type": "String" },
-      "count": { "type": "int" }
+      "playerName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
     }
   },
   "gameEffectVacuumEmpty": "The vacuum runs empty… nobody has food!",
   "gameEffectPinceNoTarget": "{playerName} looks for a target… but nobody has food!",
   "@gameEffectPinceNoTarget": {
-    "placeholders": { "playerName": { "type": "String" } }
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
   },
   "gameEffectPinceSteal": "{playerName} uses the pince and steals 1 food from {targetName}!",
   "@gameEffectPinceSteal": {
     "placeholders": {
-      "playerName": { "type": "String" },
-      "targetName": { "type": "String" }
+      "playerName": {
+        "type": "String"
+      },
+      "targetName": {
+        "type": "String"
+      }
     }
-  }
+  },
+  "privacyTitle": "PRIVACY",
+  "@privacyTitle": {},
+  "privacyScreenTitle": "Privacy Policy",
+  "@privacyScreenTitle": {},
+  "privacyIntroTitle": "Introduction",
+  "@privacyIntroTitle": {},
+  "privacyIntroContent": "Raccoon Bandit is a family card game designed to be simple, fun and accessible to both children and adults. Protecting your privacy matters to us.",
+  "@privacyIntroContent": {},
+  "privacyDataTitle": "Data Collected",
+  "@privacyDataTitle": {},
+  "privacyDataContent": "Raccoon Bandit does not directly request or collect any personally identifiable information (name, address, phone number). Integrated third-party services may automatically collect anonymised technical information.",
+  "@privacyDataContent": {},
+  "privacyAdsTitle": "Advertisements",
+  "@privacyAdsTitle": {},
+  "privacyAdsContent": "The app may display rewarded ads via Google AdMob.",
+  "@privacyAdsContent": {},
+  "privacyPurchasesTitle": "In-App Purchases",
+  "@privacyPurchasesTitle": {},
+  "privacyPurchasesContent": "The app offers an optional purchase to unlock Premium mode and remove ads.",
+  "@privacyPurchasesContent": {},
+  "privacyAnalyticsTitle": "Analytics",
+  "@privacyAnalyticsTitle": {},
+  "privacyAnalyticsContent": "Raccoon Bandit uses Firebase Analytics to collect anonymised usage statistics.",
+  "@privacyAnalyticsContent": {},
+  "privacyChildrenTitle": "Children & Data Protection",
+  "@privacyChildrenTitle": {},
+  "privacyChildrenContent": "Raccoon Bandit is designed for family use. We do not knowingly collect personal data from children.",
+  "@privacyChildrenContent": {},
+  "privacyThirdPartyTitle": "Third-Party Services",
+  "@privacyThirdPartyTitle": {},
+  "privacyThirdPartyContent": "Google AdMob · Google Play Billing / App Store IAP · Firebase Analytics",
+  "@privacyThirdPartyContent": {},
+  "privacyGdprTitle": "Your Rights (GDPR)",
+  "@privacyGdprTitle": {},
+  "privacyGdprContent": "For any request related to your data, contact us at:",
+  "@privacyGdprContent": {},
+  "privacyContactEmail": "papadrien.prepa@gmail.com",
+  "@privacyContactEmail": {},
+  "privacyUpdatesTitle": "Policy Updates",
+  "@privacyUpdatesTitle": {},
+  "privacyUpdatesContent": "This policy may be updated at any time. We encourage you to review it periodically.",
+  "@privacyUpdatesContent": {}
 }

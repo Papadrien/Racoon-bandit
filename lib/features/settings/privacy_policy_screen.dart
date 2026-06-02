@@ -1,82 +1,164 @@
 import 'package:flutter/material.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_decorations.dart';
+import '../../core/ui/app_spacing.dart';
+import '../../core/theme/app_theme.dart';
 import 'widgets/settings_secondary_header.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
-  static const String _policy = r'''Politique de confidentialité – Raccoon Bandit
-
-Introduction
-
-Raccoon Bandit est un jeu de cartes familial conçu pour être simple, amusant et accessible aux enfants comme aux adultes.
-
-La protection de votre vie privée est importante. Cette politique explique quelles informations peuvent être collectées lors de l'utilisation de l'application et comment elles sont utilisées.
-
-Données collectées
-
-Raccoon Bandit ne demande pas et ne collecte pas directement de données personnelles permettant d'identifier un utilisateur, telles que son nom, son adresse ou son numéro de téléphone.
-
-Toutefois, certains services tiers intégrés à l'application peuvent collecter automatiquement des informations techniques.
-
-Publicités
-
-Raccoon Bandit peut afficher des publicités récompensées via Google AdMob.
-
-Achats intégrés
-
-L'application propose un achat intégré optionnel permettant de débloquer le mode Premium et de supprimer les publicités.
-
-Statistiques et analyses
-
-Raccoon Bandit utilise Firebase Analytics afin de recueillir des statistiques anonymisées sur l'utilisation de l'application.
-
-Enfants et protection des données
-
-Raccoon Bandit est conçu pour un usage familial.
-
-Services tiers
-
-- Google AdMob
-- Google Play Billing / App Store In-App Purchases
-- Firebase Analytics
-
-Liens :
-https://policies.google.com/privacy
-
-https://firebase.google.com/support/privacy
-
-Vos droits (RGPD)
-
-Pour toute demande relative à vos données :
-
-papadrien.prepa@gmail.com
-
-Modifications de cette politique
-
-Cette politique peut être mise à jour à tout moment.
-
-Contact
-
-papadrien.prepa@gmail.com''';
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final sections = [
+      _PolicySection(
+        icon: '📖',
+        title: l10n.privacyIntroTitle,
+        content: l10n.privacyIntroContent,
+      ),
+      _PolicySection(
+        icon: '🔒',
+        title: l10n.privacyDataTitle,
+        content: l10n.privacyDataContent,
+      ),
+      _PolicySection(
+        icon: '📢',
+        title: l10n.privacyAdsTitle,
+        content: l10n.privacyAdsContent,
+      ),
+      _PolicySection(
+        icon: '🛒',
+        title: l10n.privacyPurchasesTitle,
+        content: l10n.privacyPurchasesContent,
+      ),
+      _PolicySection(
+        icon: '📊',
+        title: l10n.privacyAnalyticsTitle,
+        content: l10n.privacyAnalyticsContent,
+      ),
+      _PolicySection(
+        icon: '👨‍👩‍👧',
+        title: l10n.privacyChildrenTitle,
+        content: l10n.privacyChildrenContent,
+      ),
+      _PolicySection(
+        icon: '🔗',
+        title: l10n.privacyThirdPartyTitle,
+        content: l10n.privacyThirdPartyContent,
+      ),
+      _PolicySection(
+        icon: '⚖️',
+        title: l10n.privacyGdprTitle,
+        content: l10n.privacyGdprContent,
+        extra: l10n.privacyContactEmail,
+      ),
+      _PolicySection(
+        icon: '🔄',
+        title: l10n.privacyUpdatesTitle,
+        content: l10n.privacyUpdatesContent,
+      ),
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            const SettingsSecondaryHeader(title: 'Politique de confidentialité'),
+            SettingsSecondaryHeader(title: l10n.privacyScreenTitle),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: SelectableText(_policy),
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.hPadNormal,
+                  AppSpacing.lg,
+                  AppSpacing.hPadNormal,
+                  AppSpacing.xl * 2,
+                ),
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AppSpacing.md),
+                itemCount: sections.length,
+                itemBuilder: (context, index) => _SectionCard(
+                  section: sections[index],
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PolicySection {
+  final String icon;
+  final String title;
+  final String content;
+  final String? extra;
+
+  const _PolicySection({
+    required this.icon,
+    required this.title,
+    required this.content,
+    this.extra,
+  });
+}
+
+class _SectionCard extends StatelessWidget {
+  final _PolicySection section;
+
+  const _SectionCard({required this.section});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: AppDecorations.sectionCard,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(section.icon, style: const TextStyle(fontSize: 18)),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  section.title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textMuted,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SelectableText(
+            section.content,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.55,
+              color: AppColors.textDark,
+            ),
+          ),
+          if (section.extra != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            SelectableText(
+              section.extra!,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primary,
+                decoration: TextDecoration.underline,
+                decorationColor: AppTheme.primary,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

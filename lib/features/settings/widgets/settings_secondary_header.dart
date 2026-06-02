@@ -15,10 +15,15 @@ class SettingsSecondaryHeader extends StatelessWidget {
   /// Widget optionnel en position trailing (ex: icône d'action).
   final Widget? trailing;
 
+  /// Callback optionnel appelé lors de l'appui sur le bouton retour.
+  /// Si null, comportement par défaut : Navigator.pop().
+  final VoidCallback? onBackPressed;
+
   const SettingsSecondaryHeader({
     super.key,
     required this.title,
     this.trailing,
+    this.onBackPressed,
   });
 
   @override
@@ -34,7 +39,7 @@ class SettingsSecondaryHeader extends StatelessWidget {
         children: [
           // ── Bouton retour sticker ──────────────────────────────────────
           GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
+            onTap: onBackPressed ?? () => Navigator.of(context).pop(),
             behavior: HitTestBehavior.opaque,
             child: Container(
               width: AppSpacing.floatingButtonSize,

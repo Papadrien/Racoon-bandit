@@ -144,6 +144,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               title: widget.isNew
                   ? l10n.profileEditTitleNew
                   : l10n.profileEditTitleEdit,
+              onBackPressed: () async {
+                final discard = await _confirmDiscard();
+                if (discard && mounted) Navigator.pop(context, false);
+              },
             ),
             Expanded(
               child: LayoutBuilder(
