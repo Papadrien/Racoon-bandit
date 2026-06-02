@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
+import '../../core/game/card_resolution_message.dart';
 import '../../core/game/game_state.dart';
 import '../../core/models/card_type.dart';
 import '../../core/models/game_card.dart';
@@ -401,6 +402,38 @@ class _GameScreenState extends State<GameScreen>
 
   // ── Game logic ─────────────────────────────────────────────────────────────
 
+  String _resolveEffectMessage(CardEffectMessage msg) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (msg.key) {
+      case CardEffectKey.gameOver:
+        return l10n.gameEffectGameOver;
+      case CardEffectKey.foodGained:
+        return l10n.gameEffectFoodGained(msg.playerName ?? '');
+      case CardEffectKey.trashSecured:
+        return l10n.gameEffectTrashSecured(msg.playerName ?? '');
+      case CardEffectKey.raccoonBlocked:
+        return l10n.gameEffectRaccoonBlocked;
+      case CardEffectKey.raccoonDevours:
+        return l10n.gameEffectRaccoonDevours(msg.playerName ?? '');
+      case CardEffectKey.banquet:
+        return l10n.gameEffectBanquet(msg.playerName ?? '');
+      case CardEffectKey.babyRaccoonDevours:
+        return l10n.gameEffectBabyRaccoonDevours(msg.count ?? 0, msg.targetName ?? '');
+      case CardEffectKey.babyRaccoonEmpty:
+        return l10n.gameEffectBabyRaccoonEmpty;
+      case CardEffectKey.vacuumSteals:
+        return l10n.gameEffectVacuumSteals(msg.playerName ?? '', msg.count ?? 0);
+      case CardEffectKey.vacuumEmpty:
+        return l10n.gameEffectVacuumEmpty;
+      case CardEffectKey.pinceNoTarget:
+        return l10n.gameEffectPinceNoTarget(msg.playerName ?? '');
+      case CardEffectKey.pinceSteal:
+        return l10n.gameEffectPinceSteal(msg.playerName ?? '', msg.targetName ?? '');
+      case CardEffectKey.none:
+        return '';
+    }
+  }
+
   Future<void> _drawCard() async {
     if (_isAnimating || _showingPinceOverlay || _gameState.isGameOver) return;
 
@@ -462,7 +495,7 @@ class _GameScreenState extends State<GameScreen>
     _playOverlayAnimations(card, result, foodCountBeforeDraw: foodCountBeforeDraw);
 
     setState(() {
-      _effectText = result.message;
+      _effectText = _resolveEffectMessage(result.effectMessage);
     });
 
     final bool isRaccoonEffect =
@@ -508,7 +541,7 @@ class _GameScreenState extends State<GameScreen>
       _showingPinceOverlay = false;
       _pinceTargets = [];
       _pendingPinceCallback = null;
-      _effectText = resolution.message;
+      _effectText = _resolveEffectMessage(resolution.effectMessage);
       // Activer le snapshot uniquement si un vol effectif a eu lieu.
       if (resolution.foodStolen) {
         _snapshotFoodCounts = foodSnapshot;

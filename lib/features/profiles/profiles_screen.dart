@@ -98,18 +98,6 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton: _profiles.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () {
-                AudioService.instance.playButtonSound();
-                _addProfile();
-              },
-              backgroundColor: AppTheme.primary,
-              elevation: 0,
-              label: Text(l10n.profilesAddTooltip),
-              icon: const Icon(Icons.add_rounded),
-            ),
       body: Column(
         children: [
           SafeArea(
@@ -126,12 +114,27 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
                         AppSpacing.lg,
                         AppSpacing.lg,
                         AppSpacing.lg,
-                        100,
+                        AppSpacing.lg,
                       ),
-                      itemCount: _profiles.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: AppSpacing.md),
+                      itemCount: _profiles.length + 1,
+                      separatorBuilder: (_, i) =>
+                          i < _profiles.length - 1
+                              ? const SizedBox(height: AppSpacing.md)
+                              : const SizedBox(height: AppSpacing.xl),
                       itemBuilder: (_, i) {
+                        if (i == _profiles.length) {
+                          return OrangeButton(
+                            label: l10n.profilesAddTooltip,
+                            icon: Icons.add_rounded,
+                            onPressed: () {
+                              AudioService.instance.playButtonSound();
+                              _addProfile();
+                            },
+                            height: AppSpacing.buttonHeightSecondary,
+                            fontSize: 15,
+                            letterSpacing: 1.5,
+                          );
+                        }
                         final profile = _profiles[i];
 
                         return _ProfileCard(

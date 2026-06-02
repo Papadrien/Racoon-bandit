@@ -305,6 +305,22 @@
   "@profileEditButtonSave": {
     "description": "Bouton enregistrer profil existant"
   },
+  "profileEditDiscardTitle": "Abandonner les modifications ?",
+  "@profileEditDiscardTitle": {
+    "description": "Titre dialog confirmation abandon modifications profil"
+  },
+  "profileEditDiscardContent": "Vos modifications ne seront pas enregistrées.",
+  "@profileEditDiscardContent": {
+    "description": "Contenu dialog confirmation abandon modifications profil"
+  },
+  "profileEditDiscardCancel": "Continuer",
+  "@profileEditDiscardCancel": {
+    "description": "Annuler l'abandon dans l'édition profil"
+  },
+  "profileEditDiscardConfirm": "Abandonner",
+  "@profileEditDiscardConfirm": {
+    "description": "Confirmer l'abandon dans l'édition profil"
+  },
   "settingsTitle": "PARAMÈTRES",
   "@settingsTitle": {
     "description": "Titre AppBar Settings"
@@ -513,5 +529,50 @@
   "adError": "Une erreur est survenue, veuillez réessayer.",
   "@adError": {
     "description": "Snackbar erreur pub rewarded"
+  },
+  "gameEffectGameOver": "Fin de partie",
+  "gameEffectFoodGained": "{playerName} ramasse 1 nourriture",
+  "@gameEffectFoodGained": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectTrashSecured": "{playerName} sécurise sa poubelle",
+  "@gameEffectTrashSecured": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectRaccoonBlocked": "Le raton est repoussé par la poubelle sécurisée !",
+  "gameEffectRaccoonDevours": "Le raton dévore toute la nourriture de {playerName} !",
+  "@gameEffectRaccoonDevours": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectBanquet": "{playerName} festoie et gagne 2 nourritures !",
+  "@gameEffectBanquet": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectBabyRaccoonDevours": "Le bébé raton dévore {count} nourriture{count, plural, one{} other{s}} chez {targetName} !",
+  "@gameEffectBabyRaccoonDevours": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "targetName": { "type": "String" }
+    }
+  },
+  "gameEffectBabyRaccoonEmpty": "Le bébé raton cherche de la nourriture… mais il n'y en a pas !",
+  "gameEffectVacuumSteals": "{playerName} aspire {count} nourriture{count, plural, one{} other{s}} chez les autres !",
+  "@gameEffectVacuumSteals": {
+    "placeholders": {
+      "playerName": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "gameEffectVacuumEmpty": "L'aspirateur tourne à vide… personne n'a de nourriture !",
+  "gameEffectPinceNoTarget": "{playerName} cherche une cible… mais personne n'a de nourriture !",
+  "@gameEffectPinceNoTarget": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectPinceSteal": "{playerName} sort la pince et vole une nourriture à {targetName} !",
+  "@gameEffectPinceSteal": {
+    "placeholders": {
+      "playerName": { "type": "String" },
+      "targetName": { "type": "String" }
+    }
   }
 }

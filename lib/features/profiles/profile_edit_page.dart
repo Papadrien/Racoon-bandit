@@ -61,6 +61,40 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     super.dispose();
   }
 
+  Future<bool> _confirmDiscard() async {
+    final l10n = AppLocalizations.of(context)!;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+        ),
+        title: Text(l10n.profileEditDiscardTitle),
+        content: Text(l10n.profileEditDiscardContent),
+        actions: [
+          TextButton(
+            onPressed: () {
+              AudioService.instance.playButtonSound();
+              Navigator.pop(ctx, false);
+            },
+            child: Text(l10n.profileEditDiscardCancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              AudioService.instance.playButtonSound();
+              Navigator.pop(ctx, true);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+            ),
+            child: Text(l10n.profileEditDiscardConfirm),
+          ),
+        ],
+      ),
+    );
+    return result == true;
+  }
+
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context)!;
     final name = _nameCtrl.text.trim();
@@ -93,9 +127,16 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final discard = await _confirmDiscard();
+        if (discard && mounted) Navigator.pop(context, false);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
         child: Column(
           children: [
             SettingsSecondaryHeader(
@@ -193,7 +234,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                         label: widget.isNew
                             ? l10n.profileEditButtonCreate
                             : l10n.profileEditButtonSave,
-                        icon: Icons.check_rounded,
                         onPressed: () {
                           AudioService.instance.playButtonSound();
                           _save();
@@ -210,6 +250,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           ],
         ),
       ),
+    ),
     );
   }
 }

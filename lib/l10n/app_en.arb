@@ -305,6 +305,22 @@
   "@profileEditButtonSave": {
     "description": "Save existing profile button"
   },
+  "profileEditDiscardTitle": "Discard changes?",
+  "@profileEditDiscardTitle": {
+    "description": "Profile edit discard confirmation dialog title"
+  },
+  "profileEditDiscardContent": "Your changes will not be saved.",
+  "@profileEditDiscardContent": {
+    "description": "Profile edit discard confirmation dialog content"
+  },
+  "profileEditDiscardCancel": "Keep editing",
+  "@profileEditDiscardCancel": {
+    "description": "Cancel discard in profile edit"
+  },
+  "profileEditDiscardConfirm": "Discard",
+  "@profileEditDiscardConfirm": {
+    "description": "Confirm discard in profile edit"
+  },
   "settingsTitle": "SETTINGS",
   "@settingsTitle": {
     "description": "AppBar title Settings"
@@ -513,5 +529,50 @@
   "adError": "An error occurred, please try again.",
   "@adError": {
     "description": "Rewarded ad error snackbar"
+  },
+  "gameEffectGameOver": "Game over",
+  "gameEffectFoodGained": "{playerName} picks up 1 food",
+  "@gameEffectFoodGained": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectTrashSecured": "{playerName} secures a bin",
+  "@gameEffectTrashSecured": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectRaccoonBlocked": "The raccoon is repelled by the secured bin!",
+  "gameEffectRaccoonDevours": "The raccoon devours all of {playerName}'s food!",
+  "@gameEffectRaccoonDevours": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectBanquet": "{playerName} feasts and gains 2 food!",
+  "@gameEffectBanquet": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectBabyRaccoonDevours": "The baby raccoon devours {count} food from {targetName}!",
+  "@gameEffectBabyRaccoonDevours": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "targetName": { "type": "String" }
+    }
+  },
+  "gameEffectBabyRaccoonEmpty": "The baby raccoon looks for food… but there is none!",
+  "gameEffectVacuumSteals": "{playerName} vacuums up {count} food from the others!",
+  "@gameEffectVacuumSteals": {
+    "placeholders": {
+      "playerName": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "gameEffectVacuumEmpty": "The vacuum runs empty… nobody has food!",
+  "gameEffectPinceNoTarget": "{playerName} looks for a target… but nobody has food!",
+  "@gameEffectPinceNoTarget": {
+    "placeholders": { "playerName": { "type": "String" } }
+  },
+  "gameEffectPinceSteal": "{playerName} uses the pince and steals 1 food from {targetName}!",
+  "@gameEffectPinceSteal": {
+    "placeholders": {
+      "playerName": { "type": "String" },
+      "targetName": { "type": "String" }
+    }
   }
 }
