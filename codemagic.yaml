@@ -6,10 +6,20 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.junade.raccoonbandit  # ← à adapter
-    
+      # Secrets à configurer dans Codemagic → App settings → Environment variables
+      # APP_STORE_CONNECT_ISSUER_ID         (App Store Connect API)
+      # APP_STORE_CONNECT_KEY_IDENTIFIER    (App Store Connect API key ID)
+      # APP_STORE_CONNECT_PRIVATE_KEY       (contenu du fichier .p8, multiline secret)
+      # CERTIFICATE_PRIVATE_KEY             (clé privée du certificat de distribution, multiline secret)
+      vars:
+        BUNDLE_ID: "com.junade.raccoonbandit"  # ← à adapter si différent
+        APP_STORE_APP_ID: "XXXXXXXXXX"          # ← Apple ID numérique de l'app sur App Store Connect
+      groups:
+        - app_store_credentials   # groupe contenant les 3 secrets App Store Connect API
+        - certificates            # groupe contenant CERTIFICATE_PRIVATE_KEY
+    integrations:
+      app_store_connect: Raccoon Bandit  # ← nom de la connexion créée dans Codemagic
+
     scripts:
       - name: Install pods
         script: |
@@ -21,10 +31,17 @@ workflows:
 
       - name: Flutter build IPA
         script: |
-          flutter build ipa --release
+          flutter build ipa \
+            --release \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
 
-    # Pas de bloc publishing : upload manuel via Transporter
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false   # passer à true pour publication directe

@@ -139,7 +139,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         body: SafeArea(
         child: Column(
           children: [
-            SettingsSecondaryHeader(
+            SettingsSecondaryHeader(onBackPressed: () async { final discard = await _confirmDiscard(); if (discard && context.mounted) Navigator.pop(context,false); }, 
               title: widget.isNew
                   ? l10n.profileEditTitleNew
                   : l10n.profileEditTitleEdit,
