@@ -41,7 +41,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   bool _chaosModeEnabled = false;
 
   // ── Système de vies ────────────────────────────────────────────────────────
-  final LifeSystemService _lifeSystemService = LifeSystemService();
+  final LifeSystemService _lifeSystemService = LifeSystemService.instance;
   Timer? _livesTimer;
   bool _isRewardLoading = false;
 
@@ -215,18 +215,17 @@ class _LobbyScreenState extends State<LobbyScreen> {
       );
     });
 
-    final lifeSystemService = LifeSystemService();
-    await lifeSystemService.load();
+    await _lifeSystemService.updateLivesFromTime();
 
-    if (lifeSystemService.currentLives <= 0) {
+    if (_lifeSystemService.currentLives <= 0) {
       _navigationInProgress = false;
       return;
     }
 
-    await lifeSystemService.consumeLife();
+    await _lifeSystemService.consumeLife();
 
     unawaited(AnalyticsService.instance.logLifeConsumed(
-      livesRemaining: lifeSystemService.currentLives,
+      livesRemaining: _lifeSystemService.currentLives,
     ));
 
     unawaited(AnalyticsService.instance.logGameStarted(

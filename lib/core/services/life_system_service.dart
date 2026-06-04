@@ -5,6 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LifeSystemService {
+  LifeSystemService._();
+
+  static final LifeSystemService instance = LifeSystemService._();
+
   static const int maxLives = 1;
   static const Duration rechargeDuration = Duration(minutes: 15);
 

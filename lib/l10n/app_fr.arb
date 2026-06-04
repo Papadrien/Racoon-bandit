@@ -577,15 +577,15 @@
   "@privacyIntroContent": {},
   "privacyDataTitle": "Données collectées",
   "@privacyDataTitle": {},
-  "privacyDataContent": "Raccoon Bandit ne demande pas et ne collecte pas directement de données personnelles permettant d'identifier un utilisateur (nom, adresse, téléphone). Des services tiers intégrés peuvent collecter automatiquement des informations techniques anonymisées.",
+  "privacyDataContent": "Raccoon Bandit ne demande pas et ne collecte pas directement de données personnelles permettant d'identifier un utilisateur (nom, adresse, téléphone). Des services tiers intégrés (Google AdMob, Firebase Analytics) peuvent collecter des informations techniques anonymisées selon vos préférences de consentement. Les préférences de l'application (son, vibrations) sont stockées localement sur l'appareil via SharedPreferences et ne sont pas transmises.",
   "@privacyDataContent": {},
   "privacyAdsTitle": "Publicités",
   "@privacyAdsTitle": {},
-  "privacyAdsContent": "L'application peut afficher des publicités récompensées via Google AdMob.",
+  "privacyAdsContent": "L'application peut afficher des publicités récompensées via Google AdMob. Lors du premier lancement dans l'Espace Économique Européen (EEE) ou au Royaume-Uni, un formulaire de consentement (UMP — User Messaging Platform) vous est présenté pour vous permettre de choisir si vous souhaitez recevoir des publicités personnalisées. Vous pouvez modifier ces préférences à tout moment depuis les Paramètres.",
   "@privacyAdsContent": {},
   "privacyPurchasesTitle": "Achats intégrés",
   "@privacyPurchasesTitle": {},
-  "privacyPurchasesContent": "L'application propose un achat optionnel permettant de débloquer le mode Premium et de supprimer les publicités.",
+  "privacyPurchasesContent": "Raccoon Bandit ne propose pas d'achats intégrés dans sa version actuelle.",
   "@privacyPurchasesContent": {},
   "privacyAnalyticsTitle": "Statistiques et analyses",
   "@privacyAnalyticsTitle": {},
@@ -593,11 +593,11 @@
   "@privacyAnalyticsContent": {},
   "privacyChildrenTitle": "Enfants et protection des données",
   "@privacyChildrenTitle": {},
-  "privacyChildrenContent": "Raccoon Bandit est conçu pour un usage familial. Nous ne collectons pas sciemment de données personnelles concernant des enfants.",
+  "privacyChildrenContent": "Raccoon Bandit est conçu pour un usage familial. Nous ne collectons pas sciemment de données personnelles concernant des enfants. L'application n'est pas classifiée comme application destinée aux enfants au sens du programme Families de Google Play, et affiche des publicités récompensées soumises au consentement de l'utilisateur.",
   "@privacyChildrenContent": {},
   "privacyThirdPartyTitle": "Services tiers",
   "@privacyThirdPartyTitle": {},
-  "privacyThirdPartyContent": "Google AdMob · Google Play Billing / App Store IAP · Firebase Analytics",
+  "privacyThirdPartyContent": "Google AdMob (publicités récompensées, gestion du consentement UMP) · Firebase Analytics (statistiques anonymisées) · SharedPreferences (préférences locales, aucune donnée transmise)",
   "@privacyThirdPartyContent": {},
   "privacyGdprTitle": "Vos droits (RGPD)",
   "@privacyGdprTitle": {},
@@ -608,5 +608,13 @@
   "privacyUpdatesTitle": "Modifications",
   "@privacyUpdatesTitle": {},
   "privacyUpdatesContent": "Cette politique peut être mise à jour à tout moment. Nous vous invitons à la consulter régulièrement.",
-  "@privacyUpdatesContent": {}
+  "@privacyUpdatesContent": {},
+  "settingsConsentLabel": "Préférences publicitaires",
+  "@settingsConsentLabel": {
+    "description": "Tile gestion du consentement publicitaire UMP"
+  },
+  "settingsConsentSubtitle": "Modifier mes préférences de personnalisation des publicités",
+  "@settingsConsentSubtitle": {
+    "description": "Sous-titre tile consentement"
+  }
 }

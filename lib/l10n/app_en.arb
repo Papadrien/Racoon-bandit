@@ -577,15 +577,15 @@
   "@privacyIntroContent": {},
   "privacyDataTitle": "Data Collected",
   "@privacyDataTitle": {},
-  "privacyDataContent": "Raccoon Bandit does not directly request or collect any personally identifiable information (name, address, phone number). Integrated third-party services may automatically collect anonymised technical information.",
+  "privacyDataContent": "Raccoon Bandit does not directly request or collect any personally identifiable information (name, address, phone number). Integrated third-party services (Google AdMob, Firebase Analytics) may collect anonymised technical information based on your consent preferences. App preferences (sound, vibrations) are stored locally on the device via SharedPreferences and are never transmitted.",
   "@privacyDataContent": {},
   "privacyAdsTitle": "Advertisements",
   "@privacyAdsTitle": {},
-  "privacyAdsContent": "The app may display rewarded ads via Google AdMob.",
+  "privacyAdsContent": "The app may display rewarded ads via Google AdMob. On first launch in the European Economic Area (EEA) or United Kingdom, a consent form (UMP — User Messaging Platform) is shown so you can choose whether to receive personalised ads. You can update your preferences at any time in Settings.",
   "@privacyAdsContent": {},
   "privacyPurchasesTitle": "In-App Purchases",
   "@privacyPurchasesTitle": {},
-  "privacyPurchasesContent": "The app offers an optional purchase to unlock Premium mode and remove ads.",
+  "privacyPurchasesContent": "Raccoon Bandit does not offer in-app purchases in its current version.",
   "@privacyPurchasesContent": {},
   "privacyAnalyticsTitle": "Analytics",
   "@privacyAnalyticsTitle": {},
@@ -593,11 +593,11 @@
   "@privacyAnalyticsContent": {},
   "privacyChildrenTitle": "Children & Data Protection",
   "@privacyChildrenTitle": {},
-  "privacyChildrenContent": "Raccoon Bandit is designed for family use. We do not knowingly collect personal data from children.",
+  "privacyChildrenContent": "Raccoon Bandit is designed for family use. We do not knowingly collect personal data from children. The app is not classified as a children's app under the Google Play Families programme and displays rewarded ads subject to user consent.",
   "@privacyChildrenContent": {},
   "privacyThirdPartyTitle": "Third-Party Services",
   "@privacyThirdPartyTitle": {},
-  "privacyThirdPartyContent": "Google AdMob · Google Play Billing / App Store IAP · Firebase Analytics",
+  "privacyThirdPartyContent": "Google AdMob (rewarded ads, UMP consent management) · Firebase Analytics (anonymised statistics) · SharedPreferences (local preferences, no data transmitted)",
   "@privacyThirdPartyContent": {},
   "privacyGdprTitle": "Your Rights (GDPR)",
   "@privacyGdprTitle": {},
@@ -608,5 +608,13 @@
   "privacyUpdatesTitle": "Policy Updates",
   "@privacyUpdatesTitle": {},
   "privacyUpdatesContent": "This policy may be updated at any time. We encourage you to review it periodically.",
-  "@privacyUpdatesContent": {}
+  "@privacyUpdatesContent": {},
+  "settingsConsentLabel": "Ad preferences",
+  "@settingsConsentLabel": {
+    "description": "Ad consent management tile label"
+  },
+  "settingsConsentSubtitle": "Manage my ad personalisation preferences",
+  "@settingsConsentSubtitle": {
+    "description": "Ad consent tile subtitle"
+  }
 }

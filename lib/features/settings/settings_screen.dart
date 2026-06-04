@@ -9,6 +9,7 @@ import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/models/reward_unlock.dart';
 import '../../core/services/onboarding_service.dart';
+import '../../core/services/consent_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/services/settings_service.dart';
 import '../../core/ui/app_colors.dart';
@@ -193,6 +194,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               AppRoutes.privacyPolicy,
                             ),
                           ),
+                          // Tile "Préférences publicitaires" — visible uniquement
+                          // si le SDK UMP indique que le formulaire est disponible
+                          // (zone EEE/UK). Masqué hors-EEE.
+                          if (ConsentService.instance.privacyOptionsRequired) ...[
+                            const _CardDivider(),
+                            _NavTile(
+                              icon: Icons.tune_rounded,
+                              label: l10n.settingsConsentLabel,
+                              onTap: () => ConsentService.instance
+                                  .showPrivacyOptionsForm(context),
+                            ),
+                          ],
                         ],
                       ),
 

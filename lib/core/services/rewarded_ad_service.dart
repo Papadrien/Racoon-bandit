@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'analytics_service.dart';
+import 'consent_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -14,40 +15,57 @@ class RewardedAdService {
 
   bool _isLoading = false;
   bool _isShowing = false;
+  bool _isShowRequested = false; // garde-fou anti double-clic précoce
   bool _hasRewardBeenGranted = false;
+
+  static const Duration _loadTimeout = Duration(seconds: 8);
 
   bool get isAdReady => _rewardedInterstitialAd != null;
 
   static Future<void> initialize() async {
+    // Configuration globale AdMob :
+    // - L'app est familiale mais n'est PAS inscrite au programme Google Families.
+    //   tagForChildDirectedTreatment doit donc rester à "unspecified" (valeur par défaut).
+    // - Le consentement UMP gère la personnalisation selon la région de l'utilisateur.
     await MobileAds.instance.initialize();
   }
 
   Future<void> preloadAd() async {
+    // Ne pas charger de publicité si le consentement n'a pas été obtenu ou
+    // n'est pas requis dans la région de l'utilisateur.
+    if (!ConsentService.instance.canRequestAds) return;
     if (_rewardedInterstitialAd != null || _isLoading) return;
 
     _isLoading = true;
     _loadCompleter = Completer<bool>();
 
-    await RewardedInterstitialAd.load(
-      adUnitId: _adUnitId,
-      request: const AdRequest(),
-      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _rewardedInterstitialAd?.dispose();
-          _rewardedInterstitialAd = ad;
-          _isLoading = false;
-          _loadCompleter?.complete(true);
-          _loadCompleter = null;
-          AnalyticsService.instance.logRewardedAdLoaded();
-        },
-        onAdFailedToLoad: (error) {
-          if (kDebugMode) print('[Ads] Failed to preload: ${error.message}');
-          _rewardedInterstitialAd = null;
-          _isLoading = false;
-          _loadCompleter?.complete(false);
-          _loadCompleter = null;
-          AnalyticsService.instance.logRewardedAdFailed(reason: error.message);
-        },
+    unawaited(
+      RewardedInterstitialAd.load(
+        adUnitId: _adUnitId,
+        request: const AdRequest(),
+        rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+          onAdLoaded: (ad) {
+            _rewardedInterstitialAd?.dispose();
+            _rewardedInterstitialAd = ad;
+            _isLoading = false;
+            if (_loadCompleter != null && !_loadCompleter!.isCompleted) {
+              _loadCompleter!.complete(true);
+            }
+            _loadCompleter = null;
+            AnalyticsService.instance.logRewardedAdLoaded();
+          },
+          onAdFailedToLoad: (error) {
+            if (kDebugMode) print('[Ads] Failed to preload: ${error.message}');
+            _rewardedInterstitialAd = null;
+            _isLoading = false;
+            if (_loadCompleter != null && !_loadCompleter!.isCompleted) {
+              _loadCompleter!.complete(false);
+            }
+            _loadCompleter = null;
+            AnalyticsService.instance
+                .logRewardedAdFailed(reason: error.message);
+          },
+        ),
       ),
     );
   }
@@ -56,63 +74,82 @@ class RewardedAdService {
     required VoidCallback onRewardEarned,
     required ValueChanged<String> onError,
   }) async {
-    if (_isShowing) return false;
-
-    // Si pas prête et pas en chargement, lancer le chargement maintenant
-    if (_rewardedInterstitialAd == null && !_isLoading) {
-      await preloadAd();
-    }
-
-    // Si en chargement (lancé maintenant ou déjà en cours), attendre la fin
-    if (_rewardedInterstitialAd == null && _isLoading) {
-      await _loadCompleter?.future;
-    }
-
-    // Toujours pas prête = vrai échec réseau
-    if (_rewardedInterstitialAd == null) {
-      preloadAd();
-      onError('Une erreur est survenue, veuillez réessayer.');
-      return false;
-    }
-
-    _hasRewardBeenGranted = false;
-    _isShowing = true;
+    // Garde-fou le plus précoce possible — bloque les doubles clics
+    if (_isShowRequested || _isShowing) return false;
+    _isShowRequested = true;
 
     try {
-      _rewardedInterstitialAd!.fullScreenContentCallback =
-          FullScreenContentCallback(
-        onAdDismissedFullScreenContent: (ad) {
-          ad.dispose();
-          _resetState();
-          preloadAd();
-          // Pas de message si l'utilisateur ferme sans regarder entièrement
-        },
-        onAdFailedToShowFullScreenContent: (ad, error) {
-          ad.dispose();
-          _resetState();
-          preloadAd();
-          onError('Une erreur est survenue, veuillez réessayer.');
-        },
-      );
+      // Si pas prête et pas en chargement, lancer le chargement maintenant
+      if (_rewardedInterstitialAd == null && !_isLoading) {
+        await preloadAd();
+      }
 
-      AnalyticsService.instance.logRewardedAdShown();
+      // Si en chargement (lancé maintenant ou déjà en cours), attendre avec timeout
+      if (_rewardedInterstitialAd == null && _isLoading) {
+        final completer = _loadCompleter;
+        if (completer != null) {
+          await completer.future.timeout(
+            _loadTimeout,
+            onTimeout: () {
+              if (kDebugMode) print('[Ads] Load timeout after ${_loadTimeout.inSeconds}s');
+              // Résoudre le completer bloqué et réinitialiser l'état de chargement
+              if (!completer.isCompleted) completer.complete(false);
+              _isLoading = false;
+              _loadCompleter = null;
+              return false;
+            },
+          );
+        }
+      }
 
-      await _rewardedInterstitialAd!.show(
-        onUserEarnedReward: (_, reward) {
-          if (_hasRewardBeenGranted) return;
-          _hasRewardBeenGranted = true;
-          AnalyticsService.instance.logRewardedAdRewarded();
-          onRewardEarned();
-        },
-      );
+      // Toujours pas prête = vrai échec réseau ou timeout
+      if (_rewardedInterstitialAd == null) {
+        unawaited(preloadAd());
+        onError('Une erreur est survenue, veuillez réessayer.');
+        return false;
+      }
 
-      return true;
-    } catch (e) {
-      if (kDebugMode) print('[Ads] Unexpected error: $e');
-      _resetState();
-      preloadAd();
-      onError('Une erreur est survenue, veuillez réessayer.');
-      return false;
+      _hasRewardBeenGranted = false;
+      _isShowing = true;
+
+      try {
+        _rewardedInterstitialAd!.fullScreenContentCallback =
+            FullScreenContentCallback(
+          onAdDismissedFullScreenContent: (ad) {
+            ad.dispose();
+            _resetState();
+            unawaited(preloadAd());
+          },
+          onAdFailedToShowFullScreenContent: (ad, error) {
+            ad.dispose();
+            _resetState();
+            unawaited(preloadAd());
+            onError('Une erreur est survenue, veuillez réessayer.');
+          },
+        );
+
+        AnalyticsService.instance.logRewardedAdShown();
+
+        await _rewardedInterstitialAd!.show(
+          onUserEarnedReward: (_, reward) {
+            if (_hasRewardBeenGranted) return;
+            _hasRewardBeenGranted = true;
+            AnalyticsService.instance.logRewardedAdRewarded();
+            onRewardEarned();
+          },
+        );
+
+        return true;
+      } catch (e) {
+        if (kDebugMode) print('[Ads] Unexpected error: $e');
+        _resetState();
+        unawaited(preloadAd());
+        onError('Une erreur est survenue, veuillez réessayer.');
+        return false;
+      }
+    } finally {
+      // Toujours libérer le verrou de demande, même en cas d'erreur inattendue
+      _isShowRequested = false;
     }
   }
 
@@ -120,18 +157,17 @@ class RewardedAdService {
     _rewardedInterstitialAd = null;
     _isLoading = false;
     _isShowing = false;
+    _isShowRequested = false;
     _hasRewardBeenGranted = false;
   }
 
   String get _adUnitId {
     if (kDebugMode) {
-      // IDs de test Google
       if (defaultTargetPlatform == TargetPlatform.android) {
         return 'ca-app-pub-3940256099942544/5354046379';
       }
       return 'ca-app-pub-3940256099942544/6978759866';
     }
-    // IDs de production
     if (defaultTargetPlatform == TargetPlatform.android) {
       return 'ca-app-pub-7203301690798915/2347010041';
     }

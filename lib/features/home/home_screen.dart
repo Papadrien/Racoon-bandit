@@ -28,7 +28,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  final LifeSystemService _lifeSystemService = LifeSystemService();
+  final LifeSystemService _lifeSystemService = LifeSystemService.instance;
 
   // Onboarding — premier lancement uniquement
   bool _showOnboarding = false;
