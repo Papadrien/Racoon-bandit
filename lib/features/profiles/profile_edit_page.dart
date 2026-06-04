@@ -132,8 +132,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
+        final navigator = Navigator.of(context);
         final discard = await _confirmDiscard();
-        if (discard && mounted) Navigator.pop(context, false);
+        if (discard && mounted) navigator.pop(false);
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
@@ -145,8 +146,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                   ? l10n.profileEditTitleNew
                   : l10n.profileEditTitleEdit,
               onBackPressed: () async {
+                final navigator = Navigator.of(context);
                 final discard = await _confirmDiscard();
-                if (discard && mounted) Navigator.pop(context, false);
+                if (discard && mounted) navigator.pop(false);
               },
             ),
             Expanded(

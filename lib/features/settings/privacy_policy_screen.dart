@@ -77,7 +77,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   AppSpacing.hPadNormal,
                   AppSpacing.xl * 2,
                 ),
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const SizedBox(height: AppSpacing.md),
                 itemCount: sections.length,
                 itemBuilder: (context, index) => _SectionCard(
@@ -149,7 +149,7 @@ class _SectionCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             SelectableText(
               section.extra!,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.primary,
