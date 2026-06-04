@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 /// Service singleton gérant le consentement publicitaire via Google UMP.
@@ -20,27 +19,35 @@ class ConsentService {
   // ── API publique ───────────────────────────────────────────────────────────
 
   /// Vrai si AdMob est autorisé à charger des publicités.
-  /// Couvre : consentement obtenu, zone non-EEE/UK, formulaire non requis.
-  bool get canRequestAds {
-    final consent = ConsentInformation.instance.consentStatus;
-    return consent == ConsentStatus.obtained ||
-        consent == ConsentStatus.notRequired;
+  /// Appel async — retourne false en cas d'erreur.
+  Future<bool> canRequestAds() async {
+    try {
+      return await ConsentInformation.instance.canRequestAds();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Consent] canRequestAds erreur : $e');
+      return false;
+    }
   }
 
-  /// Vrai si le bouton "Gérer mes préférences publicitaires" doit être affiché
-  /// dans les paramètres.
-  bool get privacyOptionsRequired =>
-      ConsentInformation.instance.privacyOptionsRequirementStatus ==
-      PrivacyOptionsRequirementStatus.required;
+  /// Vrai si le bouton "Gérer mes préférences publicitaires" doit être affiché.
+  Future<bool> privacyOptionsRequired() async {
+    try {
+      return await ConsentInformation.instance
+              .getPrivacyOptionsRequirementStatus() ==
+          PrivacyOptionsRequirementStatus.required;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Consent] privacyOptionsRequired erreur : $e');
+      return false;
+    }
+  }
 
   /// Demande une mise à jour du statut UMP, puis affiche le formulaire si
   /// nécessaire. À appeler au démarrage avant MobileAds.initialize().
   /// Les erreurs sont absorbées pour ne pas bloquer le démarrage.
-  Future<void> requestAndShow(BuildContext context) async {
+  Future<void> requestAndShow() async {
     try {
       await _requestUpdate();
-      if (!context.mounted) return;
-      await _showFormIfRequired(context);
+      await _showFormIfRequired();
     } catch (e) {
       if (kDebugMode) debugPrint('[Consent] Erreur UMP : $e');
     }
@@ -48,16 +55,16 @@ class ConsentService {
 
   /// Ouvre le formulaire de gestion des préférences publicitaires.
   /// À appeler depuis l'écran Paramètres.
-  Future<void> showPrivacyOptionsForm(BuildContext context) async {
+  Future<void> showPrivacyOptionsForm() async {
     try {
-      await ConsentForm.showPrivacyOptionsForm(
-        context,
-        (FormError? error) {
-          if (error != null && kDebugMode) {
-            debugPrint('[Consent] Formulaire vie privée : ${error.message}');
-          }
-        },
-      );
+      final completer = Completer<void>();
+      ConsentForm.showPrivacyOptionsForm((FormError? error) {
+        if (error != null && kDebugMode) {
+          debugPrint('[Consent] Formulaire vie privée : ${error.message}');
+        }
+        if (!completer.isCompleted) completer.complete();
+      });
+      await completer.future;
     } catch (e) {
       if (kDebugMode) debugPrint('[Consent] showPrivacyOptionsForm : $e');
     }
@@ -96,14 +103,16 @@ class ConsentService {
     await completer.future;
   }
 
-  Future<void> _showFormIfRequired(BuildContext context) async {
-    await ConsentForm.loadAndShowConsentFormIfRequired(
-      context,
-      (FormError? error) {
-        if (error != null && kDebugMode) {
-          debugPrint('[Consent] loadAndShowConsentFormIfRequired : ${error.message}');
-        }
-      },
-    );
+  Future<void> _showFormIfRequired() async {
+    final completer = Completer<void>();
+
+    ConsentForm.loadAndShowConsentFormIfRequired((FormError? error) {
+      if (error != null && kDebugMode) {
+        debugPrint('[Consent] loadAndShowConsentFormIfRequired : ${error.message}');
+      }
+      if (!completer.isCompleted) completer.complete();
+    });
+
+    await completer.future;
   }
 }

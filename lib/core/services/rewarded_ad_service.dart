@@ -33,7 +33,7 @@ class RewardedAdService {
   Future<void> preloadAd() async {
     // Ne pas charger de publicité si le consentement n'a pas été obtenu ou
     // n'est pas requis dans la région de l'utilisateur.
-    if (!ConsentService.instance.canRequestAds) return;
+    if (!await ConsentService.instance.canRequestAds()) return;
     if (_rewardedInterstitialAd != null || _isLoading) return;
 
     _isLoading = true;

@@ -55,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // conformément aux exigences Google et aux règles de la politique de
     // consentement pour l'EEE/UK (RGPD / PECR).
     if (mounted) {
-      await ConsentService.instance.requestAndShow(context);
+      await ConsentService.instance.requestAndShow();
     }
 
     // ── Initialisation AdMob ────────────────────────────────────────────────
@@ -65,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await RewardedAdService.initialize();
 
     // Pré-chargement de la publicité récompensée uniquement si autorisé
-    if (ConsentService.instance.canRequestAds) {
+    if (await ConsentService.instance.canRequestAds()) {
       await RewardedAdService.instance.preloadAd();
     }
 

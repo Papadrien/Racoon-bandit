@@ -28,12 +28,19 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late bool _soundEnabled;
   late bool _vibrationEnabled;
+  bool _privacyOptionsRequired = false;
 
   @override
   void initState() {
     super.initState();
     _soundEnabled = SettingsService.soundEnabled;
     _vibrationEnabled = SettingsService.vibrationEnabled;
+    _loadPrivacyOptionsStatus();
+  }
+
+  Future<void> _loadPrivacyOptionsStatus() async {
+    final required = await ConsentService.instance.privacyOptionsRequired();
+    if (mounted) setState(() => _privacyOptionsRequired = required);
   }
 
   void _onSoundChanged(bool value) {
@@ -197,13 +204,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           // Tile "Préférences publicitaires" — visible uniquement
                           // si le SDK UMP indique que le formulaire est disponible
                           // (zone EEE/UK). Masqué hors-EEE.
-                          if (ConsentService.instance.privacyOptionsRequired) ...[
+                          if (_privacyOptionsRequired) ...[ 
                             const _CardDivider(),
                             _NavTile(
                               icon: Icons.tune_rounded,
                               label: l10n.settingsConsentLabel,
                               onTap: () => ConsentService.instance
-                                  .showPrivacyOptionsForm(context),
+                                  .showPrivacyOptionsForm(),
                             ),
                           ],
                         ],
