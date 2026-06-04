@@ -31,6 +31,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _init() async {
+    final navigator = Navigator.of(context);
+
     await _initFirebase();
     await SettingsService.load();
     await PlayerProfilesService.load();
@@ -46,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
     ]);
 
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    navigator.pushReplacementNamed(AppRoutes.home);
   }
 
   Future<void> _initFirebase() async {

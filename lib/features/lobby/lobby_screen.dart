@@ -16,7 +16,6 @@ import '../../core/services/progression_service.dart';
 import '../../core/constants/app_assets.dart';
 import '../profiles/profile_edit_page.dart';
 import '../../core/models/card_back_config.dart';
-// import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/ui/app_colors.dart';
@@ -203,6 +202,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     _navigationInProgress = true;
 
+    final navigator = Navigator.of(context);
+
     final players = List.generate(_playerCount, (i) {
       final profile = _selectedProfiles[i];
       return PlayerState(
@@ -245,8 +246,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       return;
     }
 
-    Navigator.pushNamed(
-      context,
+    navigator.pushNamed(
       AppRoutes.game,
       arguments: GameState(players: players, chaosMode: _chaosModeEnabled),
     ).then((_) {
@@ -1145,6 +1145,7 @@ class _ProfilePickerSheetState extends State<_ProfilePickerSheet> {
   }
 
   Future<void> _createProfile() async {
+    final navigator = Navigator.of(context);
     final newP = PlayerProfilesService.newProfile();
     final created = await Navigator.push<bool>(
       context,
@@ -1165,7 +1166,7 @@ class _ProfilePickerSheetState extends State<_ProfilePickerSheet> {
           (p) => !widget.disabledProfileIds.contains(p.id) && p.id != widget.currentProfileId,
           orElse: () => fresh.last,
         );
-        if (mounted) Navigator.pop(context, justCreated);
+        if (mounted) navigator.pop(justCreated);
       }
     }
   }

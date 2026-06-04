@@ -46,12 +46,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _replayTutorial() async {
-    if (!context.mounted) return;
-    await Navigator.pushNamed(context, AppRoutes.onboarding);
+    final navigator = Navigator.of(context);
+    await navigator.pushNamed(AppRoutes.onboarding);
   }
 
   Future<void> _debugSimulateFinishedGame() async {
-    if (!context.mounted) return;
+    final navigator = Navigator.of(context);
 
     final players = [
       PlayerState(id: 1, name: 'Alice', emoji: '🦝', colorValue: 0xFF7C4DFF, foodCount: 5, trashCount: 2),
@@ -68,16 +68,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     final args = ResultScreenArgs(gameState: fakeState);
 
-    if (!context.mounted) return;
-    await Navigator.pushNamed(
-      context,
+    await navigator.pushNamed(
       AppRoutes.result,
       arguments: args,
     );
   }
 
   Future<void> _debugSimulateReward() async {
-    if (!context.mounted) return;
     const fakeReward = RewardUnlock(
       id: 'debug_reward',
       name: 'Dos Bleu',
@@ -89,11 +86,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _debugUnlockAll() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     await ProgressionService.debugUnlockAll();
     if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(context).showSnackBar(
+
+    messenger.showSnackBar(
       SnackBar(
         content: Text(l10n.settingsDebugUnlockAll),
         backgroundColor: AppColors.orange,
@@ -237,10 +236,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               icon: Icons.replay_rounded,
                               label: 'Reset onboarding (relancer app)',
                               onTap: () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final l = AppLocalizations.of(context)!;
                                 await OnboardingService.resetForDebug();
                                 if (!context.mounted) return;
-                                final l = AppLocalizations.of(context)!;
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                messenger.showSnackBar(
                                   SnackBar(
                                     content: Text(
                                       l.settingsDebugOnboardingReset,

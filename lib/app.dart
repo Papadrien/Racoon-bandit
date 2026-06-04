@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -10,14 +9,9 @@ import 'l10n/app_localizations.dart';
 
 /// Notifier pour forcer une locale en mode debug.
 /// Null = comportement par défaut (résolution système).
-final ValueNotifier<Locale?> debugLocaleOverride = kDebugMode
-    ? ValueNotifier<Locale?>(null)
-    : ValueNotifier<Locale?>(null);
+final ValueNotifier<Locale?> debugLocaleOverride = ValueNotifier<Locale?>(null);
 
 /// Widget racine de l'application.
-///
-/// Observe le cycle de vie pour suspendre/reprendre l'audio
-/// proprement (mise en arrière-plan, fermeture).
 class RaccoonBanditApp extends StatefulWidget {
   const RaccoonBanditApp({super.key});
 
@@ -25,30 +19,12 @@ class RaccoonBanditApp extends StatefulWidget {
   State<RaccoonBanditApp> createState() => _RaccoonBanditAppState();
 }
 
-class _RaccoonBanditAppState extends State<RaccoonBanditApp>
-    with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
+class _RaccoonBanditAppState extends State<RaccoonBanditApp> {
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     // Libère les ressources audio à la fermeture de l'app
     AudioService.instance.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Stoppe tous les sons si l'app passe en arrière-plan
-    // (évite sons bloqués ou erreurs audio système)
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached) {
-      // AudioService gère le cycle via dispose() à la fermeture définitive
-    }
   }
 
   @override

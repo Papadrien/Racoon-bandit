@@ -118,7 +118,6 @@ class ProgressionService {
     if (!_progression.unlockedCardBackIds.contains(cardBackId)) return;
     _progression = _progression.copyWith(selectedCardBackId: cardBackId);
     await save();
-    // Met à jour le thème dynamiquement (notifie les listeners)
   }
 
   // ── Debug : tout débloquer ───────────────────────────────────────────────

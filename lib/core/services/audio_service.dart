@@ -31,19 +31,6 @@ enum SoundEffect {
   /// Bouton UI
   button,
 
-  // ── Legacy aliases (conservés pour compatibilité interne) ────────────────
-
-  /// Alias legacy → piocheCarte
-  draw,
-
-  /// Alias legacy → gainNourriture
-  cardPlayed,
-
-  /// Alias legacy → raccoon ou bandit selon contexte
-  steal,
-
-  /// Alias legacy → frigo
-  trash,
 }
 
 /// Service audio centralisé. Utiliser [AudioService.instance].
@@ -70,12 +57,6 @@ class AudioService {
     SoundEffect.fridgeBlock:    'sounds/fridge_block.mp3',
     SoundEffect.popupRecompense:'sounds/popup_recompense.mp3',
     SoundEffect.button:         'sounds/button_click.mp3',
-
-    // Legacy aliases → redirigés vers les nouveaux sons
-    SoundEffect.draw:      'sounds/pioche_carte.mp3',
-    SoundEffect.cardPlayed:'sounds/gain_nourriture.mp3',
-    SoundEffect.steal:     'sounds/raccoon.mp3',
-    SoundEffect.trash:     'sounds/frigo.mp3',
   };
 
   /// Sons préchargés au démarrage (sons les plus fréquents en gameplay).
