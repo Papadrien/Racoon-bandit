@@ -31,13 +31,25 @@ class RewardedAdService {
   }
 
   Future<void> preloadAd() async {
-    // Ne pas charger de publicité si le consentement n'a pas été obtenu ou
-    // n'est pas requis dans la région de l'utilisateur.
-    if (!await ConsentService.instance.canRequestAds()) return;
     if (_rewardedInterstitialAd != null || _isLoading) return;
 
+    // On marque _isLoading=true AVANT le await canRequestAds() pour éviter
+    // une race condition : si deux appels arrivent simultanément, le second
+    // sort immédiatement sur le check ci-dessus, au lieu de lancer un second
+    // chargement concurrent qui disposerait le premier.
     _isLoading = true;
     _loadCompleter = Completer<bool>();
+
+    // Ne pas charger de publicité si le consentement n'a pas été obtenu ou
+    // n'est pas requis dans la région de l'utilisateur.
+    if (!await ConsentService.instance.canRequestAds()) {
+      _isLoading = false;
+      if (_loadCompleter != null && !_loadCompleter!.isCompleted) {
+        _loadCompleter!.complete(false);
+      }
+      _loadCompleter = null;
+      return;
+    }
 
     unawaited(
       RewardedInterstitialAd.load(
@@ -79,12 +91,17 @@ class RewardedAdService {
     _isShowRequested = true;
 
     try {
-      // Si pas prête et pas en chargement, lancer le chargement maintenant
+      // Si pas prête et pas en chargement, lancer le chargement maintenant.
+      // On capture le completer APRÈS preloadAd() car canRequestAds() peut
+      // retourner false et sortir sans créer de completer (dans ce cas,
+      // _loadCompleter reste null et _isLoading reste false).
       if (_rewardedInterstitialAd == null && !_isLoading) {
         await preloadAd();
       }
 
-      // Si en chargement (lancé maintenant ou déjà en cours), attendre avec timeout
+      // Si en chargement (lancé maintenant ou déjà en cours), attendre avec timeout.
+      // Note : on relit _loadCompleter ici (pas une capture préalable) car
+      // preloadAd() ci-dessus vient peut-être de le créer.
       if (_rewardedInterstitialAd == null && _isLoading) {
         final completer = _loadCompleter;
         if (completer != null) {
@@ -99,6 +116,12 @@ class RewardedAdService {
               return false;
             },
           );
+        } else {
+          // _loadCompleter est null mais _isLoading est true : situation anormale
+          // (preloadAd() a été interrompu par canRequestAds()=false par exemple).
+          // On réinitialise pour éviter un état bloqué.
+          if (kDebugMode) print('[Ads] _isLoading=true but no completer — resetting');
+          _isLoading = false;
         }
       }
 

@@ -33,6 +33,15 @@ class CardFrontWidget extends StatelessWidget {
       fit: BoxFit.contain,
       gaplessPlayback: true,
       filterQuality: FilterQuality.high,
+      // En release, le décodage de l'image peut prendre une frame même après
+      // precacheImage (taille différente, éviction cache). frameBuilder garantit
+      // que l'image n'est affichée qu'une fois prête — pas de flash gris visible.
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded || frame != null) return child;
+        // Image pas encore décodée : on affiche un placeholder invisible mais de
+        // même taille, pour éviter tout artefact gris pendant le flip.
+        return const SizedBox.expand();
+      },
     );
 
     if (flipHorizontal) {
