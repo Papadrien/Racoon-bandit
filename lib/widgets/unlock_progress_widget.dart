@@ -459,6 +459,7 @@ class _AllUnlockedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -491,7 +492,7 @@ class _AllUnlockedCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Collection complète !',
+                  l10n.allUnlockedTitle,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
@@ -499,9 +500,9 @@ class _AllUnlockedCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'Tous les dos de cartes sont débloqués.',
-                  style: TextStyle(
+                Text(
+                  l10n.allUnlockedSubtitle,
+                  style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.textMuted,
                   ),

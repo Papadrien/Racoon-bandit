@@ -616,5 +616,13 @@
   "settingsConsentSubtitle": "Modifier mes préférences de personnalisation des publicités",
   "@settingsConsentSubtitle": {
     "description": "Sous-titre tile consentement"
+  },
+  "allUnlockedTitle": "Collection complète !",
+  "@allUnlockedTitle": {
+    "description": "Titre de l'encart quand tous les dos de cartes sont débloqués"
+  },
+  "allUnlockedSubtitle": "Tous les dos de cartes sont débloqués.",
+  "@allUnlockedSubtitle": {
+    "description": "Paragraphe de l'encart quand tous les dos de cartes sont débloqués"
   }
 }

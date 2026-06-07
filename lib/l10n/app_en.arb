@@ -616,5 +616,13 @@
   "settingsConsentSubtitle": "Manage my ad personalisation preferences",
   "@settingsConsentSubtitle": {
     "description": "Ad consent tile subtitle"
+  },
+  "allUnlockedTitle": "Complete collection!",
+  "@allUnlockedTitle": {
+    "description": "Title of the banner when all card backs are unlocked"
+  },
+  "allUnlockedSubtitle": "All card backs are unlocked.",
+  "@allUnlockedSubtitle": {
+    "description": "Subtitle of the banner when all card backs are unlocked"
   }
 }
