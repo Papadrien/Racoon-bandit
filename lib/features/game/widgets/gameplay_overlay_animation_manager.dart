@@ -63,28 +63,28 @@ class GameplayOverlayAnimationManager extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // RepaintBoundary global : les particules ne déclenchent JAMAIS
-    // un repaint du reste du jeu (fond, joueurs, pioche).
-    return RepaintBoundary(
-      child: IgnorePointer(
-        child: ValueListenableBuilder<List<GameplayOverlayAnimation>>(
-          valueListenable: animationsNotifier,
-          builder: (context, animations, _) {
-            return SizedBox.expand(
-              child: Stack(
-                clipBehavior: Clip.hardEdge,
-                children: animations
-                    .map(
-                      (animation) => _AnimatedOverlayItem(
-                        key: ValueKey(animation.id),
-                        animation: animation,
-                      ),
-                    )
-                    .toList(),
-              ),
-            );
-          },
-        ),
+    // Pas de RepaintBoundary global ici : un layer couvrant tout l'écran
+    // promu au GPU apparaît gris en release (Impeller/Skia) pendant le
+    // re-rendu. Chaque particule a son propre RepaintBoundary — c'est
+    // suffisant pour isoler les repaints sans créer un layer opaque global.
+    return IgnorePointer(
+      child: ValueListenableBuilder<List<GameplayOverlayAnimation>>(
+        valueListenable: animationsNotifier,
+        builder: (context, animations, _) {
+          return SizedBox.expand(
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              children: animations
+                  .map(
+                    (animation) => _AnimatedOverlayItem(
+                      key: ValueKey(animation.id),
+                      animation: animation,
+                    ),
+                  )
+                  .toList(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -244,19 +244,22 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
                       .clamp(0.0, 1.0);
           }
 
-          return Positioned.fill(
+          // Positionnement direct par coordonnées : évite Positioned.fill +
+          // Transform.translate + Align + Opacity qui forçaient un saveLayer
+          // plein-écran en release (Opacity sur Positioned.fill = saveLayer de
+          // la taille du parent = framebuffer GPU plein-écran par particule).
+          // Ici l'Opacity porte uniquement sur le widget 72×72 de la particule.
+          return Positioned(
+            left: dx - 36,
+            top: dy - 36,
+            width: 72,
+            height: 72,
             child: IgnorePointer(
-              child: Transform.translate(
-                offset: Offset(dx - 36, dy - 36),
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Opacity(
-                    opacity: opacity.clamp(0.0, 1.0),
-                    child: Transform.scale(
-                      scale: scale,
-                      child: child,
-                    ),
-                  ),
+              child: Opacity(
+                opacity: opacity.clamp(0.0, 1.0),
+                child: Transform.scale(
+                  scale: scale,
+                  child: child,
                 ),
               ),
             ),

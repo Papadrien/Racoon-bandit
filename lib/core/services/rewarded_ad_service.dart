@@ -42,7 +42,9 @@ class RewardedAdService {
 
     // Ne pas charger de publicité si le consentement n'a pas été obtenu ou
     // n'est pas requis dans la région de l'utilisateur.
-    if (!await ConsentService.instance.canRequestAds()) {
+    final canRequest = await ConsentService.instance.canRequestAds();
+    debugPrint('[Ads] canRequestAds=$canRequest');
+    if (!canRequest) {
       _isLoading = false;
       if (_loadCompleter != null && !_loadCompleter!.isCompleted) {
         _loadCompleter!.complete(false);
@@ -67,7 +69,8 @@ class RewardedAdService {
             AnalyticsService.instance.logRewardedAdLoaded();
           },
           onAdFailedToLoad: (error) {
-            if (kDebugMode) print('[Ads] Failed to preload: ${error.message}');
+            // Log en debug ET en release pour diagnostiquer les échecs prod.
+            debugPrint('[Ads] Failed to preload (code=${error.code}): ${error.message}');
             _rewardedInterstitialAd = null;
             _isLoading = false;
             if (_loadCompleter != null && !_loadCompleter!.isCompleted) {
@@ -75,7 +78,7 @@ class RewardedAdService {
             }
             _loadCompleter = null;
             AnalyticsService.instance
-                .logRewardedAdFailed(reason: error.message);
+                .logRewardedAdFailed(reason: '${error.code}: ${error.message}');
           },
         ),
       ),
