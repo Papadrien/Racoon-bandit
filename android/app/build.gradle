@@ -5,6 +5,8 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
     // Google Services — lit google-services.json et configure Firebase
     id "com.google.gms.google-services"
+    // Crashlytics — upload des symboles de débogage pour les stack traces lisibles
+    id "com.google.firebase.crashlytics"
 }
 
 android {

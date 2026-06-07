@@ -5,7 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LifeSystemService {
-  static const int maxLives = 3;
+  LifeSystemService._();
+
+  static final LifeSystemService instance = LifeSystemService._();
+
+  static const int maxLives = 1;
   static const Duration rechargeDuration = Duration(minutes: 15);
 
   // Clé unique JSON — sauvegarde atomique lives + timestamp

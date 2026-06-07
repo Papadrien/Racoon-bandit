@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'app_theme_provider.dart';
 
 class AppTheme {
   AppTheme._();
 
   static const Color primary   = Color(0xFF7C4DFF);
-  static const Color textMuted = Color(0xFF9E9E9E);
+  static const Color textMuted = Color(0xFF6B5744);
 
   // ── Responsive helpers ────────────────────────────────────────────────────
 
@@ -25,17 +24,18 @@ class AppTheme {
   static bool isShortScreen(BuildContext context) =>
       MediaQuery.sizeOf(context).height < 640;
 
-  /// Couleur accent courante — change selon le dos équipé.
-  /// Utiliser [AppThemeProvider.instance.accent] pour réagir aux changements.
-  static Color get accent => AppThemeProvider.instance.accent;
+  /// Couleur accent (orange fixe).
+  static const Color accent = Color(0xFFFF6D00);
+
+  static const Color background = Color(0xFFEECDAD);
 
   static final ThemeData dark = ThemeData(
-    brightness: Brightness.dark,
-    colorScheme: const ColorScheme.dark(
+    brightness: Brightness.light,
+    colorScheme: const ColorScheme.light(
       primary: primary,
       secondary: Color(0xFFFF6D00), // valeur initiale, remplacée dynamiquement
     ),
-    scaffoldBackgroundColor: const Color(0xFF121212),
+    scaffoldBackgroundColor: background,
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
@@ -71,7 +71,7 @@ class AppTheme {
         fontSize: 64,
         fontWeight: FontWeight.w900,
         letterSpacing: 4,
-        color: Colors.white,
+        color: Color(0xFF2D1A0E),
       ),
     ),
   );

@@ -5,7 +5,13 @@ import '../../core/models/player_profile.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/player_profiles_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_decorations.dart';
+import '../../core/ui/app_shadows.dart';
+import '../../core/ui/app_spacing.dart';
 import '../../widgets/player_avatar.dart';
+import '../../widgets/primary_button.dart';
+import '../settings/widgets/settings_secondary_header.dart';
 import 'profile_edit_page.dart';
 
 class ProfilesScreen extends StatefulWidget {
@@ -49,9 +55,13 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
 
   Future<void> _deleteProfile(PlayerProfile profile) async {
     final l10n = AppLocalizations.of(context)!;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+        ),
         title: Text(l10n.profileDeleteTitle),
         content: Text(l10n.profileDeleteContent(profile.name)),
         actions: [
@@ -62,19 +72,20 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
             },
             child: Text(l10n.profileDeleteCancel),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () {
               AudioService.instance.playButtonSound();
               Navigator.pop(ctx, true);
             },
-            child: Text(
-              l10n.profileDeleteConfirm,
-              style: const TextStyle(color: Colors.redAccent),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.redAccent,
             ),
+            child: Text(l10n.profileDeleteConfirm),
           ),
         ],
       ),
     );
+
     if (confirm == true) {
       await PlayerProfilesService.deleteProfile(profile.id);
       _refresh();
@@ -84,92 +95,131 @@ class _ProfilesScreenState extends State<ProfilesScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.profilesTitle),
-        leading: const BackButton(),
-      ),
-      body: SafeArea(
-        minimum: const EdgeInsets.symmetric(horizontal: 4),
-        child: _profiles.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.person_outline_rounded,
-                      size: 56,
-                      color: AppTheme.textMuted,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      l10n.profilesEmpty,
-                      style: const TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 16,
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: SettingsSecondaryHeader(title: l10n.profilesTitle),
+          ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: _profiles.isEmpty
+                  ? _EmptyProfilesState(onAdd: _addProfile)
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: () {
-                        AudioService.instance.playButtonSound();
-                        _addProfile();
+                      itemCount: _profiles.length + 1,
+                      separatorBuilder: (_, i) =>
+                          i < _profiles.length - 1
+                              ? const SizedBox(height: AppSpacing.md)
+                              : const SizedBox(height: AppSpacing.xl),
+                      itemBuilder: (_, i) {
+                        if (i == _profiles.length) {
+                          return OrangeButton(
+                            label: l10n.profilesAddTooltip,
+                            icon: Icons.add_rounded,
+                            onPressed: () {
+                              AudioService.instance.playButtonSound();
+                              _addProfile();
+                            },
+                            height: AppSpacing.buttonHeightSecondary,
+                            fontSize: 15,
+                            letterSpacing: 1.5,
+                          );
+                        }
+                        final profile = _profiles[i];
+
+                        return _ProfileCard(
+                          profile: profile,
+                          color: Color(profile.colorValue),
+                          onEdit: () {
+                            AudioService.instance.playButtonSound();
+                            _editProfile(profile);
+                          },
+                          onDelete: () {
+                            AudioService.instance.playButtonSound();
+                            _deleteProfile(profile);
+                          },
+                        );
                       },
-                      icon: const Icon(Icons.add),
-                      label: Text(l10n.profilesAddTooltip),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
                     ),
-                  ],
-                ),
-              )
-            : ListView.separated(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                itemCount: _profiles.length,
-                separatorBuilder: (_, i) => const SizedBox(height: 8),
-                itemBuilder: (_, i) {
-                  final p = _profiles[i];
-                  final color = Color(p.colorValue);
-                  return _ProfileCard(
-                    profile: p,
-                    color: color,
-                    onEdit: () {
-                      AudioService.instance.playButtonSound();
-                      _editProfile(p);
-                    },
-                    onDelete: () {
-                      AudioService.instance.playButtonSound();
-                      _deleteProfile(p);
-                    },
-                  );
-                },
-              ),
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: _profiles.isNotEmpty
-          ? FloatingActionButton(
-              onPressed: () {
-                AudioService.instance.playButtonSound();
-                _addProfile();
-              },
-              backgroundColor: AppTheme.primary,
-              tooltip: l10n.profilesAddTooltip,
-              child: const Icon(Icons.add),
-            )
-          : null,
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _ProfileCard — carte de profil style cohérent avec Settings
-// ─────────────────────────────────────────────────────────────────────────────
+class _EmptyProfilesState extends StatelessWidget {
+  final VoidCallback onAdd;
+
+  const _EmptyProfilesState({required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: AppDecorations.floatingSticker,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.people_alt_rounded,
+                  size: 42,
+                  color: AppTheme.primary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                l10n.profilesEmpty,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              OrangeButton(
+                label: l10n.profilesAddTooltip,
+                icon: Icons.add_rounded,
+                onPressed: () {
+                  AudioService.instance.playButtonSound();
+                  onAdd();
+                },
+                height: AppSpacing.buttonHeightSecondary,
+                fontSize: 15,
+                letterSpacing: 1.5,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _ProfileCard extends StatelessWidget {
   final PlayerProfile profile;
@@ -188,50 +238,67 @@ class _ProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
         border: Border.all(
-          color: color.withValues(alpha: 0.20),
-          width: 1,
+          color: color.withValues(alpha: 0.16),
+          width: 1.5,
         ),
+        boxShadow: AppShadows.floating,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
           children: [
-            // Avatar
-            PlayerAvatar(
-              emoji: profile.emoji,
-              color: color,
-              size: 52,
-            ),
-            const SizedBox(width: 16),
-
-            // Nom
-            Expanded(
-              child: Text(
-                profile.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: color.withValues(alpha: 0.25),
+                  width: 2,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              ),
+              child: PlayerAvatar(
+                emoji: profile.emoji,
+                color: color,
+                size: 60,
               ),
             ),
-
-            // Actions
-            _ActionIconButton(
-              icon: Icons.edit_outlined,
-              color: AppTheme.primary,
-              onPressed: onEdit,
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    profile.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(width: 4),
-            _ActionIconButton(
-              icon: Icons.delete_outline,
-              color: Colors.redAccent,
-              onPressed: onDelete,
+            const SizedBox(width: AppSpacing.sm),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _ActionIconButton(
+                  icon: Icons.edit_rounded,
+                  color: AppTheme.primary,
+                  onPressed: onEdit,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                _ActionIconButton(
+                  icon: Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
+                  onPressed: onDelete,
+                ),
+              ],
             ),
           ],
         ),
@@ -254,14 +321,18 @@ class _ActionIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color.withValues(alpha: 0.10),
-      borderRadius: BorderRadius.circular(10),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(icon, color: color, size: 20),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+        child: Ink(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+          ),
+          child: Icon(icon, color: color, size: 22),
         ),
       ),
     );

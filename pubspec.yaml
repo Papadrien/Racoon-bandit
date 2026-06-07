@@ -20,6 +20,7 @@ dependencies:
   # ── Firebase ──────────────────────────────────────────────────────────────
   firebase_core: ^3.13.1
   firebase_analytics: ^11.4.5
+  firebase_crashlytics: ^4.3.0
 
 dev_dependencies:
   flutter_test:
@@ -34,16 +35,26 @@ flutter:
     - assets/images/cards/
     - assets/images/splash_logo.png
     - assets/images/raccoon_bandit_hero.png
+    - assets/images/raccoon_bandit_logo.png
     - assets/images/card_front_raccoon.png
-    - assets/images/card_front_trash.png
-    - assets/images/card_front_food.png
     - assets/images/card_front_pince.png
     - assets/images/card_front_vacuum.png
+    - assets/images/card_front_banquet.png
+    - assets/images/card_front_baby_raccoon.png
     - assets/images/icon_trash.png
     - assets/images/icon_food.png
+    - assets/images/sticker_pine_cone.png
+    - assets/images/sticker_pine_tree.png
+    - assets/images/sticker_cabin.png
     # Nota : assets/sounds/ inclut automatiquement tous les .mp3 du dossier
     - assets/images/cards/card_back_purple.png
     - assets/images/cards/card_back_blue.png
     - assets/images/cards/card_back_green.png
     - assets/images/cards/card_back_pink.png
     - assets/images/cards/card_back_yellow.png
+    - assets/fonts/
+
+  fonts:
+    - family: Righteous
+      fonts:
+        - asset: assets/fonts/Righteous-Regular.ttf

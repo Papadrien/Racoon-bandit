@@ -5,13 +5,13 @@ import 'core/navigation/app_router.dart';
 import 'core/services/analytics_service.dart';
 import 'core/services/audio_service.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/app_theme_provider.dart';
 import 'l10n/app_localizations.dart';
 
+/// Notifier pour forcer une locale en mode debug.
+/// Null = comportement par défaut (résolution système).
+final ValueNotifier<Locale?> debugLocaleOverride = ValueNotifier<Locale?>(null);
+
 /// Widget racine de l'application.
-///
-/// Observe le cycle de vie pour suspendre/reprendre l'audio
-/// proprement (mise en arrière-plan, fermeture).
 class RaccoonBanditApp extends StatefulWidget {
   const RaccoonBanditApp({super.key});
 
@@ -19,38 +19,19 @@ class RaccoonBanditApp extends StatefulWidget {
   State<RaccoonBanditApp> createState() => _RaccoonBanditAppState();
 }
 
-class _RaccoonBanditAppState extends State<RaccoonBanditApp>
-    with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
+class _RaccoonBanditAppState extends State<RaccoonBanditApp> {
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     // Libère les ressources audio à la fermeture de l'app
     AudioService.instance.dispose();
     super.dispose();
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Stoppe tous les sons si l'app passe en arrière-plan
-    // (évite sons bloqués ou erreurs audio système)
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached) {
-      AudioService.instance.stopAll();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    // Reconstruit MaterialApp quand l'accent change (changement de dos de carte)
-    return ListenableBuilder(
-      listenable: AppThemeProvider.instance,
-      builder: (context, _) {
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: debugLocaleOverride,
+      builder: (context, overrideLocale, _) {
         return MaterialApp(
           title: 'Raccoon Bandit',
           debugShowCheckedModeBanner: false,
@@ -65,8 +46,10 @@ class _RaccoonBanditAppState extends State<RaccoonBanditApp>
             Locale('fr'),
             Locale('en'),
           ],
+          locale: overrideLocale,
           // FR par défaut, EN si langue système anglaise, FR sinon
           localeResolutionCallback: (locale, supportedLocales) {
+            if (overrideLocale != null) return overrideLocale;
             if (locale == null) return const Locale('fr');
             for (final supported in supportedLocales) {
               if (supported.languageCode == locale.languageCode) {
@@ -76,11 +59,7 @@ class _RaccoonBanditAppState extends State<RaccoonBanditApp>
             return const Locale('fr');
           },
           // ───────────────────────────────────────────────────────────────
-          theme: AppTheme.dark.copyWith(
-            colorScheme: AppTheme.dark.colorScheme.copyWith(
-              secondary: AppThemeProvider.instance.accent,
-            ),
-          ),
+          theme: AppTheme.dark,
           initialRoute: AppRoutes.splash,
           onGenerateRoute: AppRouter.generateRoute,
           // Observateur Analytics pour le suivi automatique des routes
@@ -103,7 +82,6 @@ class _AnalyticsNavigatorObserver extends NavigatorObserver {
     AppRoutes.result: 'result',
     AppRoutes.profiles: 'profiles',
     AppRoutes.settings: 'settings',
-    AppRoutes.premium: 'premium',
     AppRoutes.privacyPolicy: 'privacy_policy',
   };
 

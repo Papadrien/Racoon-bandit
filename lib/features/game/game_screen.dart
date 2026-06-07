@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
+import '../../core/game/card_resolution_message.dart';
 import '../../core/game/game_state.dart';
 import '../../core/models/card_type.dart';
 import '../../core/models/game_card.dart';
@@ -15,12 +15,17 @@ import '../../core/services/analytics_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/services/progression_service.dart';
-import '../../core/services/wakelock_service.dart';
 import '../../core/services/stats_service.dart';
+import '../../core/services/wakelock_service.dart';
+import '../../core/ui/app_colors.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
-import '../../widgets/player_avatar.dart';
-import 'widgets/pince_target_overlay.dart';
+import 'dialogs/quit_game_dialog.dart';
+import 'widgets/game_background_stickers.dart';
+import 'widgets/game_center_area.dart';
+import 'widgets/game_controls_bar.dart';
+import 'widgets/game_player_card.dart';
 import 'widgets/gameplay_overlay_animation_manager.dart';
+import 'widgets/pince_target_overlay.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -52,9 +57,18 @@ class _GameScreenState extends State<GameScreen>
   int? _lastResolvedPlayerId;
   // Nom du joueur affiché pendant l'animation (pour ne pas sauter visuellement)
   String? _displayPlayerName;
+  // Joueur affiché sur le sticker de la carte à piocher (ne change qu'après le slide)
+  PlayerState? _deckStickerPlayer;
 
   bool _showingPinceOverlay = false;
   List<PlayerState> _pinceTargets = [];
+
+  /// Snapshot des stocks (nourriture + poubelles) capturés avant drawCard/resolve.
+  /// Utilisés pour afficher les anciennes valeurs pendant les particules,
+  /// jusqu'au début du slide de retrait de la carte.
+  Map<int, int> _snapshotFoodCounts = {};
+  Map<int, int> _snapshotTrashCounts = {};
+  bool _useStockSnapshot = false;
   bool _quitDialogOpen = false;
 
   late final AnimationController _flipController;
@@ -63,14 +77,6 @@ class _GameScreenState extends State<GameScreen>
   late final AnimationController _appearController;
   late final Animation<double> _appearOffset;
   late final Animation<double> _appearOpacity;
-
-  static const Map<CardType, AssetImage> _cardFaceProviders = {
-    CardType.raccoon: AssetImage('assets/images/card_front_raccoon.png'),
-    CardType.trash: AssetImage('assets/images/card_front_trash.png'),
-    CardType.food: AssetImage('assets/images/card_front_food.png'),
-    CardType.pince: AssetImage('assets/images/card_front_pince.png'),
-    CardType.vacuum: AssetImage('assets/images/card_front_vacuum.png'),
-  };
 
   bool _resultScreenOpened = false;
 
@@ -94,18 +100,18 @@ class _GameScreenState extends State<GameScreen>
     super.initState();
     _flipController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 420),
     );
     _animationsNotifier = ValueNotifier<List<GameplayOverlayAnimation>>([]);
     _overlayCoordinator = GameplayOverlayCoordinator(_animationsNotifier);
     _slideController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 275),
+      duration: const Duration(milliseconds: 330),
     );
-    // Animation d'apparition de carte : 180ms, très rapide et premium
+    // Animation d'apparition de carte : 216ms (+20%)
     _appearController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 180),
+      duration: const Duration(milliseconds: 216),
     );
     _appearOffset = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(parent: _appearController, curve: Curves.easeOut),
@@ -133,12 +139,10 @@ class _GameScreenState extends State<GameScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Précache les faces des cartes pour éviter le délai lors du retournement.
-    precacheImage(const AssetImage('assets/images/card_front_raccoon.png'), context);
-    precacheImage(const AssetImage('assets/images/card_front_trash.png'), context);
-    precacheImage(const AssetImage('assets/images/card_front_food.png'), context);
-    precacheImage(const AssetImage('assets/images/card_front_pince.png'), context);
-    precacheImage(const AssetImage('assets/images/card_front_vacuum.png'), context);
+    // Précache les icônes sticker des faces de cartes.
+    for (final type in CardType.values) {
+      precacheImage(AssetImage(AppAssets.cardFrontIcon(type)), context);
+    }
     if (!_initialized) {
       _restoreOrInitGame();
     }
@@ -164,6 +168,9 @@ class _GameScreenState extends State<GameScreen>
     _isAnimating = false;
     _showingPinceOverlay = false;
     _pinceTargets = [];
+    _snapshotFoodCounts = {};
+    _snapshotTrashCounts = {};
+    _useStockSnapshot = false;
     _pendingPinceCallback = null;
     _revealedCard = null;
     _effectText = '';
@@ -173,6 +180,7 @@ class _GameScreenState extends State<GameScreen>
     _navigationInProgress = false;
 
     _displayPlayerName = null;
+    _deckStickerPlayer = null;
     _initialized = true;
     unawaited(WakelockService.enable());
   }
@@ -207,54 +215,7 @@ class _GameScreenState extends State<GameScreen>
     NavigationGuard.log(_tag, 'dialog opened — quit confirmation');
     setState(() => _quitDialogOpen = true);
 
-    final l10n = AppLocalizations.of(context)!;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF2A1F3D),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Text(
-          l10n.gameQuitDialogTitle,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          l10n.gameQuitDialogContent,
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              AudioService.instance.playButtonSound();
-              Navigator.of(ctx).pop(false);
-            },
-            child: Text(
-              l10n.gameQuitCancel,
-              style: const TextStyle(color: Colors.white54),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              AudioService.instance.playButtonSound();
-              Navigator.of(ctx).pop(true);
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.redAccent,
-            ),
-            child: Text(
-              l10n.gameQuitConfirm,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
+    final confirmed = await showQuitGameDialog(context);
 
     if (!mounted) {
       NavigationGuard.log(_tag, 'dialog closed — widget démonté');
@@ -263,10 +224,10 @@ class _GameScreenState extends State<GameScreen>
 
     NavigationGuard.log(
       _tag,
-      'dialog closed — résultat: ${confirmed == true ? "quitter" : "annuler"}',
+      'dialog closed — résultat: ${confirmed ? "quitter" : "annuler"}',
     );
     setState(() => _quitDialogOpen = false);
-    return confirmed ?? false;
+    return confirmed;
   }
 
   Future<void> _quitToHome() async {
@@ -317,6 +278,38 @@ class _GameScreenState extends State<GameScreen>
 
   // ── Game logic ─────────────────────────────────────────────────────────────
 
+  String _resolveEffectMessage(CardEffectMessage msg) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (msg.key) {
+      case CardEffectKey.gameOver:
+        return l10n.gameEffectGameOver;
+      case CardEffectKey.foodGained:
+        return l10n.gameEffectFoodGained(msg.playerName ?? '');
+      case CardEffectKey.trashSecured:
+        return l10n.gameEffectTrashSecured(msg.playerName ?? '');
+      case CardEffectKey.raccoonBlocked:
+        return l10n.gameEffectRaccoonBlocked;
+      case CardEffectKey.raccoonDevours:
+        return l10n.gameEffectRaccoonDevours(msg.playerName ?? '');
+      case CardEffectKey.banquet:
+        return l10n.gameEffectBanquet(msg.playerName ?? '');
+      case CardEffectKey.babyRaccoonDevours:
+        return l10n.gameEffectBabyRaccoonDevours(msg.count ?? 0, msg.targetName ?? '');
+      case CardEffectKey.babyRaccoonEmpty:
+        return l10n.gameEffectBabyRaccoonEmpty;
+      case CardEffectKey.vacuumSteals:
+        return l10n.gameEffectVacuumSteals(msg.playerName ?? '', msg.count ?? 0);
+      case CardEffectKey.vacuumEmpty:
+        return l10n.gameEffectVacuumEmpty;
+      case CardEffectKey.pinceNoTarget:
+        return l10n.gameEffectPinceNoTarget(msg.playerName ?? '');
+      case CardEffectKey.pinceSteal:
+        return l10n.gameEffectPinceSteal(msg.playerName ?? '', msg.targetName ?? '');
+      case CardEffectKey.none:
+        return '';
+    }
+  }
+
   Future<void> _drawCard() async {
     if (_isAnimating || _showingPinceOverlay || _gameState.isGameOver) return;
 
@@ -329,22 +322,35 @@ class _GameScreenState extends State<GameScreen>
     });
 
     _lastResolvedPlayerId = _gameState.currentPlayer.id;
-    // Capturer le nom avant l'avancée du tour pour l'afficher pendant l'animation
     final String currentPlayerNameSnapshot = _gameState.currentPlayer.name;
     final foodCountBeforeDraw = _gameState.currentPlayer.foodCount;
+    final PlayerState currentPlayerSnapshot = _gameState.currentPlayer;
+
+    final Map<int, int> foodSnapshot = {
+      for (final p in _gameState.players) p.id: p.foodCount,
+    };
+    final Map<int, int> trashSnapshot = {
+      for (final p in _gameState.players) p.id: p.trashCount,
+    };
 
     final result = _gameState.drawCard();
     final card = _gameState.revealedCard;
 
+    final bool shouldFreezeStocks = _shouldFreezeStocksForCard(card, result);
+
     setState(() {
       _revealedCard = card;
       _displayPlayerName = currentPlayerNameSnapshot;
+      _deckStickerPlayer = currentPlayerSnapshot;
+      if (shouldFreezeStocks) {
+        _snapshotFoodCounts = foodSnapshot;
+        _snapshotTrashCounts = trashSnapshot;
+        _useStockSnapshot = true;
+      }
     });
 
-    // Précharger agressivement les faces avant avant le flip
-    // afin d'éviter tout délai visible pendant la rotation.
-    if (card != null && _cardFaceProviders.containsKey(card.type)) {
-      await precacheImage(_cardFaceProviders[card.type]!, context);
+    if (card != null) {
+      await precacheImage(AssetImage(AppAssets.cardFrontIcon(card.type)), context);
     }
 
     await _flipController.forward(from: 0);
@@ -358,7 +364,7 @@ class _GameScreenState extends State<GameScreen>
     _playOverlayAnimations(card, result, foodCountBeforeDraw: foodCountBeforeDraw);
 
     setState(() {
-      _effectText = result.message;
+      _effectText = _resolveEffectMessage(result.effectMessage);
     });
 
     final bool isRaccoonEffect =
@@ -388,6 +394,13 @@ class _GameScreenState extends State<GameScreen>
 
     if (!mounted || _disposed) return;
 
+    final Map<int, int> foodSnapshot = {
+      for (final p in _gameState.players) p.id: p.foodCount,
+    };
+    final Map<int, int> trashSnapshot = {
+      for (final p in _gameState.players) p.id: p.trashCount,
+    };
+
     final resolution = targetCardType == CardType.pince
         ? _gameState.resolvePince(target)
         : _gameState.resolveTargetedSpecial(targetCardType, target);
@@ -396,10 +409,14 @@ class _GameScreenState extends State<GameScreen>
       _showingPinceOverlay = false;
       _pinceTargets = [];
       _pendingPinceCallback = null;
-      _effectText = resolution.message;
+      _effectText = _resolveEffectMessage(resolution.effectMessage);
+      if (resolution.foodStolen) {
+        _snapshotFoodCounts = foodSnapshot;
+        _snapshotTrashCounts = trashSnapshot;
+        _useStockSnapshot = true;
+      }
     });
 
-    // Son bandit joué uniquement en cas de vol effectif
     if (resolution.foodStolen) {
       AudioService.instance.playSfx(SoundEffect.pince);
     }
@@ -410,6 +427,24 @@ class _GameScreenState extends State<GameScreen>
     );
 
     await _finishCardAnimation();
+  }
+
+  /// Détermine si on doit figer les stocks pendant les particules.
+  bool _shouldFreezeStocksForCard(GameCard? card, CardResolution result) {
+    if (card == null) return false;
+    switch (card.type) {
+      case CardType.food:
+      case CardType.trash:
+      case CardType.banquet:
+        return true;
+      case CardType.vacuum:
+        return result.foodStolen;
+      case CardType.pince:
+        return !result.needsTargetSelection && result.foodStolen;
+      case CardType.raccoon:
+      case CardType.babyRaccoon:
+        return false;
+    }
   }
 
   void _playPinceStealAnimation({
@@ -427,10 +462,18 @@ class _GameScreenState extends State<GameScreen>
   }
 
   Future<void> _finishCardAnimation({int extraDelay = 0}) async {
-    final waitMs = 700 + extraDelay;
+    final waitMs = 840 + (extraDelay * 1.2).round();
     await Future<void>.delayed(Duration(milliseconds: waitMs));
 
     if (!mounted || _disposed) return;
+
+    if (_useStockSnapshot) {
+      setState(() {
+        _useStockSnapshot = false;
+        _snapshotFoodCounts = {};
+        _snapshotTrashCounts = {};
+      });
+    }
 
     await _slideController.forward(from: 0);
 
@@ -440,13 +483,12 @@ class _GameScreenState extends State<GameScreen>
       _revealedCard = null;
       _isAnimating = false;
       _displayPlayerName = null;
+      _deckStickerPlayer = null;
     });
 
     _flipController.reset();
     _slideController.reset();
 
-    // Animation d'apparition : la nouvelle carte remonte légèrement du paquet
-    // quand elle devient disponible pour la prochaine pioche.
     if (!_gameState.isGameOver) {
       unawaited(_appearController.forward(from: 0));
     }
@@ -463,7 +505,6 @@ class _GameScreenState extends State<GameScreen>
       final newUnlocks = await ProgressionService.registerCompletedGame();
       await StatsService.registerGame(_gameState);
 
-      // Analytics — partie terminée
       final ranking = _gameState.ranking;
       final winner = ranking.isNotEmpty ? ranking.first : null;
       unawaited(AnalyticsService.instance.logGameFinished(
@@ -474,8 +515,6 @@ class _GameScreenState extends State<GameScreen>
       ));
 
       HapticService.trigger(HapticType.heavy);
-      // Son joué ici uniquement s'il n'y a pas de popup de déblocage.
-      // Si des dos sont débloqués, c'est la popup qui joue le son.
       if (newUnlocks.isEmpty) {
         AudioService.instance.playSfx(SoundEffect.popupRecompense);
       }
@@ -495,6 +534,49 @@ class _GameScreenState extends State<GameScreen>
   }
 
   void Function(PlayerState)? _pendingPinceCallback;
+
+  void _playCardFeedback(GameCard? card, CardResolution result) {
+    if (card == null) return;
+
+    switch (card.type) {
+      case CardType.trash:
+        HapticService.trigger(HapticType.medium);
+        AudioService.instance.playSfx(SoundEffect.frigo);
+        return;
+      case CardType.raccoon:
+        HapticService.trigger(HapticType.medium);
+        if (result.trashDestroyed) {
+          AudioService.instance.playSfx(SoundEffect.fridgeBlock);
+        } else {
+          AudioService.instance.playSfx(SoundEffect.raccoon);
+        }
+        return;
+      case CardType.pince:
+        HapticService.trigger(HapticType.medium);
+        if (!result.needsTargetSelection && result.foodStolen) {
+          AudioService.instance.playSfx(SoundEffect.pince);
+        }
+        return;
+      case CardType.food:
+        HapticService.trigger(HapticType.light);
+        AudioService.instance.playSfx(SoundEffect.gainNourriture);
+        return;
+      case CardType.banquet:
+        HapticService.trigger(HapticType.medium);
+        AudioService.instance.playSfx(SoundEffect.gainNourriture);
+        return;
+      case CardType.babyRaccoon:
+        HapticService.trigger(HapticType.medium);
+        AudioService.instance.playSfx(SoundEffect.raccoon);
+        return;
+      case CardType.vacuum:
+        HapticService.trigger(HapticType.heavy);
+        AudioService.instance.playSfx(SoundEffect.pince);
+        return;
+    }
+  }
+
+  // ── Overlay animations & coordinate helpers ────────────────────────────────
 
   Offset _widgetCenter(GlobalKey key, {double? verticalBias}) {
     final ctx = key.currentContext;
@@ -530,7 +612,7 @@ class _GameScreenState extends State<GameScreen>
   }
 
   double _playerVerticalBias(int playerIndex) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = MediaQuery.sizeOf(context).height;
     final unit = screenHeight * 0.04;
     final totalPlayers = _gameState.players.length;
 
@@ -585,17 +667,24 @@ class _GameScreenState extends State<GameScreen>
         if (result.trashDestroyed) {
           _overlayCoordinator.playFridgeImpact(center: fridgeCenter);
         } else if (foodCountBeforeDraw > 0) {
-          _overlayCoordinator.playRaccoonDevour(playerCenter: playerCenter, cardCenter: start, foodCount: foodCountBeforeDraw);
+          _overlayCoordinator.playRaccoonDevour(
+            playerCenter: playerCenter,
+            cardCenter: start,
+            foodCount: foodCountBeforeDraw,
+          );
         }
         return;
       case CardType.pince:
         if (result.targetPlayerId != null) {
-          _playPinceStealAnimation(thiefId: currentPlayerId, targetId: result.targetPlayerId!);
+          _playPinceStealAnimation(
+            thiefId: currentPlayerId,
+            targetId: result.targetPlayerId!,
+          );
         }
         return;
       case CardType.banquet:
         _overlayCoordinator.playFoodGain(start: start, end: playerCenter);
-        Future.delayed(const Duration(milliseconds: 120), () {
+        Future.delayed(const Duration(milliseconds: 144), () {
           if (mounted) {
             _overlayCoordinator.playFoodGain(start: start, end: playerCenter);
           }
@@ -603,65 +692,34 @@ class _GameScreenState extends State<GameScreen>
         return;
       case CardType.babyRaccoon:
         if (_gameState.chaosMode) {
-          // Mode pagaille : le joueur actif perd 2 nourritures
-          _overlayCoordinator.playRaccoonDevour(playerCenter: playerCenter, cardCenter: start, foodCount: 2);
+          _overlayCoordinator.playRaccoonDevour(
+            playerCenter: playerCenter,
+            cardCenter: start,
+            foodCount: 2,
+          );
         } else if (result.targetPlayerId != null) {
           final targetCenter = _playerFoodCenter(result.targetPlayerId!);
-          _overlayCoordinator.playRaccoonDevour(playerCenter: targetCenter, cardCenter: start, foodCount: 2);
+          _overlayCoordinator.playRaccoonDevour(
+            playerCenter: targetCenter,
+            cardCenter: start,
+            foodCount: 2,
+          );
         }
         return;
       case CardType.vacuum:
         for (final player in _gameState.players) {
           if (player.id == currentPlayerId || player.foodCount <= 0) continue;
           final targetCenter = _playerFoodCenter(player.id);
-          _overlayCoordinator.playFoodSteal(fromTarget: targetCenter, toThief: playerCenter);
+          _overlayCoordinator.playFoodSteal(
+            fromTarget: targetCenter,
+            toThief: playerCenter,
+          );
         }
         return;
     }
   }
 
-  void _playCardFeedback(GameCard? card, CardResolution result) {
-    if (card == null) return;
-
-    switch (card.type) {
-      case CardType.trash:
-        HapticService.trigger(HapticType.medium);
-        AudioService.instance.playSfx(SoundEffect.frigo);
-        return;
-      case CardType.raccoon:
-        HapticService.trigger(HapticType.medium);
-        if (result.trashDestroyed) {
-          AudioService.instance.playSfx(SoundEffect.fridgeBlock);
-        } else {
-          AudioService.instance.playSfx(SoundEffect.raccoon);
-        }
-        return;
-      case CardType.pince:
-        HapticService.trigger(HapticType.medium);
-        if (!result.needsTargetSelection && result.foodStolen) {
-          AudioService.instance.playSfx(SoundEffect.pince);
-        }
-        return;
-      case CardType.food:
-        HapticService.trigger(HapticType.light);
-        AudioService.instance.playSfx(SoundEffect.gainNourriture);
-        return;
-      case CardType.banquet:
-        HapticService.trigger(HapticType.medium);
-        AudioService.instance.playBanquetSound();
-        return;
-      case CardType.babyRaccoon:
-        HapticService.trigger(HapticType.medium);
-        AudioService.instance.playBabyRaccoonSound();
-        return;
-      case CardType.vacuum:
-        HapticService.trigger(HapticType.heavy);
-        AudioService.instance.playVacuumSound();
-        return;
-    }
-  }
-
-  // ── UI builders ──────────────────────────────────────────────────────────
+  // ── UI builders ────────────────────────────────────────────────────────────
 
   void _computeCardSize(BoxConstraints constraints) {
     final maxH = constraints.maxHeight * 0.52;
@@ -671,108 +729,14 @@ class _GameScreenState extends State<GameScreen>
     _cardWidth = (_cardHeight * 0.70).clamp(130.0, 185.0).clamp(0.0, maxW);
   }
 
-  Widget _buildPlayerCard(int index, {double maxWidth = 150}) {
-    final player = _gameState.players[index];
-    // Durant l'animation, on maintient la mise en évidence du joueur qui joue
-    final animatingPlayerId = _displayPlayerName != null ? _lastResolvedPlayerId : null;
-    final active = animatingPlayerId != null
-        ? player.id == animatingPlayerId
-        : index == _gameState.currentPlayerIndex;
-
-    _playerKeys.putIfAbsent(player.id, GlobalKey.new);
-    _foodZoneKeys.putIfAbsent(player.id, GlobalKey.new);
-    _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
-
-    final isCompact = maxWidth < 115;
-    final avatarSize = isCompact ? 28.0 : 38.0;
-    final nameFontSize = isCompact ? 10.0 : 12.0;
-    final emojiFontSize = isCompact ? 12.0 : 15.0;
-    final hPad = isCompact ? 5.0 : 9.0;
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: Container(
-        key: _playerKeys[player.id],
-        padding: EdgeInsets.symmetric(
-          horizontal: hPad,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: active
-              ? player.profileColor.withValues(alpha: 0.18)
-              : Colors.black.withValues(alpha: 0.25),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: active ? player.profileColor : Colors.white24,
-            width: active ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            PlayerAvatar(
-              emoji: player.emoji,
-              color: player.profileColor,
-              size: avatarSize,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              player.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: nameFontSize,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Wrap(
-              key: _foodZoneKeys[player.id],
-              alignment: WrapAlignment.center,
-              spacing: 1,
-              runSpacing: 1,
-              children: List.generate(
-                player.foodCount,
-                (_) => Image.asset(
-                  'assets/images/icon_food.png',
-                  width: emojiFontSize * 1.4,
-                  height: emojiFontSize * 1.4,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Wrap(
-              key: _fridgeZoneKeys[player.id],
-              alignment: WrapAlignment.center,
-              spacing: 1,
-              runSpacing: 1,
-              children: List.generate(
-                player.trashCount,
-                (_) => Image.asset(
-                  'assets/images/icon_trash.png',
-                  width: emojiFontSize * 1.4,
-                  height: emojiFontSize * 1.75,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   List<Widget> _buildPlayerPositions(BoxConstraints constraints) {
     final sw = constraints.maxWidth;
     final sh = constraints.maxHeight;
 
-    const hMargin = 8.0;
-    final topOffset = sh * 0.01 + 44.0;
-    final bottomOffset = sh * 0.01;
-
-    final cardMaxW = (sw * 0.38).clamp(100.0, 150.0);
+    const double hMargin = 4.0;
+    final double topOffset = sh * 0.01 + 48.0;
+    final double bottomOffset = sh * 0.01 + 4.0;
+    final double cardMaxW = (sw * 0.34).clamp(82.0, 132.0);
 
     final positions = {
       2: [
@@ -795,238 +759,41 @@ class _GameScreenState extends State<GameScreen>
     final layout = positions[_gameState.players.length]!;
 
     return List.generate(_gameState.players.length, (index) {
+      final player = _gameState.players[index];
+      _playerKeys.putIfAbsent(player.id, GlobalKey.new);
+      _foodZoneKeys.putIfAbsent(player.id, GlobalKey.new);
+      _fridgeZoneKeys.putIfAbsent(player.id, GlobalKey.new);
+
+      final animatingPlayerId = _displayPlayerName != null ? _lastResolvedPlayerId : null;
+      final active = animatingPlayerId != null
+          ? player.id == animatingPlayerId
+          : index == _gameState.currentPlayerIndex;
+
+      final int displayFoodCount = _useStockSnapshot
+          ? (_snapshotFoodCounts[player.id] ?? player.foodCount)
+          : player.foodCount;
+      final int displayTrashCount = _useStockSnapshot
+          ? (_snapshotTrashCounts[player.id] ?? player.trashCount)
+          : player.trashCount;
+
       final pos = layout[index];
       return Positioned(
         top: pos['top'],
         left: pos['left'],
         right: pos['right'],
         bottom: pos['bottom'],
-        child: _buildPlayerCard(index, maxWidth: cardMaxW),
+        child: GamePlayerCard(
+          player: player,
+          active: active,
+          displayFoodCount: displayFoodCount,
+          displayTrashCount: displayTrashCount,
+          playerKey: _playerKeys[player.id]!,
+          foodZoneKey: _foodZoneKeys[player.id]!,
+          fridgeZoneKey: _fridgeZoneKeys[player.id]!,
+          maxWidth: cardMaxW,
+        ),
       );
     });
-  }
-
-  Widget _buildCardBackWidget() {
-    final id = ProgressionService.progression.selectedCardBackId;
-    final assetPath = AppAssets.cardBackAsset(id);
-    return Image.asset(
-      assetPath,
-      fit: BoxFit.fill,
-      errorBuilder: (_, a, b) =>
-          ColoredBox(color: AppAssets.cardBackFallbackColor(id)),
-    );
-  }
-
-  Widget _buildDeckCard({required bool backgroundCard}) {
-    final deckExhausted = _gameState.remainingCards == 0 && _revealedCard == null;
-
-    return GestureDetector(
-      onTap: backgroundCard || deckExhausted ? null : _drawCard,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_flipController, _slideController, _appearController]),
-        builder: (context, child) {
-          final flip = _flipController.value;
-          final slide = _slideController.value;
-          final angle = flip * math.pi;
-          final showFront = angle > math.pi / 2;
-          final isBack = !deckExhausted && !(showFront && _revealedCard != null);
-
-          // Masquer la carte lorsqu'elle est presque de profil (angle ≈ π/2)
-          // pour éviter le flash de backface visible pendant la rotation 3D.
-          final nearEdge = !backgroundCard &&
-              angle > math.pi / 2 - 0.08 &&
-              angle < math.pi / 2 + 0.08;
-
-          // Animation d'apparition : légère remontée depuis le paquet.
-          // Appliquée uniquement à la carte principale au repos (pas pendant le flip).
-          final isFlipping = flip > 0.0;
-          final appearDy = (backgroundCard || isFlipping) ? 0.0 : _appearOffset.value * 10.0;
-          final appearAlpha = (backgroundCard || isFlipping) ? 1.0 : _appearOpacity.value;
-
-          return Opacity(
-            opacity: nearEdge ? 0.0 : appearAlpha,
-            child: Transform.translate(
-            offset: backgroundCard
-                ? const Offset(0, 0)
-                : Offset(0, slide * 600 + appearDy),
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001)
-                ..rotateY(backgroundCard ? 0 : angle),
-              child: Container(
-                width: _cardWidth,
-                height: _cardHeight,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(_cardRadius),
-                  // Contour uniquement sur la face avant — le dos n'a pas de contour
-                  border: (!backgroundCard && showFront && _revealedCard != null)
-                      ? Border.all(
-                          color: Colors.white,
-                          width: 7.0,
-                        )
-                      : null,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(_cardRadius - 7.0),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Positioned.fill(
-                        child: isBack || backgroundCard
-                            ? _buildCardBackWidget()
-                            : (showFront && _revealedCard?.type == CardType.raccoon)
-                                ? Image(image: _cardFaceProviders[CardType.raccoon]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
-                                : (showFront && _revealedCard?.type == CardType.trash)
-                                    ? Image(image: _cardFaceProviders[CardType.trash]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
-                                    : (showFront && _revealedCard?.type == CardType.food)
-                                        ? Image(image: _cardFaceProviders[CardType.food]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
-                                        : ((showFront && _revealedCard?.type == CardType.pince) || (showFront && _revealedCard?.type == CardType.vacuum))
-                                            ? Image(image: _cardFaceProviders[_revealedCard!.type]!, fit: BoxFit.cover, gaplessPlayback: true, filterQuality: FilterQuality.high)
-                                            : ColoredBox(
-                                                color: _revealedCard?.color ?? Colors.deepPurple,
-                                              ),
-                      ),
-                      if (!backgroundCard &&
-                          !(showFront && (_revealedCard?.type == CardType.raccoon || _revealedCard?.type == CardType.trash || _revealedCard?.type == CardType.food || _revealedCard?.type == CardType.pince || _revealedCard?.type == CardType.vacuum)))
-                        Center(
-                          child: Transform(
-                            alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..rotateY(showFront ? math.pi : 0),
-                            child: FittedBox(
-                              child: Text(
-                                deckExhausted
-                                    ? ''
-                                    : showFront && _revealedCard != null
-                                        ? _revealedCard!.emoji
-                                        : '',
-                                style: TextStyle(
-                                  fontSize: (_cardHeight * 0.26).clamp(42.0, 68.0),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ));
-        },
-      ),
-    );
-  }
-
-  Widget _buildCenterArea(BoxConstraints constraints) {
-    _computeCardSize(constraints);
-
-    final showBackgroundCard = _gameState.remainingCards > 1;
-    final titleFontSize = (constraints.maxWidth * 0.062).clamp(14.0, 22.0);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            AppLocalizations.of(context)!.gameTurnOf(
-              _displayPlayerName ?? _gameState.currentPlayer.name,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: titleFontSize,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          key: _deckKey,
-          width: _cardWidth + 16,
-          height: _cardHeight + 16,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              if (showBackgroundCard)
-                Transform.translate(
-                  offset: const Offset(0, 6),
-                  child: Opacity(
-                    opacity: 0.65,
-                    child: _buildDeckCard(backgroundCard: true),
-                  ),
-                ),
-              _buildDeckCard(backgroundCard: false),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          child: Text(
-            _gameState.remainingCards == 0
-                ? ''
-                : AppLocalizations.of(context)!.gameRemainingCards(_gameState.remainingCards),
-            key: ValueKey(_gameState.remainingCards),
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-          ),
-        ),
-        const SizedBox(height: 8),
-        ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 36, maxHeight: 48),
-          child: Text(
-            _effectText,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGameplayControlsBar() {
-    final bool quitEnabled = !_isAnimating && !_showingPinceOverlay;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton.icon(
-            onPressed: quitEnabled
-                ? () async {
-                    AudioService.instance.playButtonSound();
-                    final confirmed = await _showQuitDialog();
-                    if (confirmed && mounted) await _quitToHome();
-                  }
-                : null,
-            icon: const Icon(Icons.exit_to_app, size: 18),
-            label: Text(AppLocalizations.of(context)!.gameQuitConfirm),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white70,
-              disabledForegroundColor: Colors.white24,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: const BorderSide(color: Colors.white24),
-              ),
-            ),
-          ),
-          const SizedBox(width: 48),
-        ],
-      ),
-    );
   }
 
   @override
@@ -1043,15 +810,21 @@ class _GameScreenState extends State<GameScreen>
         await _onBackPressed();
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF1B1525),
+        backgroundColor: AppColors.background,
         body: SafeArea(
           minimum: const EdgeInsets.only(top: 4, left: 4, right: 4, bottom: 8),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              _computeCardSize(constraints);
               return Stack(
                 key: _rootStackKey,
                 children: [
-                  // ── Fond gameplay ─────────────────────────────────────────
+                  // Stickers décoratifs fond
+                  const Positioned.fill(
+                    child: GameBackgroundStickers(),
+                  ),
+
+                  // Fond gameplay
                   Positioned.fill(
                     child: RepaintBoundary(
                       child: Padding(
@@ -1060,7 +833,27 @@ class _GameScreenState extends State<GameScreen>
                           children: [
                             ..._buildPlayerPositions(constraints),
                             Center(
-                              child: _buildCenterArea(constraints),
+                              child: GameCenterArea(
+                                deckKey: _deckKey,
+                                constraints: constraints,
+                                displayPlayerName: _displayPlayerName,
+                                currentPlayerName: _gameState.currentPlayer.name,
+                                effectText: _effectText,
+                                isAnimating: _isAnimating,
+                                remainingCards: _gameState.remainingCards,
+                                revealedCard: _revealedCard,
+                                deckStickerPlayer: _deckStickerPlayer,
+                                currentPlayer: _gameState.currentPlayer,
+                                cardWidth: _cardWidth,
+                                cardHeight: _cardHeight,
+                                cardRadius: _cardRadius,
+                                flipController: _flipController,
+                                slideController: _slideController,
+                                appearController: _appearController,
+                                appearOffset: _appearOffset,
+                                appearOpacity: _appearOpacity,
+                                onDrawCard: _drawCard,
+                              ),
                             ),
                           ],
                         ),
@@ -1068,22 +861,30 @@ class _GameScreenState extends State<GameScreen>
                     ),
                   ),
 
-                  // ── Top bar (toujours visible) ────────────────────────────
+                  // Top bar
                   Positioned(
                     top: 0,
                     left: 0,
                     right: 0,
-                    child: _buildGameplayControlsBar(),
+                    child: GameControlsBar(
+                      remainingCards: _gameState.remainingCards,
+                      quitEnabled: !_isAnimating && !_showingPinceOverlay,
+                      onQuitPressed: () async {
+                        AudioService.instance.playButtonSound();
+                        final confirmed = await _showQuitDialog();
+                        if (confirmed && mounted) await _quitToHome();
+                      },
+                    ),
                   ),
 
-                  // ── Animations overlay ────────────────────────────────────
+                  // Animations overlay
                   Positioned.fill(
                     child: GameplayOverlayAnimationManager(
                       animationsNotifier: _animationsNotifier,
                     ),
                   ),
 
-                  // ── Bandit target overlay ─────────────────────────────────
+                  // Bandit target overlay
                   if (_showingPinceOverlay && _pendingPinceCallback != null)
                     Positioned.fill(
                       child: PinceTargetOverlay(

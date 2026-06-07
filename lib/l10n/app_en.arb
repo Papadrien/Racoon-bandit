@@ -12,21 +12,21 @@
   "@tooltipPremium": {
     "description": "Premium icon tooltip"
   },
-  "noLivesAdHint": "Watch a full ad to recover 1 life.",
+  "noLivesAdHint": "Watch an ad to get a new game immediately.",
   "@noLivesAdHint": {
-    "description": "Help text below ad button when no lives"
+    "description": "Hint below ad button — no game available"
   },
   "watchAdButton": "Watch an ad",
   "@watchAdButton": {
-    "description": "Watch ad button label"
+    "description": "Label for watch ad button to get a game"
   },
   "adLoading": "Loading ad...",
   "@adLoading": {
     "description": "Ad button label while loading"
   },
-  "lifeEarned": "1 life earned!",
+  "lifeEarned": "Game ready!",
   "@lifeEarned": {
-    "description": "Snackbar when life earned via ad"
+    "description": "Snackbar game obtained via ad"
   },
   "lobbyTitle": "LOBBY",
   "@lobbyTitle": {
@@ -80,6 +80,10 @@
   "@lobbyChooseProfile": {
     "description": "Empty slot text + bottom sheet title"
   },
+  "lobbyNewProfile": "New profile",
+  "@lobbyNewProfile": {
+    "description": "Bouton créer nouveau profil dans sélecteur"
+  },
   "lobbyNoProfiles": "No profiles available.\nCreate profiles in the settings.",
   "@lobbyNoProfiles": {
     "description": "Empty state message in profile picker"
@@ -108,7 +112,7 @@
   "@chaosSlide1Title": {
     "description": "Slide 1 title chaos tutorial"
   },
-  "chaosSlide1Desc": "Special cards are added to the deck.\nMore surprises, more chaos!",
+  "chaosSlide1Desc": "Special cards are added to the game. More surprises, more chaos!",
   "@chaosSlide1Desc": {
     "description": "Slide 1 description chaos tutorial"
   },
@@ -116,7 +120,7 @@
   "@chaosSlide2Title": {
     "description": "Slide 2 title chaos tutorial"
   },
-  "chaosSlide2Desc": "Draw this card? You gain 2 food at once.\nNice draw!",
+  "chaosSlide2Desc": "You gain 2 food at once!",
   "@chaosSlide2Desc": {
     "description": "Slide 2 description chaos tutorial"
   },
@@ -124,7 +128,7 @@
   "@chaosSlide3Title": {
     "description": "Slide 3 title chaos tutorial"
   },
-  "chaosSlide3Desc": "A hungry little raccoon steals 2 food.\nLess dangerous than its big brother, but it still hurts.",
+  "chaosSlide3Desc": "A hungry little raccoon steals 2 food.",
   "@chaosSlide3Desc": {
     "description": "Slide 3 description chaos tutorial"
   },
@@ -132,17 +136,9 @@
   "@chaosSlide4Title": {
     "description": "Slide 4 title chaos tutorial"
   },
-  "chaosSlide4Desc": "This card steals 1 food from EVERY player.\nAbsolute chaos!",
+  "chaosSlide4Desc": "Steals 1 food from everyone!",
   "@chaosSlide4Desc": {
     "description": "Slide 4 description chaos tutorial"
-  },
-  "chaosSlide5Title": "Ready for chaos?",
-  "@chaosSlide5Title": {
-    "description": "Slide 5 title chaos tutorial"
-  },
-  "chaosSlide5Desc": "This mode is more unpredictable.\nFun for the family, surprising every game!",
-  "@chaosSlide5Desc": {
-    "description": "Slide 5 description chaos tutorial"
   },
   "gameQuitDialogTitle": "Quit the game?",
   "@gameQuitDialogTitle": {
@@ -224,7 +220,7 @@
   "@resultPinceCards": {
     "description": "Stat: bandit cards played"
   },
-  "resultRaccoonCards": "Raccoons played",
+  "resultRaccoonCards": "Raccoons drawn",
   "@resultRaccoonCards": {
     "description": "Stat: raccoon cards played"
   },
@@ -233,6 +229,10 @@
     "description": "Play again button on result screen"
   },
   "resultBackHome": "Back to home",
+  "resultRanking": "Rankings",
+  "@resultRanking": {
+    "description": "Section title for the rankings in the result screen"
+  },
   "@resultBackHome": {
     "description": "Back home button on result screen"
   },
@@ -305,6 +305,22 @@
   "@profileEditButtonSave": {
     "description": "Save existing profile button"
   },
+  "profileEditDiscardTitle": "Discard changes?",
+  "@profileEditDiscardTitle": {
+    "description": "Profile edit discard confirmation dialog title"
+  },
+  "profileEditDiscardContent": "Your changes will not be saved.",
+  "@profileEditDiscardContent": {
+    "description": "Profile edit discard confirmation dialog content"
+  },
+  "profileEditDiscardCancel": "Keep editing",
+  "@profileEditDiscardCancel": {
+    "description": "Cancel discard in profile edit"
+  },
+  "profileEditDiscardConfirm": "Discard",
+  "@profileEditDiscardConfirm": {
+    "description": "Confirm discard in profile edit"
+  },
   "settingsTitle": "SETTINGS",
   "@settingsTitle": {
     "description": "AppBar title Settings"
@@ -361,46 +377,6 @@
   "@settingsVersionLabel": {
     "description": "Version label at bottom of settings"
   },
-  "privacyTitle": "PRIVACY",
-  "@privacyTitle": {
-    "description": "AppBar title privacy policy"
-  },
-  "privacyHeading": "Privacy Policy",
-  "@privacyHeading": {
-    "description": "Main heading on privacy screen"
-  },
-  "privacyAppName": "Raccoon Bandit",
-  "@privacyAppName": {
-    "description": "App name under privacy heading"
-  },
-  "privacySection1Title": "Data Collection",
-  "@privacySection1Title": {
-    "description": "Data collection section title"
-  },
-  "privacySection1Content": "Raccoon Bandit does not collect any personal data. All game data is stored locally on your device.",
-  "@privacySection1Content": {
-    "description": "Data collection section content"
-  },
-  "privacySection2Title": "Ads",
-  "@privacySection2Title": {
-    "description": "Ads section title"
-  },
-  "privacySection2Content": "The app may display ads via Google AdMob. These ads may use anonymised identifiers in accordance with Google's policy.",
-  "@privacySection2Content": {
-    "description": "Ads section content"
-  },
-  "privacySection3Title": "Contact",
-  "@privacySection3Title": {
-    "description": "Contact section title"
-  },
-  "privacySection3Content": "For any questions about privacy, you can contact us via the app's page on the Google Play Store.",
-  "@privacySection3Content": {
-    "description": "Contact section content"
-  },
-  "privacyComingSoon": "Full privacy policy coming soon",
-  "@privacyComingSoon": {
-    "description": "Privacy policy placeholder note"
-  },
   "premiumTitle": "PREMIUM",
   "@premiumTitle": {
     "description": "AppBar title premium"
@@ -421,9 +397,9 @@
   "@premiumRestorePurchases": {
     "description": "Restore purchases button"
   },
-  "livesAdButton": "Ad +1",
+  "livesAdButton": "Game +1",
   "@livesAdButton": {
-    "description": "Ad +1 life button label in lives bar"
+    "description": "Label for ad +1 game button in indicator"
   },
   "onboardingSkip": "Skip",
   "onboardingNext": "Next",
@@ -446,5 +422,207 @@
   "defaultLabel": "Default",
   "newCardBackUnlocked": "NEW CARD BACK UNLOCKED",
   "tryButton": "TRY",
-  "laterButton": "Later"
+  "laterButton": "Later",
+  "gameReadyLabel": "Game ready",
+  "@gameReadyLabel": {
+    "description": "Indicator — a game is available"
+  },
+  "gameReadyWaiting": "Next game in",
+  "@gameReadyWaiting": {
+    "description": "Indicator — waiting for recharge"
+  },
+  "cardBackNamePurple": "Purple",
+  "@cardBackNamePurple": {
+    "description": "Purple card back name"
+  },
+  "cardBackNameBlue": "Blue",
+  "@cardBackNameBlue": {
+    "description": "Blue card back name"
+  },
+  "cardBackNameGreen": "Green",
+  "@cardBackNameGreen": {
+    "description": "Green card back name"
+  },
+  "cardBackNamePink": "Pink",
+  "@cardBackNamePink": {
+    "description": "Pink card back name"
+  },
+  "cardBackNameYellow": "Yellow",
+  "@cardBackNameYellow": {
+    "description": "Yellow card back name"
+  },
+  "cardBacksGamesCount": "{count, plural, one{{count} game} other{{count} games}}",
+  "@cardBacksGamesCount": {
+    "description": "Games count in card backs bottom sheet",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unlockAfterGames": "{count, plural, one{Unlocked after {count} game played!} other{Unlocked after {count} games played!}}",
+  "@unlockAfterGames": {
+    "description": "Unlock hint in reward popup",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gamesRemainingProgress": "{count, plural, one{{count} game remaining} other{{count} games remaining}}",
+  "@gamesRemainingProgress": {
+    "description": "Games remaining in result screen progress widget",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pince": "Pince",
+  "@pince": {
+    "description": "Pince card name (singular)"
+  },
+  "pinces": "Pinces",
+  "@pinces": {
+    "description": "Pince card name (plural)"
+  },
+  "adError": "An error occurred, please try again.",
+  "@adError": {
+    "description": "Rewarded ad error snackbar"
+  },
+  "gameEffectGameOver": "Game over",
+  "gameEffectFoodGained": "{playerName} picks up 1 food",
+  "@gameEffectFoodGained": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "gameEffectTrashSecured": "{playerName} secures a bin",
+  "@gameEffectTrashSecured": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "gameEffectRaccoonBlocked": "The raccoon is repelled by the secured bin!",
+  "gameEffectRaccoonDevours": "The raccoon devours all of {playerName}'s food!",
+  "@gameEffectRaccoonDevours": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "gameEffectBanquet": "{playerName} feasts and gains 2 food!",
+  "@gameEffectBanquet": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "gameEffectBabyRaccoonDevours": "The baby raccoon devours {count} food from {targetName}!",
+  "@gameEffectBabyRaccoonDevours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "targetName": {
+        "type": "String"
+      }
+    }
+  },
+  "gameEffectBabyRaccoonEmpty": "The baby raccoon looks for food… but there is none!",
+  "gameEffectVacuumSteals": "{playerName} vacuums up {count} food from the others!",
+  "@gameEffectVacuumSteals": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "gameEffectVacuumEmpty": "The vacuum runs empty… nobody has food!",
+  "gameEffectPinceNoTarget": "{playerName} looks for a target… but nobody has food!",
+  "@gameEffectPinceNoTarget": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "gameEffectPinceSteal": "{playerName} uses the pince and steals 1 food from {targetName}!",
+  "@gameEffectPinceSteal": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      },
+      "targetName": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyTitle": "PRIVACY",
+  "@privacyTitle": {},
+  "privacyScreenTitle": "Privacy Policy",
+  "@privacyScreenTitle": {},
+  "privacyIntroTitle": "Introduction",
+  "@privacyIntroTitle": {},
+  "privacyIntroContent": "Raccoon Bandit is a family card game designed to be simple, fun and accessible to both children and adults. Protecting your privacy matters to us.",
+  "@privacyIntroContent": {},
+  "privacyDataTitle": "Data Collected",
+  "@privacyDataTitle": {},
+  "privacyDataContent": "Raccoon Bandit does not directly request or collect any personally identifiable information (name, address, phone number). Integrated third-party services (Google AdMob, Firebase Analytics) may collect anonymised technical information based on your consent preferences. App preferences (sound, vibrations) are stored locally on the device via SharedPreferences and are never transmitted.",
+  "@privacyDataContent": {},
+  "privacyAdsTitle": "Advertisements",
+  "@privacyAdsTitle": {},
+  "privacyAdsContent": "The app may display rewarded ads via Google AdMob. On first launch in the European Economic Area (EEA) or United Kingdom, a consent form (UMP — User Messaging Platform) is shown so you can choose whether to receive personalised ads. You can update your preferences at any time in Settings.",
+  "@privacyAdsContent": {},
+  "privacyPurchasesTitle": "In-App Purchases",
+  "@privacyPurchasesTitle": {},
+  "privacyPurchasesContent": "Raccoon Bandit does not offer in-app purchases in its current version.",
+  "@privacyPurchasesContent": {},
+  "privacyAnalyticsTitle": "Analytics",
+  "@privacyAnalyticsTitle": {},
+  "privacyAnalyticsContent": "Raccoon Bandit uses Firebase Analytics to collect anonymised usage statistics.",
+  "@privacyAnalyticsContent": {},
+  "privacyChildrenTitle": "Children & Data Protection",
+  "@privacyChildrenTitle": {},
+  "privacyChildrenContent": "Raccoon Bandit is designed for family use. We do not knowingly collect personal data from children. The app is not classified as a children's app under the Google Play Families programme and displays rewarded ads subject to user consent.",
+  "@privacyChildrenContent": {},
+  "privacyThirdPartyTitle": "Third-Party Services",
+  "@privacyThirdPartyTitle": {},
+  "privacyThirdPartyContent": "Google AdMob (rewarded ads, UMP consent management) · Firebase Analytics (anonymised statistics) · SharedPreferences (local preferences, no data transmitted)",
+  "@privacyThirdPartyContent": {},
+  "privacyGdprTitle": "Your Rights (GDPR)",
+  "@privacyGdprTitle": {},
+  "privacyGdprContent": "For any request related to your data, contact us at:",
+  "@privacyGdprContent": {},
+  "privacyContactEmail": "papadrien.prepa@gmail.com",
+  "@privacyContactEmail": {},
+  "privacyUpdatesTitle": "Policy Updates",
+  "@privacyUpdatesTitle": {},
+  "privacyUpdatesContent": "This policy may be updated at any time. We encourage you to review it periodically.",
+  "@privacyUpdatesContent": {},
+  "settingsConsentLabel": "Ad preferences",
+  "@settingsConsentLabel": {
+    "description": "Ad consent management tile label"
+  },
+  "settingsConsentSubtitle": "Manage my ad personalisation preferences",
+  "@settingsConsentSubtitle": {
+    "description": "Ad consent tile subtitle"
+  },
+  "allUnlockedTitle": "Complete collection!",
+  "@allUnlockedTitle": {
+    "description": "Title of the banner when all card backs are unlocked"
+  },
+  "allUnlockedSubtitle": "All card backs are unlocked.",
+  "@allUnlockedSubtitle": {
+    "description": "Subtitle of the banner when all card backs are unlocked"
+  }
 }

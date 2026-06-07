@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../core/services/audio_service.dart';
 import '../../core/services/haptic_service.dart';
-import '../../core/theme/app_theme.dart';
-import 'package:raccoon_bandit/l10n/app_localizations.dart';
+import '../../core/ui/app_spacing.dart';
+import '../../widgets/tutorial_widgets.dart';
 import '../onboarding/onboarding_slide.dart';
 
-/// Slides du tutoriel Mode Pagaille — construites à partir des traductions.
-///
-/// Plus de const : les textes sont fournis par [AppLocalizations].
+/// Slides du tutoriel Mode Pagaille.
 class ChaosTutorialSlides {
   ChaosTutorialSlides._();
 
@@ -21,7 +20,9 @@ class ChaosTutorialSlides {
           accentColor: const Color(0xFFCE93D8),
         ),
         OnboardingSlide(
-          emoji: '🍎',
+          emoji: '🍕',
+          cardImageAsset: 'assets/images/card_front_banquet.png',
+          cardFrontColor: const Color(0xFFEF5350),
           title: (_) => l10n.chaosSlide2Title,
           description: (_) => l10n.chaosSlide2Desc,
           cardColor: const Color(0xFF1B3A1B),
@@ -29,6 +30,8 @@ class ChaosTutorialSlides {
         ),
         OnboardingSlide(
           emoji: '🦝',
+          cardImageAsset: 'assets/images/card_front_baby_raccoon.png',
+          cardFrontColor: const Color(0xFFBA68C8),
           title: (_) => l10n.chaosSlide3Title,
           description: (_) => l10n.chaosSlide3Desc,
           cardColor: const Color(0xFF37474F),
@@ -36,17 +39,12 @@ class ChaosTutorialSlides {
         ),
         OnboardingSlide(
           emoji: '🌀',
+          cardImageAsset: 'assets/images/card_front_vacuum.png',
+          cardFrontColor: const Color(0xFF29B6F6),
           title: (_) => l10n.chaosSlide4Title,
           description: (_) => l10n.chaosSlide4Desc,
           cardColor: const Color(0xFF1A0D2E),
           accentColor: const Color(0xFF7C4DFF),
-        ),
-        OnboardingSlide(
-          emoji: '🎲',
-          title: (_) => l10n.chaosSlide5Title,
-          description: (_) => l10n.chaosSlide5Desc,
-          cardColor: const Color(0xFF1A1A2E),
-          accentColor: const Color(0xFFFF9800),
         ),
       ];
 }
@@ -58,14 +56,16 @@ class ChaosTutorial extends StatefulWidget {
   const ChaosTutorial({super.key});
 
   /// Ouvre le tutoriel dans une bottom sheet plein écran.
-  static Future<void> show(BuildContext context) {
-    return showModalBottomSheet<void>(
+  /// Retourne `true` si l'utilisateur a cliqué "C'est parti !" (dernière slide).
+  static Future<bool> show(BuildContext context) async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       enableDrag: false,
       builder: (_) => const ChaosTutorial(),
     );
+    return result ?? false;
   }
 
   @override
@@ -76,7 +76,6 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
-  // Slides construites dans didChangeDependencies pour avoir accès au contexte.
   late List<OnboardingSlide> _slides;
 
   @override
@@ -91,11 +90,11 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
     HapticService.trigger(HapticType.selection);
     AudioService.instance.playSfx(SoundEffect.button);
     if (_isLast) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } else {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutBack,
       );
     }
   }
@@ -109,234 +108,148 @@ class _ChaosTutorialState extends State<ChaosTutorial> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final screenHeight = MediaQuery.sizeOf(context).height;
 
     return Container(
-      height: screenHeight * 0.92,
+      height: screenHeight * 0.94,
       decoration: const BoxDecoration(
-        color: Color(0xFF121212),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: Color(0xFFF4D9C1),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.radiusXLarge),
+        ),
       ),
       child: SafeArea(
         bottom: true,
-        child: Column(
+        child: Stack(
           children: [
-            // ── Handle + bouton fermer ─────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.only(top: 12, left: 16, right: 16),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: AnimatedOpacity(
-                      opacity: _isLast ? 0.0 : 1.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: TextButton(
-                        onPressed:
-                            _isLast ? null : () => Navigator.of(context).pop(),
-                        child: Text(
-                          l10n.chaosTutorialClose,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 14,
-                            letterSpacing: 0.5,
+            // ── Stickers décoratifs ───────────────────────────────────────
+            const ClipRRect(
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppSpacing.radiusXLarge),
+              ),
+              child: TutorialBackgroundDecorations(),
+            ),
+
+            // ── Contenu ───────────────────────────────────────────────────
+            Column(
+              children: [
+                // ── Handle + bouton fermer ────────────────────────────────
+                Padding(
+                  padding:
+                      const EdgeInsets.only(top: 12, left: 16, right: 16),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2B2B2B).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: AnimatedOpacity(
+                          opacity: _isLast ? 0.0 : 1.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: TextButton(
+                            onPressed: _isLast
+                                ? null
+                                : () => Navigator.of(context).pop(),
+                            child: Text(
+                              l10n.chaosTutorialClose,
+                              style: const TextStyle(
+                                color: Color(0xFF2B2B2B),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
 
-            // ── Titre de la bottom sheet ───────────────────────────────────
-            Text(
-              l10n.chaosTutorialSheetTitle,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2,
-                color: Colors.white.withValues(alpha: 0.35),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // ── Slides ─────────────────────────────────────────────────────
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() => _currentIndex = index);
-                },
-                itemCount: _slides.length,
-                itemBuilder: (context, index) =>
-                    _ChaosTutorialSlideCard(slide: _slides[index]),
-              ),
-            ),
-
-            // ── Indicateurs ────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: _DotsIndicator(
-                count: _slides.length,
-                current: _currentIndex,
-                activeColor: AppTheme.primary,
-              ),
-            ),
-
-            // ── Bouton navigation ──────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _nextPage,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                // ── Titre + compteur ──────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x22000000),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '${l10n.chaosTutorialSheetTitle}  ${_currentIndex + 1}/${_slides.length}',
+                        style: const TextStyle(
+                          color: Color(0xFF6C2BFF),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
                     ),
-                    elevation: 4,
-                    shadowColor: AppTheme.primary.withValues(alpha: 0.4),
-                  ),
-                  child: Text(
-                    _isLast ? l10n.chaosTutorialDone : l10n.chaosTutorialNext,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
+                  ],
+                ),
+
+                const SizedBox(height: AppSpacing.sm),
+
+                // ── Slides ────────────────────────────────────────────────
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() => _currentIndex = index);
+                    },
+                    itemCount: _slides.length,
+                    itemBuilder: (context, index) => TutorialSlideCard(
+                      slide: _slides[index],
+                      index: index,
                     ),
                   ),
                 ),
-              ),
+
+                // ── Indicateurs ───────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: TutorialDotsIndicator(
+                    count: _slides.length,
+                    current: _currentIndex,
+                  ),
+                ),
+
+                // ── Bouton navigation ─────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+                  child: TutorialNextButton(
+                    label: _isLast
+                        ? l10n.chaosTutorialDone.toUpperCase()
+                        : l10n.chaosTutorialNext.toUpperCase(),
+                    onPressed: _nextPage,
+                    height: 62,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _ChaosTutorialSlideCard
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ChaosTutorialSlideCard extends StatelessWidget {
-  const _ChaosTutorialSlideCard({required this.slide});
-
-  final OnboardingSlide slide;
-
-  @override
-  Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final emojiSize = screenHeight < 650 ? 64.0 : 80.0;
-    final titleSize = screenHeight < 650 ? 20.0 : 24.0;
-    final descSize = screenHeight < 650 ? 13.0 : 15.0;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Center(
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-          decoration: BoxDecoration(
-            color: slide.cardColor.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: slide.accentColor.withValues(alpha: 0.4),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: slide.accentColor.withValues(alpha: 0.18),
-                blurRadius: 32,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                slide.emoji,
-                style: TextStyle(fontSize: emojiSize),
-              ),
-              SizedBox(height: screenHeight < 650 ? 16 : 24),
-              Text(
-                slide.title(context),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: titleSize,
-                  fontWeight: FontWeight.w900,
-                  color: slide.accentColor,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                slide.description(context),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: descSize,
-                  color: Colors.white.withValues(alpha: 0.85),
-                  height: 1.55,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _DotsIndicator (local copy — même logique que l'onboarding)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _DotsIndicator extends StatelessWidget {
-  const _DotsIndicator({
-    required this.count,
-    required this.current,
-    required this.activeColor,
-  });
-
-  final int count;
-  final int current;
-  final Color activeColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(count, (index) {
-        final isActive = index == current;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: isActive ? 24 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: isActive ? activeColor : Colors.white24,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        );
-      }),
     );
   }
 }

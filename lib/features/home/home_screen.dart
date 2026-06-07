@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,15 +6,18 @@ import 'package:flutter/material.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
+import '../../core/services/haptic_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/theme/app_theme_provider.dart';
+import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_decorations.dart';
+import '../../core/ui/app_spacing.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
-import '../../widgets/lives_indicator.dart';
-import '../../widgets/primary_button.dart';
+import '../../widgets/game_ready_indicator.dart';
+import '../../widgets/raccoon_bandit_logo.dart';
 import '../onboarding/onboarding_screen.dart';
+import '../../widgets/primary_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,7 +28,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  final LifeSystemService _lifeSystemService = LifeSystemService();
+  final LifeSystemService _lifeSystemService = LifeSystemService.instance;
 
   // Onboarding — premier lancement uniquement
   bool _showOnboarding = false;
@@ -57,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 80),
     );
-    _playButtonScale = Tween<double>(begin: 1.0, end: 0.92).animate(
+    _playButtonScale = Tween<double>(begin: 1.0, end: 0.96).animate(
       CurvedAnimation(
         parent: _playButtonPressController,
         curve: Curves.easeOut,
@@ -95,14 +97,11 @@ class _HomeScreenState extends State<HomeScreen>
     if (mounted) {
       setState(() {
         _isLoading = false;
-        // Déclencher l'onboarding au bon moment : après chargement, avant UI
         _showOnboarding = OnboardingService.shouldShowOnboarding;
       });
     }
   }
 
-  /// Déclenche le preload de la pub uniquement si le bouton est visible.
-  /// Sans effet si déjà chargée ou en cours de chargement.
   void _ensureAdPreloaded() {
     if (_lifeSystemService.currentLives < LifeSystemService.maxLives) {
       RewardedAdService.instance.preloadAd();
@@ -126,9 +125,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _watchAdForLife() async {
-    if (_isRewardLoading) {
-      return;
-    }
+    if (_isRewardLoading) return;
 
     setState(() {
       _isRewardLoading = true;
@@ -152,9 +149,9 @@ class _HomeScreenState extends State<HomeScreen>
           SnackBar(content: Text(l10n.lifeEarned)),
         );
       },
-      onError: (message) {
+      onError: (_) {
         if (!mounted) return;
-        messenger.showSnackBar(SnackBar(content: Text(message)));
+        messenger.showSnackBar(SnackBar(content: Text(l10n.adError)));
       },
     );
 
@@ -167,7 +164,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Onboarding premier lancement — affiché AVANT l'écran principal
     if (_showOnboarding) {
       return OnboardingScreen(
         onDone: () {
@@ -178,16 +174,12 @@ class _HomeScreenState extends State<HomeScreen>
 
     final remainingDuration =
         _lifeSystemService.getRemainingRechargeDuration();
-
     final noLives = _lifeSystemService.currentLives <= 0;
 
-    return ListenableBuilder(
-      listenable: AppThemeProvider.instance,
-      builder: (context, _) => _buildScaffold(
-        context,
-        remainingDuration: remainingDuration,
-        noLives: noLives,
-      ),
+    return _buildScaffold(
+      context,
+      remainingDuration: remainingDuration,
+      noLives: noLives,
     );
   }
 
@@ -206,14 +198,15 @@ class _HomeScreenState extends State<HomeScreen>
       child: Scaffold(
         body: Stack(
           children: [
-            // ── Hero image ancrée en bas avec animation idle ─────────────
-            // bottom: -6 pour que le bas de l'image dépasse légèrement
-            // et évite toute séparation visible entre l'image et le bord.
-            const Positioned(
+            // ── Stickers décoratifs en fond ──────────────────────────────
+            const Positioned.fill(child: _BackgroundStickers()),
+
+            // ── Hero image — positionné à hauteur fixe, juste au-dessus du bouton Jouer
+            Positioned(
               left: 0,
               right: 0,
-              bottom: -6,
-              child: _HeroImage(),
+              bottom: MediaQuery.sizeOf(context).height * 0.20 + AppSpacing.buttonHeight + AppSpacing.lg,
+              child: const _HeroImage(),
             ),
 
             // ── Top bar (SafeArea) ────────────────────────────────────────
@@ -222,14 +215,14 @@ class _HomeScreenState extends State<HomeScreen>
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isNarrow = constraints.maxWidth < 360;
-                  final hPad = isNarrow ? 16.0 : 32.0;
+                  final hPad = isNarrow ? AppSpacing.hPadNarrow : AppSpacing.hPadWide;
 
                   return Padding(
                     padding: EdgeInsets.symmetric(horizontal: hPad),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // ── Top bar ─────────────────────────────────────
+                        // ── Top bar ────────────────────────────────────
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Row(
@@ -238,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen>
                               if (!_isLoading)
                                 ScaleTransition(
                                   scale: _rewardAnimationController,
-                                  child: LivesIndicator(
+                                  child: GameReadyIndicator(
                                     lives: _lifeSystemService.currentLives,
                                     remainingDuration:
                                         remainingDuration ?? Duration.zero,
@@ -246,23 +239,15 @@ class _HomeScreenState extends State<HomeScreen>
                                 )
                               else
                                 const SizedBox.shrink(),
+                              // ── Boutons flottants blancs ────────────
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.workspace_premium),
-                                    color: AppTheme.accent,
-                                    tooltip: AppLocalizations.of(context)!.tooltipPremium,
-                                    onPressed: () {
-                                      AudioService.instance.playButtonSound();
-                                      Navigator.pushNamed(
-                                          context, AppRoutes.premium);
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.settings),
-                                    color: AppTheme.textMuted,
-                                    tooltip: AppLocalizations.of(context)!.tooltipSettings,
+                                  _FloatingIconButton(
+                                    icon: Icons.settings,
+                                    color: AppColors.textMuted,
+                                    tooltip: AppLocalizations.of(context)!
+                                        .tooltipSettings,
                                     onPressed: () {
                                       AudioService.instance.playButtonSound();
                                       Navigator.pushNamed(
@@ -275,9 +260,9 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
 
-                        // ── Titre ────────────────────────────────────────
-                        const SizedBox(height: 12),
-                        const _Logo(),
+                        // ── Titre ─────────────────────────────────────
+                        const SizedBox(height: AppSpacing.md),
+                        const RaccoonBanditLogo(),
                       ],
                     ),
                   );
@@ -311,7 +296,41 @@ class _HomeScreenState extends State<HomeScreen>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Zone boutons repositionnée (Partie 1 & 3)
+// Bouton flottant blanc — base visuelle sticker pour le Home Screen
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _FloatingIconButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _FloatingIconButton({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: AppSpacing.floatingButtonSize,
+          height: AppSpacing.floatingButtonSize,
+          decoration: AppDecorations.floatingButton(radius: AppSpacing.radiusMedium),
+          child: Icon(icon, color: color, size: 22),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Zone boutons
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PlayButtonArea extends StatelessWidget {
@@ -334,7 +353,7 @@ class _PlayButtonArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < 360;
-    final hPad = isNarrow ? 16.0 : 32.0;
+    final hPad = isNarrow ? AppSpacing.sm : AppSpacing.lg;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: hPad),
@@ -348,23 +367,44 @@ class _PlayButtonArea extends StatelessWidget {
               onPressed: onWatchAd,
             )
           else
-            ScaleTransition(
-              scale: playButtonScale,
-              child: PrimaryButton(
-                label: AppLocalizations.of(context)!.play,
-                onPressed: isLoading ? null : onPlay,
+            AnimatedBuilder(
+              animation: playButtonScale,
+              builder: (context, _) => Transform.scale(
+                scale: playButtonScale.value,
+                child: _StickerPlayButton(
+                  label: AppLocalizations.of(context)!.play,
+                  onPressed: isLoading ? null : onPlay,
+                  shadowScale: playButtonScale.value,
+                ),
               ),
             ),
           if (noLives) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm + 2),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                AppLocalizations.of(context)!.noLivesAdHint,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 13,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x14000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.noLivesAdHint,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 13,
+                  ),
                 ),
               ),
             ),
@@ -376,66 +416,23 @@ class _PlayButtonArea extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Hero image avec animation idle (Partie 2)
+// Hero image — directement depuis l'asset PNG, sans contour artificiel
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Image hero pleine largeur, ancrée en bas de l'écran,
-/// avec un léger flottement vertical (idle breathing).
-class _HeroImage extends StatefulWidget {
+class _HeroImage extends StatelessWidget {
   const _HeroImage();
-
-  @override
-  State<_HeroImage> createState() => _HeroImageState();
-}
-
-class _HeroImageState extends State<_HeroImage>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _idleController;
-  late final Animation<double> _floatAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _idleController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2800),
-    )..repeat(reverse: true);
-
-    // Amplitude : 6px max, courbe sinusoïdale douce
-    _floatAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _idleController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _idleController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final screenH = MediaQuery.sizeOf(context).height;
+    // Hauteur responsive : ~32% de l'écran, confortable sur petits Android
+    final heroHeight = (screenH * 0.32).clamp(160.0, 300.0);
 
-    return AnimatedBuilder(
-      animation: _floatAnimation,
-      builder: (context, child) {
-        // translateY de -6px à 0 (vers le haut puis retour)
-        final dy = -6.0 * math.sin(_floatAnimation.value * math.pi);
-        return Transform.translate(
-          offset: Offset(0, dy),
-          child: child,
-        );
-      },
-      child: SizedBox(
-        // +12px de marge basse pour compenser les 6px d'amplitude de
-        // l'animation vers le haut — évite de voir le bas de l'image
-        height: screenH * 0.65 + 12,
-        child: Image.asset(
-          'assets/images/raccoon_bandit_hero.png',
-          fit: BoxFit.contain,
-          alignment: Alignment.bottomCenter,
-        ),
+    return SizedBox(
+      height: heroHeight,
+      child: Image.asset(
+        'assets/images/raccoon_bandit_hero.png',
+        fit: BoxFit.contain,
       ),
     );
   }
@@ -452,75 +449,508 @@ class _RewardAdButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: isLoading
-            ? null
-            : () {
-                AudioService.instance.playButtonSound();
-                onPressed();
-              },
-        icon: isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.ondemand_video_rounded),
-        label: Text(
-          isLoading
-              ? AppLocalizations.of(context)!.adLoading
-              : AppLocalizations.of(context)!.watchAdButton,
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.accent,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 52),
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+    final l10n = AppLocalizations.of(context)!;
+    return WatchAdButton(
+      label: isLoading ? l10n.adLoading : l10n.watchAdButton,
+      icon: isLoading ? null : Icons.ondemand_video_rounded,
+      onPressed: isLoading ? null : onPressed,
+      isLoading: isLoading,
+      height: AppSpacing.buttonHeightSecondary,
+      fontSize: 15,
+      letterSpacing: 1.5,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bouton Jouer style sticker
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _StickerPlayButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final double shadowScale;
+
+  const _StickerPlayButton({
+    required this.label,
+    required this.onPressed,
+    this.shadowScale = 1.0,
+  });
+
+  static const _orange     = AppColors.orange;
+  static const _orangeDark = AppColors.orangeDark;
+  static const _cutSize    = 36.0;
+  static const _tabSize    = 20.0;
+  static const _height     = AppSpacing.buttonHeight;
+  static const _radius     = AppSpacing.radiusXLarge - 6;  // 22.0
+  static const _border     = 8.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onPressed != null;
+
+    return GestureDetector(
+      onTap: enabled
+          ? () {
+              HapticService.trigger(HapticType.selection);
+              AudioService.instance.playSfx(SoundEffect.button);
+              onPressed!();
+            }
+          : null,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // ── Contour blanc sticker ─────────────────────────────────────
+          CustomPaint(
+            painter: _StickerBorderPainter(
+              cutSize: _cutSize,
+              radius: _radius + _border,
+              border: _border,
+              shadowScale: shadowScale,
+            ),
+            child: const SizedBox(
+              width: double.infinity,
+              height: _height + _border * 2,
+            ),
           ),
-        ),
+
+          // ── Corps principal du bouton ─────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(_border),
+            child: CustomPaint(
+              painter: _ButtonBodyPainter(
+                color: enabled ? _orange : _orange.withValues(alpha: 0.5),
+                darkColor: _orangeDark,
+                cutSize: _cutSize,
+                tabSize: _tabSize,
+                radius: _radius,
+                border: _border,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: _height,
+                child: Center(
+                  child: Text(
+                    label.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 3,
+                      shadows: [
+                        Shadow(
+                          color: Color(0x66000000),
+                          offset: Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _Logo extends StatelessWidget {
-  const _Logo();
+// ── Contour blanc sticker avec coupe diagonale bas-droit ─────────────────────
+
+class _StickerBorderPainter extends CustomPainter {
+  final double cutSize;
+  final double radius;
+  final double border;
+  final double shadowScale;
+
+  const _StickerBorderPainter({
+    required this.cutSize,
+    required this.radius,
+    required this.border,
+    this.shadowScale = 1.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = cutSize + border;
+    final r = radius;
+
+    final path = Path()
+      ..moveTo(r, 0)
+      ..lineTo(size.width - r, 0)
+      ..arcToPoint(Offset(size.width, r),
+          radius: Radius.circular(r), clockwise: true)
+      ..lineTo(size.width, size.height - c)
+      ..lineTo(size.width - c, size.height)
+      ..lineTo(r, size.height)
+      ..arcToPoint(Offset(0, size.height - r),
+          radius: Radius.circular(r), clockwise: true)
+      ..lineTo(0, r)
+      ..arcToPoint(Offset(r, 0),
+          radius: Radius.circular(r), clockwise: true)
+      ..close();
+
+    // ── Ombre portée — réduite à la pression ─────────────────────────────
+    final shadowOpacity = ((shadowScale - 0.96) / 0.04).clamp(0.0, 1.0);
+    if (shadowOpacity > 0) {
+      final shadowPaint = Paint()
+        ..color = const Color(0xFF000000).withValues(alpha: 0.45 * shadowOpacity)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * shadowOpacity);
+      canvas.drawPath(
+        path.shift(const Offset(5, 7)),
+        shadowPaint,
+      );
+    }
+
+    canvas.drawPath(path, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(_StickerBorderPainter old) =>
+      old.shadowScale != shadowScale;
+}
+
+// ── Corps du bouton : fond orange dégradé + glow gauche doux + coupe diagonale
+
+class _ButtonBodyPainter extends CustomPainter {
+  final Color color;
+  final Color darkColor;
+  final double cutSize;
+  final double tabSize;
+  final double radius;
+  final double border;
+
+  const _ButtonBodyPainter({
+    required this.color,
+    required this.darkColor,
+    required this.cutSize,
+    required this.tabSize,
+    required this.radius,
+    required this.border,
+  });
+
+  Path _buildPath(Size size) {
+    final c = cutSize;
+    final r = radius;
+    return Path()
+      ..moveTo(r, 0)
+      ..lineTo(size.width - r, 0)
+      ..arcToPoint(Offset(size.width, r),
+          radius: Radius.circular(r), clockwise: true)
+      ..lineTo(size.width, size.height - c)
+      ..lineTo(size.width - c, size.height)
+      ..lineTo(r, size.height)
+      ..arcToPoint(Offset(0, size.height - r),
+          radius: Radius.circular(r), clockwise: true)
+      ..lineTo(0, r)
+      ..arcToPoint(Offset(r, 0),
+          radius: Radius.circular(r), clockwise: true)
+      ..close();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = cutSize;
+    final t = tabSize;
+    final path = _buildPath(size);
+
+    // ── Fond dégradé orange ───────────────────────────────────────────────
+    canvas.drawPath(
+      path,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.lerp(color, Colors.white, 0.15)!,
+            color,
+            darkColor,
+          ],
+          stops: const [0.0, 0.55, 1.0],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+
+    canvas.save();
+    canvas.clipPath(path);
+
+    // ── Glow doux décalé vers la gauche — organique et non agressif ──────
+    // Zone lumineuse positionnée à gauche du centre, basse intensité
+    final glowW = size.width * 0.45;
+    final glowH = size.height * 0.70;
+    final glowRect = Rect.fromCenter(
+      center: Offset(size.width * 0.28, size.height * 0.40),
+      width: glowW,
+      height: glowH,
+    );
+    canvas.drawOval(
+      glowRect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.30),
+            Colors.white.withValues(alpha: 0.0),
+          ],
+          stops: const [0.0, 1.0],
+        ).createShader(glowRect),
+    );
+
+    // ── Ombre intérieure basse (relief 3D) ───────────────────────────────
+    canvas.drawRect(
+      Rect.fromLTWH(0, size.height * 0.65, size.width, size.height * 0.35),
+      Paint()
+        ..color = darkColor.withValues(alpha: 0.30)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+
+    canvas.restore();
+
+    // ── Triangle-rebord bas-droit (coin replié style page) ───────────────
+    canvas.save();
+    canvas.translate(border / 2, border / 2);
+
+    final p1 = Offset(size.width - c, size.height);
+    final p2 = Offset(size.width, size.height - c);
+    final mid = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
+
+    const inward = Offset(-0.7071, -0.7071);
+    final tip = Offset(mid.dx + inward.dx * t, mid.dy + inward.dy * t);
+
+    final leg1Dx = tip.dx - p1.dx;
+    final leg1Dy = tip.dy - p1.dy;
+    final leg1Len = Offset(leg1Dx, leg1Dy).distance;
+    final leg1Nx = leg1Dx / leg1Len;
+    final leg1Ny = leg1Dy / leg1Len;
+
+    final leg2Dx = tip.dx - p2.dx;
+    final leg2Dy = tip.dy - p2.dy;
+    final leg2Len = Offset(leg2Dx, leg2Dy).distance;
+    final leg2Nx = leg2Dx / leg2Len;
+    final leg2Ny = leg2Dy / leg2Len;
+
+    const tipRadius = 10.0;
+
+    final arcEntry = Offset(tip.dx - leg1Nx * tipRadius, tip.dy - leg1Ny * tipRadius);
+    final arcExit  = Offset(tip.dx - leg2Nx * tipRadius, tip.dy - leg2Ny * tipRadius);
+
+    final tabPath = Path()
+      ..moveTo(p1.dx, p1.dy)
+      ..lineTo(arcEntry.dx, arcEntry.dy)
+      ..arcToPoint(arcExit,
+          radius: const Radius.circular(tipRadius), clockwise: true)
+      ..lineTo(p2.dx, p2.dy)
+      ..close();
+
+    canvas.drawPath(
+      tabPath,
+      Paint()
+        ..color = AppColors.stickerWarm
+        ..style = PaintingStyle.fill,
+    );
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_ButtonBodyPainter old) =>
+      old.color != color || old.cutSize != cutSize || old.border != border;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stickers décoratifs en fond
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BackgroundStickers extends StatelessWidget {
+  const _BackgroundStickers();
+
+  static const _pine  = 'assets/images/sticker_pine_tree.png';
+  static const _cone  = 'assets/images/sticker_pine_cone.png';
+  static const _cabin = 'assets/images/sticker_cabin.png';
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenH = MediaQuery.sizeOf(context).height;
-        final scale = (constraints.maxWidth / 360).clamp(0.72, 1.0);
-        final baseFontSize =
-            (Theme.of(context).textTheme.displayLarge?.fontSize ?? 48);
-        // Réduction supplémentaire sur petits écrans en hauteur
-        final heightScale = screenH < 600 ? 0.85 : 1.0;
-        final fontSize = baseFontSize * scale * heightScale;
+    final w = MediaQuery.sizeOf(context).width;
+    final h = MediaQuery.sizeOf(context).height;
 
-        return Column(
-          children: [
-            Text(
-              'RACCOON',
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: AppTheme.primary,
-                    fontSize: fontSize,
-                  ),
-            ),
-            Text(
-              'BANDIT',
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: AppTheme.accent,
-                    fontSize: fontSize,
-                  ),
-            ),
-          ],
-        );
-      },
+    return Stack(
+      clipBehavior: Clip.hardEdge,
+      children: [
+        // ════════════════════════════════════════════════════════════════
+        // BANDE HAUTE — logo / top-bar
+        // ════════════════════════════════════════════════════════════════
+
+        // Sapin haut-gauche — ancré dans le coin
+        _Sticker(
+          asset: _pine,
+          size: w * 0.28,
+          left: -w * 0.05,
+          top: h * 0.01,
+          angle: -0.06,
+        ),
+
+        // Pomme de pin haut-centre-gauche
+        _Sticker(
+          asset: _cone,
+          size: w * 0.09,
+          left: w * 0.27,
+          top: h * 0.02,
+          angle: 0.15,
+        ),
+
+        // Cabane haut-droite
+        _Sticker(
+          asset: _cabin,
+          size: w * 0.18,
+          right: w * 0.02,
+          top: h * 0.04,
+          angle: 0.05,
+        ),
+
+        // ════════════════════════════════════════════════════════════════
+        // BANDE MILIEU-HAUT — zone héros
+        // ════════════════════════════════════════════════════════════════
+
+        // Pomme de pin gauche
+        _Sticker(
+          asset: _cone,
+          size: w * 0.09,
+          left: w * 0.02,
+          top: h * 0.27,
+          angle: -0.20,
+        ),
+
+        // Sapin droite milieu-haut
+        _Sticker(
+          asset: _pine,
+          size: w * 0.22,
+          right: -w * 0.05,
+          top: h * 0.22,
+          angle: 0.08,
+        ),
+
+        // ════════════════════════════════════════════════════════════════
+        // BANDE MILIEU — centre écran
+        // ════════════════════════════════════════════════════════════════
+
+        // Sapin gauche milieu
+        _Sticker(
+          asset: _pine,
+          size: w * 0.19,
+          left: -w * 0.03,
+          top: h * 0.44,
+          angle: -0.04,
+        ),
+
+        // Pomme de pin droite milieu
+        _Sticker(
+          asset: _cone,
+          size: w * 0.10,
+          right: w * 0.03,
+          top: h * 0.45,
+          angle: 0.18,
+        ),
+
+        // ════════════════════════════════════════════════════════════════
+        // BANDE MILIEU-BAS — zone bouton Jouer
+        // ════════════════════════════════════════════════════════════════
+
+        // Cabane gauche milieu-bas
+        _Sticker(
+          asset: _cabin,
+          size: w * 0.17,
+          left: w * 0.02,
+          top: h * 0.60,
+          angle: -0.04,
+        ),
+
+        // Sapin droite milieu-bas
+        _Sticker(
+          asset: _pine,
+          size: w * 0.20,
+          right: -w * 0.04,
+          top: h * 0.57,
+          angle: 0.06,
+        ),
+
+        // Pomme de pin gauche milieu-bas
+        _Sticker(
+          asset: _cone,
+          size: w * 0.08,
+          left: w * 0.22,
+          top: h * 0.65,
+          angle: -0.10,
+        ),
+
+        // ════════════════════════════════════════════════════════════════
+        // BANDE BASSE — pied d'écran
+        // ════════════════════════════════════════════════════════════════
+
+        // Cabane bas-gauche
+        _Sticker(
+          asset: _cabin,
+          size: w * 0.21,
+          left: w * 0.01,
+          top: h * 0.76,
+          angle: -0.05,
+        ),
+
+        // Sapin bas-droit
+        _Sticker(
+          asset: _pine,
+          size: w * 0.23,
+          right: -w * 0.04,
+          top: h * 0.73,
+          angle: 0.06,
+        ),
+
+        // Pomme de pin bas-centre
+        _Sticker(
+          asset: _cone,
+          size: w * 0.09,
+          right: w * 0.26,
+          top: h * 0.85,
+          angle: 0.22,
+        ),
+      ],
+    );
+  }
+}
+
+class _Sticker extends StatelessWidget {
+  final String asset;
+  final double size;
+  final double? left;
+  final double? right;
+  final double? top;
+  final double angle;
+
+  const _Sticker({
+    required this.asset,
+    required this.size,
+    this.left,
+    this.right,
+    this.top,
+    this.angle = 0.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget img = Transform.rotate(
+      angle: angle,
+      child: Image.asset(
+        asset,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        opacity: const AlwaysStoppedAnimation(0.90),
+      ),
+    );
+
+    return Positioned(
+      left: left,
+      right: right,
+      top: top,
+      child: img,
     );
   }
 }

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -15,9 +14,14 @@ import '../../core/services/player_profiles_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/constants/app_assets.dart';
+import '../profiles/profile_edit_page.dart';
 import '../../core/models/card_back_config.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/services/life_system_service.dart';
+import '../../core/services/rewarded_ad_service.dart';
+import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_decorations.dart';
+import '../../core/ui/app_shadows.dart';
+import '../../core/ui/app_spacing.dart';
 import '../../widgets/player_avatar.dart';
 import '../../widgets/primary_button.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
@@ -36,10 +40,52 @@ class _LobbyScreenState extends State<LobbyScreen> {
   late List<PlayerProfile?> _selectedProfiles;
   bool _chaosModeEnabled = false;
 
+  // ── Système de vies ────────────────────────────────────────────────────────
+  final LifeSystemService _lifeSystemService = LifeSystemService.instance;
+  Timer? _livesTimer;
+  bool _isRewardLoading = false;
+
+  bool get _noLives => _lifeSystemService.currentLives <= 0;
+
   @override
   void initState() {
     super.initState();
     _initFromSaved();
+    _initLives();
+  }
+
+  Future<void> _initLives() async {
+    await _lifeSystemService.load();
+    if (_noLives) RewardedAdService.instance.preloadAd();
+    if (mounted) setState(() {});
+
+    _livesTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      await _lifeSystemService.updateLivesFromTime();
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _watchAdForLife() async {
+    if (_isRewardLoading) return;
+    setState(() => _isRewardLoading = true);
+
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    await RewardedAdService.instance.showRewardedLifeAd(
+      onRewardEarned: () async {
+        await _lifeSystemService.restoreLife();
+        if (!mounted) return;
+        setState(() {});
+        messenger.showSnackBar(SnackBar(content: Text(l10n.lifeEarned)));
+      },
+      onError: (message) {
+        if (!mounted) return;
+        messenger.showSnackBar(SnackBar(content: Text(message)));
+      },
+    );
+
+    if (mounted) setState(() => _isRewardLoading = false);
   }
 
   void _initFromSaved() {
@@ -131,19 +177,32 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   Future<void> _openChaosTutorial() async {
     AudioService.instance.playButtonSound();
-    await ChaosTutorial.show(context);
+    final activated = await ChaosTutorial.show(context);
+    if (activated && mounted) {
+      setState(() => _chaosModeEnabled = true);
+    }
   }
 
   bool get _canStart =>
-      _playerCount >= 2 && _selectedProfiles.every((p) => p != null);
+      _playerCount >= 2 &&
+      _selectedProfiles.every((p) => p != null) &&
+      !_noLives;
 
   bool _navigationInProgress = false;
+
+  @override
+  void dispose() {
+    _livesTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _startGame() async {
     if (_playerCount < 2) return;
     if (_navigationInProgress) return;
 
     _navigationInProgress = true;
+
+    final navigator = Navigator.of(context);
 
     final players = List.generate(_playerCount, (i) {
       final profile = _selectedProfiles[i];
@@ -156,22 +215,19 @@ class _LobbyScreenState extends State<LobbyScreen> {
       );
     });
 
-    final lifeSystemService = LifeSystemService();
-    await lifeSystemService.load();
+    await _lifeSystemService.updateLivesFromTime();
 
-    if (lifeSystemService.currentLives <= 0) {
+    if (_lifeSystemService.currentLives <= 0) {
       _navigationInProgress = false;
       return;
     }
 
-    await lifeSystemService.consumeLife();
+    await _lifeSystemService.consumeLife();
 
-    // Analytics — vie consommée au démarrage d'une partie
     unawaited(AnalyticsService.instance.logLifeConsumed(
-      livesRemaining: lifeSystemService.currentLives,
+      livesRemaining: _lifeSystemService.currentLives,
     ));
 
-    // Analytics — partie démarrée
     unawaited(AnalyticsService.instance.logGameStarted(
       nombreJoueurs: _playerCount,
       modePagailleActif: _chaosModeEnabled,
@@ -189,8 +245,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       return;
     }
 
-    Navigator.pushNamed(
-      context,
+    navigator.pushNamed(
       AppRoutes.game,
       arguments: GameState(players: players, chaosMode: _chaosModeEnabled),
     ).then((_) {
@@ -204,136 +259,149 @@ class _LobbyScreenState extends State<LobbyScreen> {
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {
         if (kDebugMode && didPop) {
-          // ignore: avoid_print
-          print('[LobbyScreen] back pressed — retour home');
+          debugPrint('[LobbyScreen] back pressed — retour home');
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(AppLocalizations.of(context)!.lobbyTitle),
-          leading: const BackButton(),
-        ),
-        body: SafeArea(
-          minimum: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 360;
-              final hPad = isNarrow ? 16.0 : 24.0;
-              return SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight - 32,
-                  ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // ── Sélecteur nombre de joueurs ───────────────────
-                        const SizedBox(height: 8),
-                        Text(
-                          AppLocalizations.of(context)!.lobbyPlayerCount,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: AppTheme.textMuted,
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: [
+            // ── Fond décoratif ─────────────────────────────────────────────
+            const _LobbyBackground(),
+
+            // ── Contenu principal ──────────────────────────────────────────
+            SafeArea(
+              child: Column(
+                children: [
+                  // ── Header ───────────────────────────────────────────────
+                  _LobbyHeader(onBack: () => Navigator.pop(context)),
+
+                  // ── Corps scrollable ─────────────────────────────────────
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isNarrow = constraints.maxWidth < 360;
+                        final hPad = isNarrow
+                            ? AppSpacing.hPadNarrow
+                            : AppSpacing.hPadNormal;
+                        return SingleChildScrollView(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: hPad,
+                            vertical: AppSpacing.lg,
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [2, 3, 4].map((count) {
-                            final selected = count == _playerCount;
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              child: GestureDetector(
-                                onTap: () {
-                                  AudioService.instance.playButtonSound();
-                                  _onCountChanged(count);
-                                },
-                                child: AnimatedContainer(
-                                  duration:
-                                      const Duration(milliseconds: 150),
-                                  width: 64,
-                                  height: 64,
-                                  decoration: BoxDecoration(
-                                    color: selected
-                                        ? AppTheme.primary
-                                        : Colors.transparent,
-                                    border: Border.all(
-                                      color: selected
-                                          ? AppTheme.primary
-                                          : AppTheme.textMuted,
-                                      width: 2,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight - AppSpacing.xl,
+                            ),
+                            child: IntrinsicHeight(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // ── Sélecteur joueurs ────────────────────
+                                  _PlayerCountSelector(
+                                    playerCount: _playerCount,
+                                    onChanged: _onCountChanged,
                                   ),
-                                  child: Center(
-                                    child: Text(
-                                      '$count',
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: selected
-                                            ? Colors.white
-                                            : AppTheme.textMuted,
+                                  const SizedBox(height: AppSpacing.xl),
+
+                                  // ── Slots joueurs ────────────────────────
+                                  ...List.generate(
+                                    _playerCount,
+                                    (i) => _PlayerSlotCard(
+                                      slotIndex: i,
+                                      profile: _selectedProfiles[i],
+                                      onTap: () => _openPicker(i),
+                                    ),
+                                  ),
+
+                                  const Spacer(),
+                                  const SizedBox(height: AppSpacing.xl),
+
+                                  // ── Bouton démarrer / regarder pub ───────
+                                  if (_noLives) ...[
+                                    WatchAdButton(
+                                      label: _isRewardLoading
+                                          ? AppLocalizations.of(context)!.adLoading
+                                          : AppLocalizations.of(context)!.watchAdButton,
+                                      icon: _isRewardLoading
+                                          ? null
+                                          : Icons.ondemand_video_rounded,
+                                      onPressed: _isRewardLoading ? null : _watchAdForLife,
+                                      isLoading: _isRewardLoading,
+                                      height: AppSpacing.buttonHeightSecondary,
+                                      fontSize: 15,
+                                      letterSpacing: 1.5,
+                                    ),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.sm,
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.md,
+                                          vertical: AppSpacing.sm,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                                          boxShadow: const [
+                                            BoxShadow(
+                                              color: Color(0x14000000),
+                                              blurRadius: 8,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          AppLocalizations.of(context)!.noLivesAdHint,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: AppColors.textMuted,
+                                            fontSize: 13,
+                                          ),
+                                        ),
                                       ),
                                     ),
+                                  ] else
+                                    PrimaryButton(
+                                      label: AppLocalizations.of(context)!.lobbyStart,
+                                      onPressed: _canStart ? _startGame : null,
+                                    ),
+                                  const SizedBox(height: AppSpacing.lg),
+
+                                  // ── Mode Pagaille ────────────────────────
+                                  _ChaosModeSection(
+                                    enabled: _chaosModeEnabled,
+                                    onToggle: (value) {
+                                      setState(() => _chaosModeEnabled = value);
+                                    },
+                                    onHelpTap: _openChaosTutorial,
                                   ),
-                                ),
+                                  const SizedBox(height: AppSpacing.md),
+
+                                  // ── Dos de cartes ────────────────────────
+                                  _CardBackButton(
+                                    selectedId: ProgressionService
+                                        .progression.selectedCardBackId,
+                                    onTap: () {
+                                      AudioService.instance.playButtonSound();
+                                      _openCardBackSelection();
+                                    },
+                                  ),
+                                  const SizedBox(height: AppSpacing.xl),
+                                ],
                               ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 28),
-
-                        // ── Slots joueurs ──────────────────────────────────
-                        ...List.generate(
-                          _playerCount,
-                          (i) => _PlayerSlotCard(
-                            slotIndex: i,
-                            profile: _selectedProfiles[i],
-                            onTap: () => _openPicker(i),
+                            ),
                           ),
-                        ),
-
-                        const Spacer(),
-
-                        // ── Bouton démarrer ────────────────────────────────
-                        const SizedBox(height: 20),
-                        PrimaryButton(
-                          label: AppLocalizations.of(context)!.lobbyStart,
-                          onPressed: _canStart ? _startGame : null,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // ── Section Mode Pagaille ──────────────────────────
-                        _ChaosModeSection(
-                          enabled: _chaosModeEnabled,
-                          onToggle: (value) {
-                            setState(() => _chaosModeEnabled = value);
-                          },
-                          onHelpTap: _openChaosTutorial,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // ── Bouton dos de cartes ───────────────────────────
-                        _CardBackButton(
-                          selectedId:
-                              ProgressionService.progression.selectedCardBackId,
-                          onTap: () {
-                            AudioService.instance.playButtonSound();
-                            _openCardBackSelection();
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                        );
+                      },
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -341,7 +409,271 @@ class _LobbyScreenState extends State<LobbyScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _ChaosModeSection
+// _LobbyBackground — fond beige avec stickers décoratifs légers
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LobbyBackground extends StatelessWidget {
+  const _LobbyBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          // Fond beige uni
+          Container(color: AppColors.background),
+
+          // Dégradé doux en bas pour profondeur
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 220,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.background.withValues(alpha: 0),
+                    AppColors.backgroundLight.withValues(alpha: 0.5),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Sticker sapin — haut gauche
+          const Positioned(
+            top: 40,
+            left: -10,
+            child: _StickerAsset(
+              asset: 'assets/images/sticker_pine_tree.png',
+              size: 90,
+              opacity: 0.12,
+              angle: -0.15,
+            ),
+          ),
+
+          // Sticker sapin — haut droite
+          const Positioned(
+            top: 20,
+            right: -8,
+            child: _StickerAsset(
+              asset: 'assets/images/sticker_pine_tree.png',
+              size: 75,
+              opacity: 0.10,
+              angle: 0.18,
+            ),
+          ),
+
+          // Sticker pomme de pin — milieu droite
+          const Positioned(
+            top: 260,
+            right: 4,
+            child: _StickerAsset(
+              asset: 'assets/images/sticker_pine_cone.png',
+              size: 44,
+              opacity: 0.14,
+              angle: 0.25,
+            ),
+          ),
+
+          // Sticker cabane — bas gauche
+          const Positioned(
+            bottom: 140,
+            left: -6,
+            child: _StickerAsset(
+              asset: 'assets/images/sticker_cabin.png',
+              size: 72,
+              opacity: 0.11,
+              angle: -0.08,
+            ),
+          ),
+
+          // Sticker pomme de pin — bas droite
+          const Positioned(
+            bottom: 200,
+            right: 8,
+            child: _StickerAsset(
+              asset: 'assets/images/sticker_pine_cone.png',
+              size: 38,
+              opacity: 0.13,
+              angle: -0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StickerAsset extends StatelessWidget {
+  final String asset;
+  final double size;
+  final double opacity;
+  final double angle;
+
+  const _StickerAsset({
+    required this.asset,
+    required this.size,
+    required this.opacity,
+    required this.angle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: angle,
+      child: Opacity(
+        opacity: opacity,
+        child: Image.asset(
+          asset,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, _) => const SizedBox.shrink(),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _LobbyHeader — header personnalisé cohérent avec le Home
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LobbyHeader extends StatelessWidget {
+  final VoidCallback onBack;
+
+  const _LobbyHeader({required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          // Bouton retour style sticker
+          GestureDetector(
+            onTap: () {
+              AudioService.instance.playButtonSound();
+              onBack();
+            },
+            child: Container(
+              width: AppSpacing.floatingButtonSize,
+              height: AppSpacing.floatingButtonSize,
+              decoration: AppDecorations.floatingButton(),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: AppColors.textDark,
+                size: 20,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: AppSpacing.md),
+
+          // Titre
+          Expanded(
+            child: Text(
+              l10n.lobbyTitle,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textDark,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _PlayerCountSelector — sélecteur nombre de joueurs adapté au thème beige
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PlayerCountSelector extends StatelessWidget {
+  final int playerCount;
+  final ValueChanged<int> onChanged;
+
+  const _PlayerCountSelector({
+    required this.playerCount,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      children: [
+        Text(
+          l10n.lobbyPlayerCount,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textMuted,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.stickerWhite,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+            boxShadow: AppShadows.floating,
+          ),
+          padding: const EdgeInsets.all(AppSpacing.xs + 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [2, 3, 4].map((count) {
+              final selected = count == playerCount;
+              return GestureDetector(
+                onTap: () {
+                  AudioService.instance.playButtonSound();
+                  onChanged(count);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 64,
+                  height: 52,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.orange : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                    boxShadow: selected ? AppShadows.button : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: selected ? Colors.white : AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _ChaosModeSection — adapté au thème beige
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ChaosModeSection extends StatelessWidget {
@@ -359,24 +691,40 @@ class _ChaosModeSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.stickerWhite,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
         border: Border.all(
           color: enabled
-              ? const Color(0xFF7C4DFF).withValues(alpha: 0.4)
-              : Colors.white.withValues(alpha: 0.08),
+              ? AppColors.violet.withValues(alpha: 0.30)
+              : AppColors.shadowSubtle,
+          width: 1.5,
         ),
+        boxShadow: AppShadows.floating,
       ),
       child: Row(
         children: [
-          // ── Icône + texte ────────────────────────────────────────────────
           Expanded(
             child: Row(
               children: [
-                const Text('🌀', style: TextStyle(fontSize: 24)),
-                const SizedBox(width: 12),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: enabled
+                        ? AppColors.violet.withValues(alpha: 0.10)
+                        : AppColors.backgroundLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Text('🌀', style: TextStyle(fontSize: 20)),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,15 +734,16 @@ class _ChaosModeSection extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppColors.textDark,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
                         AppLocalizations.of(context)!.lobbyChaosSubtitle,
                         style: const TextStyle(
-                          color: AppTheme.textMuted,
+                          color: AppColors.textMuted,
                           fontSize: 12,
+                          height: 1.3,
                         ),
                       ),
                     ],
@@ -403,25 +752,21 @@ class _ChaosModeSection extends StatelessWidget {
               ],
             ),
           ),
-
-          // ── Bouton aide ──────────────────────────────────────────────────
           IconButton(
             onPressed: onHelpTap,
-            icon: const Icon(Icons.help_outline, size: 20),
-            color: AppTheme.textMuted,
+            icon: const Icon(Icons.help_outline_rounded, size: 20),
+            color: AppColors.textMuted,
             tooltip: AppLocalizations.of(context)!.lobbyChaosTooltip,
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             constraints: const BoxConstraints(),
           ),
-
-          // ── Toggle ───────────────────────────────────────────────────────
           Switch(
             value: enabled,
             onChanged: (val) {
               AudioService.instance.playButtonSound();
               onToggle(val);
             },
-            activeThumbColor: const Color(0xFF7C4DFF),
+            activeThumbColor: AppColors.violet,
           ),
         ],
       ),
@@ -430,7 +775,7 @@ class _ChaosModeSection extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _PlayerSlotCard
+// _PlayerSlotCard — adapté au thème beige/sticker
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PlayerSlotCard extends StatelessWidget {
@@ -445,98 +790,113 @@ class _PlayerSlotCard extends StatelessWidget {
   });
 
   static List<String> _slotLabels(AppLocalizations l10n) => [
-    l10n.lobbySlot1,
-    l10n.lobbySlot2,
-    l10n.lobbySlot3,
-    l10n.lobbySlot4,
-  ];
+        l10n.lobbySlot1,
+        l10n.lobbySlot2,
+        l10n.lobbySlot3,
+        l10n.lobbySlot4,
+      ];
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final label = _slotLabels(l10n)[slotIndex % 4];
     final hasProfile = profile != null;
-    final color =
-        hasProfile ? Color(profile!.colorValue) : AppTheme.textMuted;
+    final accentColor =
+        hasProfile ? Color(profile!.colorValue) : AppColors.textMuted;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Material(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          onTap: () {
-            AudioService.instance.playButtonSound();
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: color.withValues(alpha: 0.35),
-                width: 1.5,
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm - 1),
+      child: GestureDetector(
+        onTap: () {
+          AudioService.instance.playButtonSound();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md + 2,
+          ),
+          decoration: BoxDecoration(
+            color: hasProfile
+                ? AppColors.stickerWhite
+                : AppColors.stickerWhite.withValues(alpha: 0.65),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+            border: Border.all(
+              color: hasProfile
+                  ? accentColor.withValues(alpha: 0.22)
+                  : AppColors.textMuted.withValues(alpha: 0.12),
+              width: 1.5,
+            ),
+            boxShadow: hasProfile ? AppShadows.floating : AppShadows.soft,
+          ),
+          child: Row(
+            children: [
+              // Avatar ou placeholder
+              if (hasProfile)
+                PlayerAvatar(
+                  emoji: profile!.emoji,
+                  color: Color(profile!.colorValue),
+                  size: 52,
+                )
+              else
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundLight,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.textMuted.withValues(alpha: 0.20),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.person_add_outlined,
+                    color: AppColors.textMuted,
+                    size: 22,
+                  ),
+                ),
+
+              const SizedBox(width: AppSpacing.lg),
+
+              // Textes
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textMuted,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      hasProfile
+                          ? profile!.name
+                          : l10n.lobbyChooseProfile,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: hasProfile
+                            ? AppColors.textDark
+                            : AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                if (hasProfile)
-                  PlayerAvatar(
-                    emoji: profile!.emoji,
-                    color: Color(profile!.colorValue),
-                    size: 48,
-                  )
-                else
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppTheme.textMuted.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppTheme.textMuted.withValues(alpha: 0.4),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.person_add_outlined,
-                      color: AppTheme.textMuted,
-                      size: 22,
-                    ),
-                  ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textMuted,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        hasProfile ? profile!.name : l10n.lobbyChooseProfile,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: hasProfile ? Colors.white : AppTheme.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right,
-                  color: color.withValues(alpha: 0.7),
-                ),
-              ],
-            ),
+
+              Icon(
+                Icons.chevron_right_rounded,
+                color: accentColor.withValues(alpha: hasProfile ? 0.45 : 0.30),
+                size: 22,
+              ),
+            ],
           ),
         ),
       ),
@@ -613,33 +973,27 @@ class _CardBackButtonState extends State<_CardBackButton>
         duration: const Duration(milliseconds: 100),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md + 2,
+          ),
           decoration: BoxDecoration(
-            color: accentColor.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.stickerWhite,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
             border: Border.all(
-              color: accentColor.withValues(alpha: 0.30),
+              color: accentColor.withValues(alpha: 0.20),
               width: 1.5,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: accentColor.withValues(alpha: 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: AppShadows.floating,
           ),
           child: Row(
             children: [
-              // ── Mini carte inclinée avec animation idle ────────────────
               _AnimatedCardPreview(
                 assetPath: AppAssets.cardBackAsset(cardBackId),
                 accentColor: accentColor,
                 floatAnim: _floatAnim,
               ),
-              const SizedBox(width: 16),
-
-              // ── Textes ─────────────────────────────────────────────────
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,31 +1003,40 @@ class _CardBackButtonState extends State<_CardBackButton>
                       AppLocalizations.of(context)!.lobbyCardBackLabel,
                       style: const TextStyle(
                         fontSize: 10,
-                        color: AppTheme.textMuted,
+                        color: AppColors.textMuted,
                         letterSpacing: 1.5,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      config.name,
+                      () {
+                        final l10n = AppLocalizations.of(context)!;
+                        return switch (config.id) {
+                          'purple' => l10n.cardBackNamePurple,
+                          'blue'   => l10n.cardBackNameBlue,
+                          'green'  => l10n.cardBackNameGreen,
+                          'pink'   => l10n.cardBackNamePink,
+                          'yellow' => l10n.cardBackNameYellow,
+                          _        => config.id,
+                        };
+                      }(),
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.textDark,
                         letterSpacing: 0.3,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Badge "Équipé"
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(20),
+                        color: accentColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
                         border: Border.all(
-                          color: accentColor.withValues(alpha: 0.35),
+                          color: accentColor.withValues(alpha: 0.30),
                           width: 1,
                         ),
                       ),
@@ -690,10 +1053,8 @@ class _CardBackButtonState extends State<_CardBackButton>
                   ],
                 ),
               ),
-
-              // ── Chevron ────────────────────────────────────────────────
               Icon(
-                Icons.chevron_right,
+                Icons.chevron_right_rounded,
                 color: accentColor.withValues(alpha: 0.5),
                 size: 22,
               ),
@@ -735,26 +1096,16 @@ class _AnimatedCardPreview extends StatelessWidget {
         height: 74,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(7),
-          boxShadow: [
-            BoxShadow(
-              color: accentColor.withValues(alpha: 0.35),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 6,
-              offset: const Offset(2, 3),
-            ),
-          ],
+          border: Border.all(color: Colors.white, width: 3.0),
+          boxShadow: AppShadows.sticker,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(7),
+          borderRadius: BorderRadius.circular(4),
           child: Image.asset(
             assetPath,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Container(
-              color: accentColor.withValues(alpha: 0.3),
+              color: accentColor.withValues(alpha: 0.2),
               child: Icon(Icons.style, color: accentColor, size: 28),
             ),
           ),
@@ -768,7 +1119,7 @@ class _AnimatedCardPreview extends StatelessWidget {
 // _ProfilePickerSheet
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ProfilePickerSheet extends StatelessWidget {
+class _ProfilePickerSheet extends StatefulWidget {
   final List<PlayerProfile> profiles;
   final String? currentProfileId;
   final Set<String> disabledProfileIds;
@@ -780,130 +1131,183 @@ class _ProfilePickerSheet extends StatelessWidget {
   });
 
   @override
+  State<_ProfilePickerSheet> createState() => _ProfilePickerSheetState();
+}
+
+class _ProfilePickerSheetState extends State<_ProfilePickerSheet> {
+  late List<PlayerProfile> _profiles;
+
+  @override
+  void initState() {
+    super.initState();
+    _profiles = List<PlayerProfile>.from(widget.profiles);
+  }
+
+  Future<void> _createProfile() async {
+    final navigator = Navigator.of(context);
+    final newP = PlayerProfilesService.newProfile();
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileEditPage(profile: newP, isNew: true),
+      ),
+    );
+    if (created == true && mounted) {
+      setState(() {
+        _profiles = PlayerProfilesService.sortedProfiles;
+      });
+      // Sélectionner automatiquement le profil nouvellement créé
+      final fresh = _profiles.where(
+        (p) => !widget.disabledProfileIds.contains(p.id),
+      );
+      if (fresh.isNotEmpty) {
+        final justCreated = _profiles.lastWhere(
+          (p) => !widget.disabledProfileIds.contains(p.id) && p.id != widget.currentProfileId,
+          orElse: () => fresh.last,
+        );
+        if (mounted) navigator.pop(justCreated);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return DraggableScrollableSheet(
-      initialChildSize: 0.55,
-      minChildSize: 0.35,
-      maxChildSize: 0.85,
+      initialChildSize: 0.60,
+      minChildSize: 0.40,
+      maxChildSize: 0.90,
       builder: (_, scrollController) {
         return Container(
           decoration: const BoxDecoration(
-            color: Color(0xFF1E1E2E),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            color: AppColors.backgroundLight,
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXLarge)),
+            boxShadow: AppShadows.sticker,
           ),
           child: Column(
             children: [
-              const SizedBox(height: 12),
+              // ── Handle ──────────────────────────────────────────────────
+              const SizedBox(height: AppSpacing.md),
               Container(
-                width: 40,
+                width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: AppColors.textMuted.withValues(alpha: 0.30),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
+
+              // ── Titre ────────────────────────────────────────────────────
               Text(
-                AppLocalizations.of(context)!.lobbyChooseProfile,
+                l10n.lobbyChooseProfile,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
-                  color: Colors.white,
+                  color: AppColors.textDark,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Divider(color: Colors.white12),
+              const SizedBox(height: AppSpacing.sm),
+              Divider(color: AppColors.textMuted.withValues(alpha: 0.15)),
+
+              // ── Liste des profils ─────────────────────────────────────────
               Expanded(
-                child: profiles.isEmpty
+                child: _profiles.isEmpty
                     ? Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(AppSpacing.xl),
                           child: Text(
-                            AppLocalizations.of(context)!.lobbyNoProfiles,
+                            l10n.lobbyNoProfiles,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppTheme.textMuted),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                            ),
                           ),
                         ),
                       )
                     : ListView.builder(
                         controller: scrollController,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        itemCount: profiles.length,
+                            horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                        itemCount: _profiles.length,
                         itemBuilder: (_, i) {
-                          final p = profiles[i];
-                          final isDisabled = disabledProfileIds.contains(p.id);
-                          final isCurrent = p.id == currentProfileId;
+                          final p = _profiles[i];
+                          final isDisabled =
+                              widget.disabledProfileIds.contains(p.id);
+                          final isCurrent = p.id == widget.currentProfileId;
                           final color = Color(p.colorValue);
 
                           return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.xs + 1),
                             child: Opacity(
                               opacity: isDisabled ? 0.35 : 1.0,
-                              child: Material(
-                                color: isCurrent
-                                    ? color.withValues(alpha: 0.18)
-                                    : color.withValues(alpha: 0.07),
-                                borderRadius: BorderRadius.circular(12),
-                                child: InkWell(
-                                  onTap: isDisabled
-                                      ? null
-                                      : () {
-                                          AudioService.instance
-                                              .playButtonSound();
-                                          Navigator.pop(context, p);
-                                        },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 12),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: isCurrent
-                                            ? color.withValues(alpha: 0.8)
-                                            : color.withValues(alpha: 0.25),
-                                        width: isCurrent ? 2 : 1,
+                              child: GestureDetector(
+                                onTap: isDisabled
+                                    ? null
+                                    : () {
+                                        AudioService.instance.playButtonSound();
+                                        Navigator.pop(context, p);
+                                      },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.lg,
+                                    vertical: AppSpacing.md,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isCurrent
+                                        ? color.withValues(alpha: 0.10)
+                                        : AppColors.stickerWhite,
+                                    borderRadius: BorderRadius.circular(
+                                        AppSpacing.radiusLarge),
+                                    border: Border.all(
+                                      color: isCurrent
+                                          ? color.withValues(alpha: 0.45)
+                                          : AppColors.textMuted
+                                              .withValues(alpha: 0.10),
+                                      width: isCurrent ? 2 : 1,
+                                    ),
+                                    boxShadow: AppShadows.soft,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      PlayerAvatar(
+                                        emoji: p.emoji,
+                                        color: color,
+                                        size: 44,
                                       ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        PlayerAvatar(
-                                          emoji: p.emoji,
+                                      const SizedBox(width: AppSpacing.md),
+                                      Expanded(
+                                        child: Text(
+                                          p.name,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDisabled
+                                                ? AppColors.textMuted
+                                                : AppColors.textDark,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isDisabled)
+                                        Text(
+                                          l10n.lobbyProfileAlreadyUsed,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppColors.textMuted,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        )
+                                      else if (isCurrent)
+                                        Icon(
+                                          Icons.check_circle,
                                           color: color,
-                                          size: 44,
+                                          size: 20,
                                         ),
-                                        const SizedBox(width: 14),
-                                        Expanded(
-                                          child: Text(
-                                            p.name,
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: isDisabled
-                                                  ? AppTheme.textMuted
-                                                  : Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                        if (isDisabled)
-                                          Text(
-                                            AppLocalizations.of(context)!.lobbyProfileAlreadyUsed,
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AppTheme.textMuted,
-                                              letterSpacing: 0.5,
-                                            ),
-                                          )
-                                        else if (isCurrent)
-                                          Icon(
-                                            Icons.check_circle,
-                                            color: color,
-                                            size: 20,
-                                          ),
-                                      ],
-                                    ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -912,7 +1316,52 @@ class _ProfilePickerSheet extends StatelessWidget {
                         },
                       ),
               ),
-              const SizedBox(height: 16),
+
+              // ── Bouton Nouveau profil ─────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg,
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: GestureDetector(
+                    onTap: _createProfile,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md + 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.stickerWhite,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+                        border: Border.all(
+                          color: AppColors.orange.withValues(alpha: 0.35),
+                          width: 1.5,
+                        ),
+                        boxShadow: AppShadows.soft,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.person_add_rounded,
+                            color: AppColors.orange,
+                            size: 18,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            l10n.lobbyNewProfile,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.orange,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         );

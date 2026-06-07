@@ -1,152 +1,165 @@
 import 'package:flutter/material.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
+import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_decorations.dart';
+import '../../core/ui/app_spacing.dart';
 import '../../core/theme/app_theme.dart';
+import 'widgets/settings_secondary_header.dart';
 
-/// Écran placeholder pour la politique de confidentialité.
-/// À remplacer par le vrai contenu avant la mise en production Play Store.
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.privacyTitle),
-        leading: const BackButton(),
+
+    final sections = [
+      _PolicySection(
+        icon: '📖',
+        title: l10n.privacyIntroTitle,
+        content: l10n.privacyIntroContent,
       ),
+      _PolicySection(
+        icon: '🔒',
+        title: l10n.privacyDataTitle,
+        content: l10n.privacyDataContent,
+      ),
+      _PolicySection(
+        icon: '📢',
+        title: l10n.privacyAdsTitle,
+        content: l10n.privacyAdsContent,
+      ),
+      _PolicySection(
+        icon: '🛒',
+        title: l10n.privacyPurchasesTitle,
+        content: l10n.privacyPurchasesContent,
+      ),
+      _PolicySection(
+        icon: '📊',
+        title: l10n.privacyAnalyticsTitle,
+        content: l10n.privacyAnalyticsContent,
+      ),
+      _PolicySection(
+        icon: '👨‍👩‍👧',
+        title: l10n.privacyChildrenTitle,
+        content: l10n.privacyChildrenContent,
+      ),
+      _PolicySection(
+        icon: '🔗',
+        title: l10n.privacyThirdPartyTitle,
+        content: l10n.privacyThirdPartyContent,
+      ),
+      _PolicySection(
+        icon: '⚖️',
+        title: l10n.privacyGdprTitle,
+        content: l10n.privacyGdprContent,
+        extra: l10n.privacyContactEmail,
+      ),
+      _PolicySection(
+        icon: '🔄',
+        title: l10n.privacyUpdatesTitle,
+        content: l10n.privacyUpdatesContent,
+      ),
+    ];
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icône + titre
-              Center(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 32),
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.privacy_tip_outlined,
-                        color: AppTheme.primary,
-                        size: 36,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      l10n.privacyHeading,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.privacyAppName,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
-                  ],
+        child: Column(
+          children: [
+            SettingsSecondaryHeader(title: l10n.privacyScreenTitle),
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.hPadNormal,
+                  AppSpacing.lg,
+                  AppSpacing.hPadNormal,
+                  AppSpacing.xl * 2,
+                ),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.md),
+                itemCount: sections.length,
+                itemBuilder: (context, index) => _SectionCard(
+                  section: sections[index],
                 ),
               ),
-
-              const SizedBox(height: 40),
-
-              // Contenu placeholder
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.07),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _PolicySection(
-                      title: l10n.privacySection1Title,
-                      content: l10n.privacySection1Content,
-                    ),
-                    const SizedBox(height: 16),
-                    _PolicySection(
-                      title: l10n.privacySection2Title,
-                      content: l10n.privacySection2Content,
-                    ),
-                    const SizedBox(height: 16),
-                    _PolicySection(
-                      title: l10n.privacySection3Title,
-                      content: l10n.privacySection3Content,
-                    ),
-                  ],
-                ),
-              ),
-
-              const Spacer(),
-
-              // Note placeholder
-              Center(
-                child: Text(
-                  l10n.privacyComingSoon,
-                  style: TextStyle(
-                    color: AppTheme.textMuted.withValues(alpha: 0.6),
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _PolicySection extends StatelessWidget {
+class _PolicySection {
+  final String icon;
   final String title;
   final String content;
+  final String? extra;
 
-  const _PolicySection({required this.title, required this.content});
+  const _PolicySection({
+    required this.icon,
+    required this.title,
+    required this.content,
+    this.extra,
+  });
+}
+
+class _SectionCard extends StatelessWidget {
+  final _PolicySection section;
+
+  const _SectionCard({required this.section});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: AppTheme.primary,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: AppDecorations.sectionCard,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(section.icon, style: const TextStyle(fontSize: 18)),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  section.title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textMuted,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          content,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 13,
-            height: 1.5,
+          const SizedBox(height: AppSpacing.sm),
+          SelectableText(
+            section.content,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.55,
+              color: AppColors.textDark,
+            ),
           ),
-        ),
-      ],
+          if (section.extra != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            SelectableText(
+              section.extra!,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primary,
+                decoration: TextDecoration.underline,
+                decorationColor: AppTheme.primary,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

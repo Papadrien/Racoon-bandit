@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../core/theme/app_theme.dart';
+import '../core/ui/app_colors.dart';
+import '../core/ui/app_decorations.dart';
+import '../core/ui/app_shadows.dart';
+import '../core/ui/app_spacing.dart';
 
-/// Barre de statut en jeu : vies restantes, timer, bouton pub.
+/// Barre de statut en jeu : parties restantes, timer, bouton pub.
+///
+/// Style : fond blanc sticker, ombres douces, cohérent avec la Home Screen.
 class LivesBar extends StatelessWidget {
   final int lives;
   final VoidCallback? onAdBonus;
 
-  static const int maxLives = 3;
+  static const int maxLives = 1;
 
   const LivesBar({
     super.key,
@@ -19,22 +25,26 @@ class LivesBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm + 2,
+      ),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
+        color: AppColors.stickerWhite,
         border: Border(
-          bottom: BorderSide(color: Color(0xFF2C2C2C)),
+          bottom: BorderSide(
+            color: Color(0x14000000),
+            width: 1,
+          ),
         ),
+        boxShadow: AppShadows.soft,
       ),
       child: Row(
         children: [
-          // Vies
           _LivesRow(lives: lives),
           const Spacer(),
-          // Timer placeholder
           const _TimerPlaceholder(),
           const Spacer(),
-          // Bouton Pub +1 vie
           if (lives < maxLives)
             _AdButton(onPressed: onAdBonus)
           else
@@ -56,13 +66,13 @@ class _LivesRow extends StatelessWidget {
       children: List.generate(LivesBar.maxLives, (i) {
         final filled = i < lives;
         return Padding(
-          padding: const EdgeInsets.only(right: 4),
+          padding: const EdgeInsets.only(right: AppSpacing.xs),
           child: Icon(
-            filled ? Icons.favorite : Icons.favorite_border,
-            size: 20,
+            filled ? Icons.circle_rounded : Icons.circle_outlined,
+            size: 14,
             color: filled
-                ? AppTheme.accent
-                : AppTheme.textMuted.withValues(alpha: 0.4),
+                ? AppColors.orange.withValues(alpha: 0.85)
+                : AppColors.textMuted.withValues(alpha: 0.35),
           ),
         );
       }),
@@ -76,17 +86,24 @@ class _TimerPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.4)),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.violet.withValues(alpha: 0.35),
+        ),
+        borderRadius: const BorderRadius.all(
+          Radius.circular(AppSpacing.radiusSmall),
+        ),
       ),
       child: const Text(
         '0:30',
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: AppTheme.primary,
+          color: AppColors.violet,
           letterSpacing: 2,
         ),
       ),
@@ -101,21 +118,37 @@ class _AdButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(Icons.smart_display, size: 16, color: AppTheme.accent),
-      label: Text(
-        l10n.livesAdButton,
-        style: TextStyle(
-          fontSize: 11,
-          color: AppTheme.accent,
-          fontWeight: FontWeight.bold,
-        ),
+    return Container(
+      decoration: AppDecorations.floatingButton(
+        radius: AppSpacing.radiusSmall,
       ),
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: TextButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(
+          Icons.smart_display,
+          size: 16,
+          color: AppTheme.accent,
+        ),
+        label: Text(
+          l10n.livesAdButton,
+          style: const TextStyle(
+            fontSize: 11,
+            color: AppTheme.accent,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.xs,
+          ),
+          backgroundColor: Colors.transparent,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(AppSpacing.radiusSmall),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -2,10 +2,11 @@ import '../models/card_type.dart';
 import '../models/game_card.dart';
 import '../models/game_session_stats.dart';
 import '../models/player_state.dart';
+import 'card_resolution_message.dart';
 import 'deck.dart';
 
 class CardResolution {
-  final String message;
+  final CardEffectMessage effectMessage;
   final int? targetPlayerId;
   final bool trashDestroyed;
   final bool foodStolen;
@@ -16,7 +17,7 @@ class CardResolution {
   final CardType? pendingTargetCardType;
 
   const CardResolution({
-    required this.message,
+    required this.effectMessage,
     this.targetPlayerId,
     this.trashDestroyed = false,
     this.foodStolen = false,
@@ -68,7 +69,7 @@ class GameState {
   CardResolution drawCard() {
     if (remainingDeck.isEmpty) {
       _markGameOver();
-      return const CardResolution(message: 'Fin de partie');
+      return const CardResolution(effectMessage: CardEffectMessage(key: CardEffectKey.gameOver));
     }
 
     _resolvedPlayerIndex = currentPlayerIndex;
@@ -117,9 +118,9 @@ class GameState {
         }
 
         return CardResolution(
-          message: stolen > 0
-              ? '${target.name} perd $stolen nourriture${stolen > 1 ? 's' : ''}'
-              : 'Aucune nourriture à voler',
+          effectMessage: stolen > 0
+              ? CardEffectMessage(key: CardEffectKey.babyRaccoonDevours, count: stolen, targetName: target.name)
+              : const CardEffectMessage(key: CardEffectKey.babyRaccoonEmpty),
           targetPlayerId: target.id,
           foodStolen: stolen > 0,
         );
@@ -144,7 +145,7 @@ class GameState {
     }
 
     return CardResolution(
-      message: '${player.name} vole 1 nourriture à ${target.name}',
+      effectMessage: CardEffectMessage(key: CardEffectKey.pinceSteal, playerName: player.name, targetName: target.name),
       targetPlayerId: target.id,
       foodStolen: true,
     );
@@ -159,17 +160,17 @@ class GameState {
     switch (card.type) {
       case CardType.food:
         _gainFood(player, 1);
-        return CardResolution(message: '${player.name} gagne 1 nourriture');
+        return CardResolution(effectMessage: CardEffectMessage(key: CardEffectKey.foodGained, playerName: player.name));
 
       case CardType.trash:
         player.trashCount++;
-        return CardResolution(message: '${player.name} pose une poubelle sécurisée');
+        return CardResolution(effectMessage: CardEffectMessage(key: CardEffectKey.trashSecured, playerName: player.name));
 
       case CardType.raccoon:
         if (player.trashCount > 0) {
           player.trashCount--;
           return CardResolution(
-            message: 'Le Raccoon est bloqué par une poubelle sécurisée !',
+            effectMessage: const CardEffectMessage(key: CardEffectKey.raccoonBlocked),
             targetPlayerId: player.id,
             trashDestroyed: true,
           );
@@ -179,7 +180,7 @@ class GameState {
         sessionStats.foodStolen += player.foodCount;
         player.foodCount = 0;
         return CardResolution(
-          message: 'Le raton mange toute la nourriture de ${player.name}',
+          effectMessage: CardEffectMessage(key: CardEffectKey.raccoonDevours, playerName: player.name),
           targetPlayerId: player.id,
           foodStolen: true,
         );
@@ -187,7 +188,7 @@ class GameState {
       case CardType.banquet:
         _gainFood(player, 2);
         return CardResolution(
-          message: '${player.name} gagne 2 nourritures',
+          effectMessage: CardEffectMessage(key: CardEffectKey.banquet, playerName: player.name),
         );
 
       case CardType.babyRaccoon:
@@ -200,9 +201,9 @@ class GameState {
             _advance();
           }
           return CardResolution(
-            message: removed > 0
-                ? '${player.name} perd $removed nourriture${removed > 1 ? 's' : ''}'
-                : 'Aucune nourriture à retirer',
+            effectMessage: removed > 0
+                ? CardEffectMessage(key: CardEffectKey.babyRaccoonDevours, count: removed, targetName: player.name)
+                : const CardEffectMessage(key: CardEffectKey.babyRaccoonEmpty),
             targetPlayerId: player.id,
             foodStolen: removed > 0,
           );
@@ -212,7 +213,7 @@ class GameState {
 
         if (validTargets.isEmpty) {
           return const CardResolution(
-            message: 'Aucune nourriture à retirer',
+            effectMessage: CardEffectMessage(key: CardEffectKey.babyRaccoonEmpty),
           );
         }
 
@@ -220,16 +221,23 @@ class GameState {
           final target = validTargets.first;
           final removed = _removeFood(target, 2);
 
+          if (remainingDeck.isEmpty) {
+            _markGameOver();
+          } else {
+            _advance();
+          }
+
           return CardResolution(
-            message:
-                '${target.name} perd $removed nourriture${removed > 1 ? 's' : ''}',
+            effectMessage: removed > 0
+                ? CardEffectMessage(key: CardEffectKey.babyRaccoonDevours, count: removed, targetName: target.name)
+                : const CardEffectMessage(key: CardEffectKey.babyRaccoonEmpty),
             targetPlayerId: target.id,
             foodStolen: removed > 0,
           );
         }
 
         return const CardResolution(
-          message: '',
+          effectMessage: CardEffectMessage(key: CardEffectKey.none),
           needsTargetSelection: true,
           pendingTargetCardType: CardType.babyRaccoon,
         );
@@ -245,9 +253,9 @@ class GameState {
         _gainFood(player, stolenTotal);
 
         return CardResolution(
-          message: stolenTotal > 0
-              ? '${player.name} vole $stolenTotal nourriture${stolenTotal > 1 ? 's' : ''}'
-              : 'Aucune nourriture à aspirer',
+          effectMessage: stolenTotal > 0
+              ? CardEffectMessage(key: CardEffectKey.vacuumSteals, playerName: player.name, count: stolenTotal)
+              : const CardEffectMessage(key: CardEffectKey.vacuumEmpty),
           foodStolen: stolenTotal > 0,
         );
 
@@ -256,8 +264,8 @@ class GameState {
         final validTargets = pinceValidTargets();
 
         if (validTargets.isEmpty) {
-          return const CardResolution(
-            message: 'Personne à voler…',
+          return CardResolution(
+            effectMessage: CardEffectMessage(key: CardEffectKey.pinceNoTarget, playerName: players[currentPlayerIndex].name),
           );
         }
 
@@ -267,14 +275,14 @@ class GameState {
           _removeFood(target, 1);
           sessionStats.foodStolen++;
           return CardResolution(
-            message: '${player.name} vole 1 nourriture à ${target.name}',
+            effectMessage: CardEffectMessage(key: CardEffectKey.pinceSteal, playerName: player.name, targetName: target.name),
             targetPlayerId: target.id,
             foodStolen: true,
           );
         }
 
         return const CardResolution(
-          message: '',
+          effectMessage: CardEffectMessage(key: CardEffectKey.none),
           needsTargetSelection: true,
           pendingTargetCardType: CardType.pince,
         );

@@ -2,13 +2,21 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
+import '../../app.dart';
+import '../../core/game/game_state.dart';
+import '../../core/models/player_state.dart';
+import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/models/reward_unlock.dart';
 import '../../core/services/onboarding_service.dart';
+import '../../core/services/consent_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/services/settings_service.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/ui/app_colors.dart';
+import '../../core/ui/app_shadows.dart';
+import '../../core/ui/app_spacing.dart';
 import '../../widgets/reward_unlock_dialog.dart';
+import 'widgets/settings_secondary_header.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,12 +28,19 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late bool _soundEnabled;
   late bool _vibrationEnabled;
+  bool _privacyOptionsRequired = false;
 
   @override
   void initState() {
     super.initState();
     _soundEnabled = SettingsService.soundEnabled;
     _vibrationEnabled = SettingsService.vibrationEnabled;
+    _loadPrivacyOptionsStatus();
+  }
+
+  Future<void> _loadPrivacyOptionsStatus() async {
+    final required = await ConsentService.instance.privacyOptionsRequired();
+    if (mounted) setState(() => _privacyOptionsRequired = required);
   }
 
   void _onSoundChanged(bool value) {
@@ -39,31 +54,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _replayTutorial() async {
-    if (!context.mounted) return;
-    await Navigator.pushNamed(context, AppRoutes.onboarding);
+    final navigator = Navigator.of(context);
+    await navigator.pushNamed(AppRoutes.onboarding);
+  }
+
+  Future<void> _debugSimulateFinishedGame() async {
+    final navigator = Navigator.of(context);
+
+    final players = [
+      PlayerState(id: 1, name: 'Alice', emoji: '🦝', colorValue: 0xFF7C4DFF, foodCount: 5, trashCount: 2),
+      PlayerState(id: 2, name: 'Bob', emoji: '🐼', colorValue: 0xFFFF6D00, foodCount: 3, trashCount: 1),
+      PlayerState(id: 3, name: 'Clara', emoji: '🦊', colorValue: 0xFF00BCD4, foodCount: 1, trashCount: 3),
+    ];
+
+    final fakeState = GameState(players: players);
+    fakeState.sessionStats.cardsPlayed = 18;
+    fakeState.sessionStats.foodGained = 9;
+    fakeState.sessionStats.foodStolen = 3;
+    fakeState.sessionStats.pinceCardsPlayed = 3;
+    fakeState.sessionStats.raccoonCardsPlayed = 2;
+
+    final args = ResultScreenArgs(gameState: fakeState);
+
+    await navigator.pushNamed(
+      AppRoutes.result,
+      arguments: args,
+    );
   }
 
   Future<void> _debugSimulateReward() async {
-    if (!context.mounted) return;
     const fakeReward = RewardUnlock(
       id: 'debug_reward',
       name: 'Dos Bleu',
       type: RewardType.cardBack,
       assetPath: 'assets/images/cards/card_back_blue.png',
-      unlockHint: 'Débloqué après 5 parties jouées !',
+      requiredGames: 5,
     );
     await RewardUnlockDialog.showAll(context, [fakeReward]);
   }
 
   Future<void> _debugUnlockAll() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     await ProgressionService.debugUnlockAll();
     if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(context).showSnackBar(
+
+    messenger.showSnackBar(
       SnackBar(
         content: Text(l10n.settingsDebugUnlockAll),
-        backgroundColor: Colors.orange,
+        backgroundColor: AppColors.orange,
       ),
     );
   }
@@ -71,192 +111,284 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final sw = MediaQuery.sizeOf(context).width;
+    final hPad = sw < 360 ? AppSpacing.hPadNarrow : AppSpacing.hPadNormal;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.settingsTitle),
-        leading: const BackButton(),
-      ),
-      body: SafeArea(
-        minimum: const EdgeInsets.symmetric(horizontal: 4),
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          children: [
-            // ── Son & Vibrations ──────────────────────────────────────────
-            _SectionLabel(label: l10n.settingsSectionAudio),
-            _SettingsCard(
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // ── Stickers décoratifs fond ──────────────────────────────────
+          const Positioned.fill(child: _SettingsBackgroundStickers()),
+
+          // ── Contenu principal ─────────────────────────────────────────
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _ToggleTile(
-                  icon: Icons.volume_up_rounded,
-                  label: l10n.settingsSoundLabel,
-                  subtitle: l10n.settingsSoundSubtitle,
-                  value: _soundEnabled,
-                  onChanged: _onSoundChanged,
-                ),
-                const _CardDivider(),
-                _ToggleTile(
-                  icon: Icons.vibration_rounded,
-                  label: l10n.settingsVibrationLabel,
-                  subtitle: l10n.settingsVibrationSubtitle,
-                  value: _vibrationEnabled,
-                  onChanged: _onVibrationChanged,
-                ),
-              ],
-            ),
+                // ── Header secondaire unifié ──────────────────────────
+                SettingsSecondaryHeader(title: l10n.settingsTitle),
 
-            const SizedBox(height: 20),
+                // ── Body scrollable ───────────────────────────────────
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      hPad,
+                      AppSpacing.lg,
+                      hPad,
+                      AppSpacing.xxl,
+                    ),
+                    children: [
+                      // ── Son & Vibrations ──────────────────────────
+                      _SectionLabel(label: l10n.settingsSectionAudio),
+                      const SizedBox(height: AppSpacing.sm),
+                      _SettingsCard(
+                        children: [
+                          _ToggleTile(
+                            icon: Icons.volume_up_rounded,
+                            label: l10n.settingsSoundLabel,
+                            subtitle: l10n.settingsSoundSubtitle,
+                            value: _soundEnabled,
+                            onChanged: _onSoundChanged,
+                          ),
+                          const _CardDivider(),
+                          _ToggleTile(
+                            icon: Icons.vibration_rounded,
+                            label: l10n.settingsVibrationLabel,
+                            subtitle: l10n.settingsVibrationSubtitle,
+                            value: _vibrationEnabled,
+                            onChanged: _onVibrationChanged,
+                          ),
+                        ],
+                      ),
 
-            // ── Profils & Tutoriel ────────────────────────────────────────
-            _SectionLabel(label: l10n.settingsSectionGame),
-            _SettingsCard(
-              children: [
-                _NavTile(
-                  icon: Icons.person_outline_rounded,
-                  label: l10n.settingsProfilesLabel,
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.profiles),
-                ),
-                const _CardDivider(),
-                _NavTile(
-                  icon: Icons.school_outlined,
-                  label: l10n.settingsTutorialLabel,
-                  onTap: _replayTutorial,
-                ),
-              ],
-            ),
+                      const SizedBox(height: AppSpacing.xl),
 
-            const SizedBox(height: 20),
+                      // ── Jeu ────────────────────────────────────────
+                      _SectionLabel(label: l10n.settingsSectionGame),
+                      const SizedBox(height: AppSpacing.sm),
+                      _SettingsCard(
+                        children: [
+                          _NavTile(
+                            icon: Icons.person_outline_rounded,
+                            label: l10n.settingsProfilesLabel,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.profiles,
+                            ),
+                          ),
+                          const _CardDivider(),
+                          _NavTile(
+                            icon: Icons.school_outlined,
+                            label: l10n.settingsTutorialLabel,
+                            onTap: _replayTutorial,
+                          ),
+                        ],
+                      ),
 
-            // ── Légal ─────────────────────────────────────────────────────
-            _SectionLabel(label: l10n.settingsSectionLegal),
-            _SettingsCard(
-              children: [
-                _NavTile(
-                  icon: Icons.privacy_tip_outlined,
-                  label: l10n.settingsPrivacyLabel,
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.privacyPolicy),
-                ),
-              ],
-            ),
+                      const SizedBox(height: AppSpacing.xl),
 
-            const SizedBox(height: 32),
+                      // ── Légal ──────────────────────────────────────
+                      _SectionLabel(label: l10n.settingsSectionLegal),
+                      const SizedBox(height: AppSpacing.sm),
+                      _SettingsCard(
+                        children: [
+                          _NavTile(
+                            icon: Icons.privacy_tip_outlined,
+                            label: l10n.settingsPrivacyLabel,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.privacyPolicy,
+                            ),
+                          ),
+                          // Tile "Préférences publicitaires" — visible uniquement
+                          // si le SDK UMP indique que le formulaire est disponible
+                          // (zone EEE/UK). Masqué hors-EEE.
+                          if (_privacyOptionsRequired) ...[ 
+                            const _CardDivider(),
+                            _NavTile(
+                              icon: Icons.tune_rounded,
+                              label: l10n.settingsConsentLabel,
+                              onTap: () => ConsentService.instance
+                                  .showPrivacyOptionsForm(),
+                            ),
+                          ],
+                        ],
+                      ),
 
-            // ── Section Debug (debug uniquement) ─────────────────────────
-            if (kDebugMode) ...[
-              const _SectionLabel(label: 'Debug', color: Colors.orange),
-              _SettingsCard(
-                borderColor: Colors.orange.withValues(alpha: 0.3),
-                children: [
-                  _DebugTile(
-                    icon: Icons.emoji_events_outlined,
-                    label: 'Simuler récompense',
-                    onTap: _debugSimulateReward,
-                  ),
-                  _CardDivider(color: Colors.orange.withValues(alpha: 0.2)),
-                  _DebugTile(
-                    icon: Icons.lock_open_rounded,
-                    label: 'Débloquer tous les dos',
-                    onTap: _debugUnlockAll,
-                  ),
-                  _CardDivider(color: Colors.orange.withValues(alpha: 0.2)),
-                  _DebugTile(
-                    icon: Icons.replay_rounded,
-                    label: 'Reset onboarding (relancer app)',
-                    onTap: () async {
-                      await OnboardingService.resetForDebug();
-                      if (!context.mounted) return;
-                      final l10n = AppLocalizations.of(context)!;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.settingsDebugOnboardingReset),
-                          backgroundColor: Colors.orange,
+                      const SizedBox(height: AppSpacing.xxl),
+
+                      // ── Debug (debug uniquement) ───────────────────
+                      if (kDebugMode) ...[
+                        const _SectionLabel(
+                          label: 'Debug',
+                          isDebug: true,
                         ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-            ],
+                        const SizedBox(height: AppSpacing.sm),
+                        _SettingsCard(
+                          isDebug: true,
+                          children: [
+                            _DebugTile(
+                              icon: Icons.emoji_events_outlined,
+                              label: 'Simuler récompense',
+                              onTap: _debugSimulateReward,
+                            ),
+                            _CardDivider(
+                              color: Colors.orange.withValues(alpha: 0.2),
+                            ),
+                            _DebugTile(
+                              icon: Icons.flag_rounded,
+                              label: 'Simuler partie terminée',
+                              onTap: _debugSimulateFinishedGame,
+                            ),
+                            _CardDivider(
+                              color: Colors.orange.withValues(alpha: 0.2),
+                            ),
+                            _DebugTile(
+                              icon: Icons.lock_open_rounded,
+                              label: 'Débloquer tous les dos',
+                              onTap: _debugUnlockAll,
+                            ),
+                            _CardDivider(
+                              color: Colors.orange.withValues(alpha: 0.2),
+                            ),
+                            _DebugTile(
+                              icon: Icons.replay_rounded,
+                              label: 'Reset onboarding (relancer app)',
+                              onTap: () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final l = AppLocalizations.of(context)!;
+                                await OnboardingService.resetForDebug();
+                                if (!context.mounted) return;
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      l.settingsDebugOnboardingReset,
+                                    ),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                              },
+                            ),
+                            _CardDivider(
+                              color: Colors.orange.withValues(alpha: 0.2),
+                            ),
+                            const _DebugLanguageSelector(),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.xxl),
+                      ],
 
-            // ── Version ───────────────────────────────────────────────────
-            Center(
-              child: Text(
-                l10n.settingsVersionLabel,
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-              ),
+                      // ── Version ────────────────────────────────────
+                      Center(
+                        child: Text(
+                          l10n.settingsVersionLabel,
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Composants internes
+// Section label — texte small caps discret
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SectionLabel extends StatelessWidget {
   final String label;
-  final Color? color;
+  final bool isDebug;
 
-  const _SectionLabel({required this.label, this.color});
+  const _SectionLabel({required this.label, this.isDebug = false});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: const EdgeInsets.only(left: AppSpacing.xs),
       child: Text(
         label.toUpperCase(),
         style: TextStyle(
-          color: (color ?? AppTheme.primary).withValues(alpha: 0.8),
+          color: isDebug
+              ? Colors.orange.withValues(alpha: 0.85)
+              : AppColors.textMuted,
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          letterSpacing: 1.5,
+          letterSpacing: 1.4,
         ),
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Carte settings — surface blanche flottante
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _SettingsCard extends StatelessWidget {
   final List<Widget> children;
-  final Color? borderColor;
+  final bool isDebug;
 
-  const _SettingsCard({required this.children, this.borderColor});
+  const _SettingsCard({required this.children, this.isDebug = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: borderColor ?? Colors.white.withValues(alpha: 0.07),
-          width: 1,
-        ),
+        color: AppColors.stickerWhite,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+        border: isDebug
+            ? Border.all(
+                color: Colors.orange.withValues(alpha: 0.3),
+                width: 1.2,
+              )
+            : null,
+        boxShadow: AppShadows.floating,
       ),
-      child: Column(
-        children: children,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: children,
+        ),
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Séparateur interne de carte
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _CardDivider extends StatelessWidget {
   final Color? color;
+
   const _CardDivider({this.color});
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
+    return Container(
       height: 1,
-      color: color ?? Colors.white.withValues(alpha: 0.07),
-      indent: 16,
-      endIndent: 16,
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      color: color ?? AppColors.stickerWarm,
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Toggle tile — son / vibrations
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _ToggleTile extends StatelessWidget {
   final IconData icon;
@@ -275,23 +407,108 @@ class _ToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      secondary: Icon(icon, color: AppTheme.primary, size: 22),
-      title: Text(
-        label,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
       ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+      child: Row(
+        children: [
+          // Icône dans cercle coloré discret
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.orange.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+            ),
+            child: Icon(icon, color: AppColors.orange, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          // Label + sous-titre
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.textDark,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          // Toggle custom
+          _ModernSwitch(value: value, onChanged: onChanged),
+        ],
       ),
-      value: value,
-      onChanged: onChanged,
-      activeThumbColor: AppTheme.primary,
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Switch moderne — pill orange/gris, style cohérent
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ModernSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _ModernSwitch({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 50,
+        height: 28,
+        decoration: BoxDecoration(
+          color: value
+              ? AppColors.orange
+              : AppColors.stickerWarm,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: AppShadows.soft,
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: Container(
+              width: 22,
+              height: 22,
+              decoration: const BoxDecoration(
+                color: AppColors.stickerWhite,
+                shape: BoxShape.circle,
+                boxShadow: AppShadows.soft,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Nav tile — profils, tutoriel, privacy
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _NavTile extends StatelessWidget {
   final IconData icon;
@@ -306,18 +523,64 @@ class _NavTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Icon(icon, color: AppTheme.primary, size: 22),
-      title: Text(
-        label,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-      ),
-      trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 20),
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+      splashColor: AppColors.orange.withValues(alpha: 0.08),
+      highlightColor: AppColors.orange.withValues(alpha: 0.05),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            // Icône
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.violet.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+              ),
+              child: Icon(icon, color: AppColors.violet, size: 20),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            // Label
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.textDark,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            // Chevron dans cercle discret
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: AppColors.stickerWarm,
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+              ),
+              child: const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textMuted,
+                size: 18,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Debug tile
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _DebugTile extends StatelessWidget {
   final IconData icon;
@@ -332,14 +595,204 @@ class _DebugTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Icon(icon, color: Colors.orange, size: 22),
-      title: Text(
-        label,
-        style: const TextStyle(color: Colors.orange, fontSize: 14, fontWeight: FontWeight.w500),
-      ),
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusLarge),
+      splashColor: Colors.orange.withValues(alpha: 0.1),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppSpacing.radiusSmall),
+              ),
+              child: Icon(icon, color: Colors.orange, size: 20),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.orange,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stickers décoratifs fond — discrets, bords uniquement
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SettingsBackgroundStickers extends StatelessWidget {
+  const _SettingsBackgroundStickers();
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    final h = MediaQuery.sizeOf(context).height;
+
+    return Stack(
+      clipBehavior: Clip.hardEdge,
+      children: [
+        // Sapin haut-droite
+        Positioned(
+          right: -w * 0.05,
+          top: h * 0.04,
+          child: Transform.rotate(
+            angle: 0.08,
+            child: Image.asset(
+              'assets/images/sticker_pine_tree.png',
+              width: w * 0.18,
+              opacity: const AlwaysStoppedAnimation(0.40),
+            ),
+          ),
+        ),
+        // Pomme de pin bas-gauche
+        Positioned(
+          left: w * 0.01,
+          top: h * 0.72,
+          child: Transform.rotate(
+            angle: -0.18,
+            child: Image.asset(
+              'assets/images/sticker_pine_cone.png',
+              width: w * 0.10,
+              opacity: const AlwaysStoppedAnimation(0.35),
+            ),
+          ),
+        ),
+        // Cabane bas-droite
+        Positioned(
+          right: -w * 0.02,
+          top: h * 0.80,
+          child: Transform.rotate(
+            angle: 0.06,
+            child: Image.asset(
+              'assets/images/sticker_cabin.png',
+              width: w * 0.15,
+              opacity: const AlwaysStoppedAnimation(0.35),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sélecteur de langue (debug uniquement)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DebugLanguageSelector extends StatelessWidget {
+  const _DebugLanguageSelector();
+
+  static const _locales = [
+    _LocaleOption(locale: null, label: 'Système (auto)'),
+    _LocaleOption(locale: Locale('fr'), label: 'Français (fr)'),
+    _LocaleOption(locale: Locale('en'), label: 'English (en)'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: debugLocaleOverride,
+      builder: (context, current, _) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(
+                    Icons.language_rounded,
+                    color: Colors.orange,
+                    size: 18,
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Langue de l\'application',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
+                children: _locales.map((option) {
+                  final isSelected = option.locale?.languageCode ==
+                      current?.languageCode;
+                  return GestureDetector(
+                    onTap: () {
+                      debugLocaleOverride.value = option.locale;
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.xs + 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.orange.withValues(alpha: 0.15)
+                            : AppColors.backgroundLight,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusMedium),
+                        border: Border.all(
+                          color: isSelected
+                              ? Colors.orange
+                              : AppColors.shadowSubtle,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Text(
+                        option.label,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? Colors.orange
+                              : AppColors.textMuted,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LocaleOption {
+  final Locale? locale;
+  final String label;
+
+  const _LocaleOption({required this.locale, required this.label});
+}
+

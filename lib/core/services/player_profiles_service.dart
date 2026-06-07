@@ -46,28 +46,28 @@ class PlayerProfilesService {
     _profiles = [
       PlayerProfile(
         id: _genId(now, 0),
-        name: 'Raton',
+        name: 'Dad',
         emoji: '🦝',
         colorValue: const Color(0xFF7C4DFF).toARGB32(),
         createdAt: now,
       ),
       PlayerProfile(
         id: _genId(now, 1),
-        name: 'Panda',
+        name: 'Mom',
         emoji: '🐼',
         colorValue: const Color(0xFF00BCD4).toARGB32(),
         createdAt: now.add(const Duration(milliseconds: 1)),
       ),
       PlayerProfile(
         id: _genId(now, 2),
-        name: 'Foxy',
+        name: 'Brother',
         emoji: '🦊',
         colorValue: const Color(0xFFFF6D00).toARGB32(),
         createdAt: now.add(const Duration(milliseconds: 2)),
       ),
       PlayerProfile(
         id: _genId(now, 3),
-        name: 'Froggy',
+        name: 'Sister',
         emoji: '🐸',
         colorValue: const Color(0xFF4CAF50).toARGB32(),
         createdAt: now.add(const Duration(milliseconds: 3)),
