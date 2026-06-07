@@ -143,6 +143,10 @@ class _GameScreenState extends State<GameScreen>
     for (final type in CardType.values) {
       precacheImage(AssetImage(AppAssets.cardFrontIcon(type)), context);
     }
+    // Précache les images des particules overlay pour éviter le flash gris
+    // en mode release (Image.asset montre un frame vide avant décodage AOT).
+    precacheImage(const AssetImage('assets/images/icon_food.png'), context);
+    precacheImage(const AssetImage('assets/images/icon_trash.png'), context);
     if (!_initialized) {
       _restoreOrInitGame();
     }
