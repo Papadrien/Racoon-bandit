@@ -49,19 +49,6 @@ class _SplashScreenState extends State<SplashScreen> {
     await OnboardingService.load();
 
     FirebaseCrashlytics.instance.log('Services: chargement terminé');
-
-    // ── Consentement UMP ────────────────────────────────────────────────────
-    // Le formulaire UMP doit être traité AVANT d'initialiser AdMob,
-    // conformément aux exigences Google et aux règles de la politique de
-    // consentement pour l'EEE/UK (RGPD / PECR).
-    if (mounted) {
-      await ConsentService.instance.requestAndShow();
-    }
-
-    // ── Initialisation AdMob ────────────────────────────────────────────────
-    // MobileAds.initialize() est appelé dans tous les cas (y compris si le
-    // consentement n'est pas requis dans la région de l'utilisateur), car
-    // l'initialisation ne déclenche pas de chargement personnalisé par elle-même.
     await RewardedAdService.initialize();
 
     // Pré-chargement de la publicité récompensée uniquement si autorisé

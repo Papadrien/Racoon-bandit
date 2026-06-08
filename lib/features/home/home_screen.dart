@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
+import '../../core/services/consent_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/onboarding_service.dart';
@@ -68,6 +69,19 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     _initializeLives();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _handleConsent());
+  }
+
+
+  Future<void> _handleConsent() async {
+    final ok = await ConsentService.instance.requestAndShow();
+    if (!mounted || ok) return;
+    final isFr = Localizations.localeOf(context).languageCode == 'fr';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(isFr
+          ? 'Le recueil du consentement a échoué.'
+          : 'Consent collection failed.')),
+    );
   }
 
   @override

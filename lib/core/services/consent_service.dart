@@ -45,13 +45,15 @@ class ConsentService {
   /// Demande une mise à jour du statut UMP, puis affiche le formulaire si
   /// nécessaire. À appeler au démarrage avant MobileAds.initialize().
   /// Les erreurs sont absorbées pour ne pas bloquer le démarrage.
-  Future<void> requestAndShow() async {
+  Future<bool> requestAndShow() async {
     try {
       await _requestUpdate();
       await _showFormIfRequired();
     } catch (e) {
       if (kDebugMode) debugPrint('[Consent] Erreur UMP : $e');
+      return false;
     }
+    return true;
   }
 
   /// Ouvre le formulaire de gestion des préférences publicitaires.
