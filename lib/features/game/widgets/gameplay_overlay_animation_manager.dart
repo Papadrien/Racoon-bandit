@@ -73,7 +73,7 @@ class GameplayOverlayAnimationManager extends StatelessWidget {
         builder: (context, animations, _) {
           return SizedBox.expand(
             child: Stack(
-              clipBehavior: Clip.hardEdge,
+              clipBehavior: Clip.none,
               children: animations
                   .map(
                     (animation) => _AnimatedOverlayItem(
@@ -171,8 +171,7 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
     );
 
     // RepaintBoundary par particule : chaque particule repeint indépendamment.
-    return RepaintBoundary(
-      child: AnimatedBuilder(
+    return AnimatedBuilder(
         animation: activeInterval,
         builder: (context, child) {
           final t = activeInterval.value; // [0..1] pendant la phase active

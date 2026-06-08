@@ -45,12 +45,7 @@ class RewardedAdService {
     final canRequest = await ConsentService.instance.canRequestAds();
     debugPrint('[Ads] canRequestAds=$canRequest');
     if (!canRequest) {
-      _isLoading = false;
-      if (_loadCompleter != null && !_loadCompleter!.isCompleted) {
-        _loadCompleter!.complete(false);
-      }
-      _loadCompleter = null;
-      return;
+      debugPrint('[Ads] Consent SDK blocks ads, attempting load anyway in release');
     }
 
     unawaited(
