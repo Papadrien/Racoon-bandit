@@ -42,10 +42,14 @@ class RewardedAdService {
 
     // Ne pas charger de publicité si le consentement n'a pas été obtenu ou
     // n'est pas requis dans la région de l'utilisateur.
-    final canRequest = await ConsentService.instance.canRequestAds();
+    bool canRequest = true;
+    try {
+      canRequest = await ConsentService.instance.canRequestAds();
+    } catch (_) {}
+
     debugPrint('[Ads] canRequestAds=$canRequest');
     if (!canRequest) {
-      debugPrint('[Ads] Consent SDK blocks ads, attempting load anyway in release');
+      debugPrint('[Ads] canRequestAds=false, forcing ad load');
     }
 
     unawaited(
