@@ -39,7 +39,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Logs de démarrage Crashlytics — visibles dans le rapport de crash
     // uniquement si un crash survient ensuite (breadcrumbs non-fatals).
-    FirebaseCrashlytics.instance.log('Services: début du chargement');
+    // Inutiles en debug car Crashlytics est désactivé dans ce mode.
+    if (!kDebugMode) {
+      FirebaseCrashlytics.instance.log('Services: début du chargement');
+    }
 
     await SettingsService.load();
     await PlayerProfilesService.load();
@@ -48,7 +51,9 @@ class _SplashScreenState extends State<SplashScreen> {
     await StatsService.load();
     await OnboardingService.load();
 
-    FirebaseCrashlytics.instance.log('Services: chargement terminé');
+    if (!kDebugMode) {
+      FirebaseCrashlytics.instance.log('Services: chargement terminé');
+    }
     await RewardedAdService.initialize();
 
     // Pré-chargement de la publicité récompensée uniquement si autorisé
@@ -62,7 +67,9 @@ class _SplashScreenState extends State<SplashScreen> {
       DeviceOrientation.portraitDown,
     ]);
 
-    FirebaseCrashlytics.instance.log('Démarrage terminé — navigation vers home');
+    if (!kDebugMode) {
+      FirebaseCrashlytics.instance.log('Démarrage terminé — navigation vers home');
+    }
 
     if (!mounted) return;
     navigator.pushReplacementNamed(AppRoutes.home);
@@ -83,10 +90,10 @@ class _SplashScreenState extends State<SplashScreen> {
       FirebaseCrashlytics.instance.log('Application démarrée');
 
       // ── Analytics ────────────────────────────────────────────────────────
+      // Désactivé en debug pour ne pas polluer les rapports Firebase.
+      // En release, la collecte est activée (comportement par défaut).
       final analytics = FirebaseAnalytics.instance;
-      if (kDebugMode) {
-        await analytics.setAnalyticsCollectionEnabled(true);
-      }
+      await analytics.setAnalyticsCollectionEnabled(!kDebugMode);
       AnalyticsService.instance.init(analytics);
       await AnalyticsService.instance.logAppOpen();
 

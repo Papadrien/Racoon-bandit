@@ -36,6 +36,10 @@ class AnalyticsService {
 
   Future<void> logScreenView({required String screenName}) async {
     if (!_initialized) return;
+    if (kDebugMode) {
+      _log('(debug) screen_view: $screenName ignoré');
+      return;
+    }
     try {
       await _analytics!.logScreenView(screenName: screenName);
       _log('screen_view: $screenName');
@@ -113,6 +117,12 @@ class AnalyticsService {
   Future<void> _send(String name, Map<String, Object> params) async {
     if (!_initialized || _analytics == null) {
       _log('(non initialisé) $name ignoré');
+      return;
+    }
+    // Analytics désactivé en debug via setAnalyticsCollectionEnabled(false),
+    // mais on court-circuite aussi ici pour éviter tout appel réseau.
+    if (kDebugMode) {
+      _log('(debug) $name ignoré');
       return;
     }
     try {

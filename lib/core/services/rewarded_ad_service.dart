@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'analytics_service.dart';
 import 'consent_service.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -70,6 +71,14 @@ class RewardedAdService {
           onAdFailedToLoad: (error) {
             // Log en debug ET en release pour diagnostiquer les échecs prod.
             debugPrint('[Ads] Failed to preload (code=${error.code}): ${error.message}');
+            if (!kDebugMode) {
+              FirebaseCrashlytics.instance.recordError(
+                '[Ads] Failed to load: ${error.code} — ${error.message}',
+                null,
+                reason: 'rewarded_interstitial_load_failed',
+                fatal: false,
+              );
+            }
             _rewardedInterstitialAd = null;
             _isLoading = false;
             if (_loadCompleter != null && !_loadCompleter!.isCompleted) {
