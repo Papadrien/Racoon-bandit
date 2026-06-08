@@ -269,7 +269,6 @@ class _AnimatedOverlayItemState extends State<_AnimatedOverlayItem>
           height: 72,
           child: Center(child: _buildParticleChild(widget.animation.emoji)),
         ),
-      ),
     );
   }
 }
