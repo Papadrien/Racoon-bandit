@@ -54,6 +54,11 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!kDebugMode) {
       FirebaseCrashlytics.instance.log('Services: chargement terminé');
     }
+
+    // Recueil du consentement UMP avant l'initialisation AdMob
+    // (recommandation Google : le SDK respecte les préférences dès son démarrage)
+    await ConsentService.instance.requestAndShow();
+
     await RewardedAdService.initialize();
 
     // Pré-chargement de la publicité récompensée uniquement si autorisé
