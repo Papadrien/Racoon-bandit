@@ -1,6 +1,5 @@
 plugins {
     id "com.android.application"
-    id "org.jetbrains.kotlin.android"
     // Le plugin Flutter Gradle DOIT être appliqué après les plugins Android et Kotlin.
     id "dev.flutter.flutter-gradle-plugin"
     // Google Services — lit google-services.json et configure Firebase
