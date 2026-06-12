@@ -19,7 +19,7 @@ class RewardedAdService {
   bool _isShowRequested = false; // garde-fou anti double-clic précoce
   bool _hasRewardBeenGranted = false;
 
-  static const Duration _loadTimeout = Duration(seconds: 8);
+  static const Duration _loadTimeout = Duration(seconds: 15);
 
   bool get isAdReady => _rewardedInterstitialAd != null;
 

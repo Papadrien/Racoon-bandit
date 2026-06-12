@@ -10,7 +10,7 @@ import 'app.dart';
 void main() async {
   // runZonedGuarded capture toutes les exceptions Dart non gérées
   // (asynchrones incluses) et les transmet à Crashlytics.
-  await runZonedGuarded<Future<void>>(
+  runZonedGuarded<Future<void>>(
     _bootstrap,
     (Object error, StackTrace stack) {
       // Exceptions asynchrones non capturées (Future, Stream, isolates...)

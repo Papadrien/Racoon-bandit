@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -63,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Pré-chargement de la publicité récompensée uniquement si autorisé
     if (await ConsentService.instance.canRequestAds()) {
-      await RewardedAdService.instance.preloadAd();
+      unawaited(RewardedAdService.instance.preloadAd());
     }
 
     await AudioService.instance.preloadAll();
