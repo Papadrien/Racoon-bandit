@@ -24,7 +24,7 @@ class AnalyticsService {
     // TODO DEBUG RELEASE: activer le DebugView Firebase Analytics en release.
     // Supprimer ce bloc quand les données remontent correctement dans le dashboard.
     if (!kDebugMode) {
-      analytics.setAnalyticsCollectionEnabled(true).catchError((e) {
+      analytics.setAnalyticsCollectionEnabled(true).catchError((Object e) {
         debugPrint('[Analytics] setAnalyticsCollectionEnabled erreur: $e');
       });
     }
