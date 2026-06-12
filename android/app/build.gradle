@@ -1,12 +1,17 @@
 plugins {
     id "com.android.application"
-    id "org.jetbrains.kotlin.android"
     // Le plugin Flutter Gradle DOIT être appliqué après les plugins Android et Kotlin.
     id "dev.flutter.flutter-gradle-plugin"
     // Google Services — lit google-services.json et configure Firebase
     id "com.google.gms.google-services"
     // Crashlytics — upload des symboles de débogage pour les stack traces lisibles
     id "com.google.firebase.crashlytics"
+}
+
+def keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -23,6 +28,17 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile     file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias      keystoreProperties['keyAlias']
+                keyPassword   keystoreProperties['keyPassword']
+            }
+        }
+    }
+
     defaultConfig {
         applicationId "fr.junade.raccoonbandit"
         minSdk 24
@@ -34,9 +50,11 @@ android {
 
     buildTypes {
         release {
-            // Signing debug par défaut pour permettre `flutter run --release` localement.
-            // En CI/release Play Store, surcharger via android/key.properties.
-            signingConfig signingConfigs.debug
+            // Utilise le signing release si key.properties est présent (CI/Play Store),
+            // sinon replie sur le signing debug local (flutter run --release).
+            signingConfig keystorePropertiesFile.exists()
+                ? signingConfigs.release
+                : signingConfigs.debug
             minifyEnabled false
             shrinkResources false
             // Si minifyEnabled est activé plus tard, inclure les règles Firebase :

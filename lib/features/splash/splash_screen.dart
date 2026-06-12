@@ -39,7 +39,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Logs de démarrage Crashlytics — visibles dans le rapport de crash
     // uniquement si un crash survient ensuite (breadcrumbs non-fatals).
-    FirebaseCrashlytics.instance.log('Services: début du chargement');
+    // Inutiles en debug car Crashlytics est désactivé dans ce mode.
+    if (!kDebugMode) {
+      FirebaseCrashlytics.instance.log('Services: début du chargement');
+    }
 
     await SettingsService.load();
     await PlayerProfilesService.load();
@@ -48,20 +51,14 @@ class _SplashScreenState extends State<SplashScreen> {
     await StatsService.load();
     await OnboardingService.load();
 
-    FirebaseCrashlytics.instance.log('Services: chargement terminé');
-
-    // ── Consentement UMP ────────────────────────────────────────────────────
-    // Le formulaire UMP doit être traité AVANT d'initialiser AdMob,
-    // conformément aux exigences Google et aux règles de la politique de
-    // consentement pour l'EEE/UK (RGPD / PECR).
-    if (mounted) {
-      await ConsentService.instance.requestAndShow();
+    if (!kDebugMode) {
+      FirebaseCrashlytics.instance.log('Services: chargement terminé');
     }
 
-    // ── Initialisation AdMob ────────────────────────────────────────────────
-    // MobileAds.initialize() est appelé dans tous les cas (y compris si le
-    // consentement n'est pas requis dans la région de l'utilisateur), car
-    // l'initialisation ne déclenche pas de chargement personnalisé par elle-même.
+    // Recueil du consentement UMP avant l'initialisation AdMob
+    // (recommandation Google : le SDK respecte les préférences dès son démarrage)
+    await ConsentService.instance.requestAndShow();
+
     await RewardedAdService.initialize();
 
     // Pré-chargement de la publicité récompensée uniquement si autorisé
@@ -75,7 +72,9 @@ class _SplashScreenState extends State<SplashScreen> {
       DeviceOrientation.portraitDown,
     ]);
 
-    FirebaseCrashlytics.instance.log('Démarrage terminé — navigation vers home');
+    if (!kDebugMode) {
+      FirebaseCrashlytics.instance.log('Démarrage terminé — navigation vers home');
+    }
 
     if (!mounted) return;
     navigator.pushReplacementNamed(AppRoutes.home);
@@ -96,10 +95,10 @@ class _SplashScreenState extends State<SplashScreen> {
       FirebaseCrashlytics.instance.log('Application démarrée');
 
       // ── Analytics ────────────────────────────────────────────────────────
+      // Désactivé en debug pour ne pas polluer les rapports Firebase.
+      // En release, la collecte est activée (comportement par défaut).
       final analytics = FirebaseAnalytics.instance;
-      if (kDebugMode) {
-        await analytics.setAnalyticsCollectionEnabled(true);
-      }
+      await analytics.setAnalyticsCollectionEnabled(!kDebugMode);
       AnalyticsService.instance.init(analytics);
       await AnalyticsService.instance.logAppOpen();
 

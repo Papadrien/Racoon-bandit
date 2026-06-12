@@ -19,13 +19,14 @@ class ConsentService {
   // ── API publique ───────────────────────────────────────────────────────────
 
   /// Vrai si AdMob est autorisé à charger des publicités.
-  /// Appel async — retourne false en cas d'erreur.
+  /// En cas d'erreur SDK, retourne true par bénéfice du doute pour ne pas
+  /// bloquer silencieusement les publicités en mode release.
   Future<bool> canRequestAds() async {
     try {
       return await ConsentInformation.instance.canRequestAds();
     } catch (e) {
       if (kDebugMode) debugPrint('[Consent] canRequestAds erreur : $e');
-      return false;
+      return true; // Bénéfice du doute si le SDK échoue (ex. hors EEE)
     }
   }
 
@@ -44,13 +45,15 @@ class ConsentService {
   /// Demande une mise à jour du statut UMP, puis affiche le formulaire si
   /// nécessaire. À appeler au démarrage avant MobileAds.initialize().
   /// Les erreurs sont absorbées pour ne pas bloquer le démarrage.
-  Future<void> requestAndShow() async {
+  Future<bool> requestAndShow() async {
     try {
       await _requestUpdate();
       await _showFormIfRequired();
     } catch (e) {
       if (kDebugMode) debugPrint('[Consent] Erreur UMP : $e');
+      return false;
     }
+    return true;
   }
 
   /// Ouvre le formulaire de gestion des préférences publicitaires.
@@ -100,7 +103,13 @@ class ConsentService {
       },
     );
 
-    await completer.future;
+    // Timeout de sécurité en cas d'absence réseau ou de bug SDK.
+    await completer.future.timeout(
+      const Duration(seconds: 8),
+      onTimeout: () {
+        if (kDebugMode) debugPrint('[Consent] requestConsentInfoUpdate timeout');
+      },
+    );
   }
 
   Future<void> _showFormIfRequired() async {
@@ -113,6 +122,13 @@ class ConsentService {
       if (!completer.isCompleted) completer.complete();
     });
 
-    await completer.future;
+    // Timeout de sécurité : si le callback UMP ne se déclenche jamais
+    // (bug SDK, réseau absent), on ne bloque pas indéfiniment le démarrage.
+    await completer.future.timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        if (kDebugMode) debugPrint('[Consent] showFormIfRequired timeout — poursuite du démarrage');
+      },
+    );
   }
 }
