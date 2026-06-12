@@ -50,6 +50,8 @@ class RewardedAdService {
 
     debugPrint('[Ads] canRequestAds=$canRequest');
     if (!canRequest) {
+      // TODO DEBUG RELEASE: log explicite si consentement bloque les pubs. Supprimer après diagnostic.
+      debugPrint('[Ads][RELEASE] ⚠️ canRequestAds=false — les pubs sont bloquées par le consentement UMP');
       debugPrint('[Ads] canRequestAds=false, forcing ad load');
     }
 
@@ -66,10 +68,14 @@ class RewardedAdService {
               _loadCompleter!.complete(true);
             }
             _loadCompleter = null;
+            // TODO DEBUG RELEASE: confirmer le chargement réussi. Supprimer après diagnostic.
+            debugPrint('[Ads][RELEASE] ✅ pub chargée avec succès');
             AnalyticsService.instance.logRewardedAdLoaded();
           },
           onAdFailedToLoad: (error) {
             // Log en debug ET en release pour diagnostiquer les échecs prod.
+            // TODO DEBUG RELEASE: log exhaustif. Supprimer après résolution.
+            debugPrint('[Ads][RELEASE] ❌ load failed — code=${error.code} domain=${error.domain} message=${error.message}');
             debugPrint('[Ads] Failed to preload (code=${error.code}): ${error.message}');
             if (!kDebugMode) {
               FirebaseCrashlytics.instance.recordError(

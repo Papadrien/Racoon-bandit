@@ -39,6 +39,13 @@ Future<void> _bootstrap() async {
     }
   };
 
+  // TODO DEBUG RELEASE: forcer l'activation Crashlytics en release pour confirmer
+  // la connexion au dashboard. Supprimer après diagnostic.
+  if (!kDebugMode) {
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+    debugPrint('[Crashlytics][RELEASE] collection activée de force');
+  }
+
   // ── Erreurs moteur / plateforme ──────────────────────────────────────────
   // Capture les erreurs provenant du moteur Flutter ou du canal plateforme
   // qui ne passent pas par FlutterError.onError.
