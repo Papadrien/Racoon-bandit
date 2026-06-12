@@ -21,13 +21,6 @@ class AnalyticsService {
   void init(FirebaseAnalytics analytics) {
     _analytics = analytics;
     _initialized = true;
-    // TODO DEBUG RELEASE: activer le DebugView Firebase Analytics en release.
-    // Supprimer ce bloc quand les données remontent correctement dans le dashboard.
-    if (!kDebugMode) {
-      analytics.setAnalyticsCollectionEnabled(true).catchError((Object e) {
-        debugPrint('[Analytics] setAnalyticsCollectionEnabled erreur: $e');
-      });
-    }
     _log('AnalyticsService initialisé');
   }
 
@@ -134,8 +127,7 @@ class AnalyticsService {
     }
     try {
       await _analytics!.logEvent(name: name, parameters: params.isEmpty ? null : params);
-      // TODO DEBUG RELEASE: log de confirmation en release. Supprimer après diagnostic.
-      debugPrint('[Analytics][RELEASE] event envoyé: $name ${params.isNotEmpty ? params : ""}');
+      _log('event: $name ${params.isNotEmpty ? params : ""}');
     } catch (e) {
       _logError(name, e);
     }
@@ -146,7 +138,6 @@ class AnalyticsService {
   }
 
   void _logError(String event, Object e) {
-    // TODO DEBUG RELEASE: log erreurs en release aussi. Supprimer après diagnostic.
-    debugPrint('[Analytics] ⚠️ erreur event "$event": $e');
+    if (kDebugMode) debugPrint('[Analytics] ⚠️ erreur event "$event": $e');
   }
 }

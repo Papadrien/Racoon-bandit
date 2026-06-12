@@ -11,7 +11,7 @@ class RewardedAdService {
 
   static final RewardedAdService instance = RewardedAdService._();
 
-  RewardedInterstitialAd? _rewardedInterstitialAd;
+  RewardedAd? _rewardedInterstitialAd;
   Completer<bool>? _loadCompleter;
 
   bool _isLoading = false;
@@ -19,7 +19,7 @@ class RewardedAdService {
   bool _isShowRequested = false; // garde-fou anti double-clic précoce
   bool _hasRewardBeenGranted = false;
 
-  static const Duration _loadTimeout = Duration(seconds: 15);
+  static const Duration _loadTimeout = Duration(seconds: 8);
 
   bool get isAdReady => _rewardedInterstitialAd != null;
 
@@ -50,16 +50,14 @@ class RewardedAdService {
 
     debugPrint('[Ads] canRequestAds=$canRequest');
     if (!canRequest) {
-      // TODO DEBUG RELEASE: log explicite si consentement bloque les pubs. Supprimer après diagnostic.
-      debugPrint('[Ads][RELEASE] ⚠️ canRequestAds=false — les pubs sont bloquées par le consentement UMP');
       debugPrint('[Ads] canRequestAds=false, forcing ad load');
     }
 
     unawaited(
-      RewardedInterstitialAd.load(
+      RewardedAd.load(
         adUnitId: _adUnitId,
         request: const AdRequest(),
-        rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (ad) {
             _rewardedInterstitialAd?.dispose();
             _rewardedInterstitialAd = ad;
@@ -68,20 +66,16 @@ class RewardedAdService {
               _loadCompleter!.complete(true);
             }
             _loadCompleter = null;
-            // TODO DEBUG RELEASE: confirmer le chargement réussi. Supprimer après diagnostic.
-            debugPrint('[Ads][RELEASE] ✅ pub chargée avec succès');
             AnalyticsService.instance.logRewardedAdLoaded();
           },
           onAdFailedToLoad: (error) {
             // Log en debug ET en release pour diagnostiquer les échecs prod.
-            // TODO DEBUG RELEASE: log exhaustif. Supprimer après résolution.
-            debugPrint('[Ads][RELEASE] ❌ load failed — code=${error.code} domain=${error.domain} message=${error.message}');
             debugPrint('[Ads] Failed to preload (code=${error.code}): ${error.message}');
             if (!kDebugMode) {
               FirebaseCrashlytics.instance.recordError(
                 '[Ads] Failed to load: ${error.code} — ${error.message}',
                 null,
-                reason: 'rewarded_interstitial_load_failed',
+                reason: 'rewarded_ad_load_failed',
                 fatal: false,
               );
             }
@@ -204,7 +198,7 @@ class RewardedAdService {
   String get _adUnitId {
     if (kDebugMode) {
       if (defaultTargetPlatform == TargetPlatform.android) {
-        return 'ca-app-pub-3940256099942544/5354046379';
+        return 'ca-app-pub-3940256099942544/5224354917';
       }
       return 'ca-app-pub-3940256099942544/6978759866';
     }
