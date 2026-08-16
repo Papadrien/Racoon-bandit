@@ -512,6 +512,26 @@
   "@cardBackNameYellow": {
     "description": "Yellow card back name"
   },
+  "cardBackNamePinecone": "Brown",
+  "@cardBackNamePinecone": {
+    "description": "Pinecone card back name"
+  },
+  "cardBackNameCloud": "White",
+  "@cardBackNameCloud": {
+    "description": "Cloud card back name"
+  },
+  "cardBackNameCrystal": "Orange",
+  "@cardBackNameCrystal": {
+    "description": "Crystal card back name"
+  },
+  "cardBackNameCampfire": "Red",
+  "@cardBackNameCampfire": {
+    "description": "Campfire card back name"
+  },
+  "cardBackNamePizza": "Pine Green",
+  "@cardBackNamePizza": {
+    "description": "Pizza card back name"
+  },
   "cardBacksGamesCount": "{count, plural, one{{count} game} other{{count} games}}",
   "@cardBacksGamesCount": {
     "description": "Games count in card backs bottom sheet",

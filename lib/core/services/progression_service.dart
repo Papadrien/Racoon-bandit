@@ -70,7 +70,7 @@ class ProgressionService {
     ),
     CardBackConfig(
       id: 'cloud',
-      name: 'Nuage',
+      name: 'Blanc',
       assetPath: AppAssets.cardBackCloud,
       themeColor: Color(0xFFB0BEC5),
       requiredGames: 25,
@@ -84,14 +84,14 @@ class ProgressionService {
     ),
     CardBackConfig(
       id: 'campfire',
-      name: 'Feu',
+      name: 'Rouge',
       assetPath: AppAssets.cardBackCampfire,
       themeColor: Color(0xFFE53935),
       requiredGames: 35,
     ),
     CardBackConfig(
       id: 'pizza',
-      name: 'Pizza',
+      name: 'Vert sapin',
       assetPath: AppAssets.cardBackPizza,
       themeColor: Color(0xFF2E7D32),
       requiredGames: 40,

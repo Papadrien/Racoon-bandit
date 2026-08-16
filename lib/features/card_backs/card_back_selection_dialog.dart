@@ -15,12 +15,17 @@ import '../../core/ui/app_spacing.dart';
 String _localizedCardBackName(BuildContext context, String id) {
   final l10n = AppLocalizations.of(context)!;
   return switch (id) {
-    'purple' => l10n.cardBackNamePurple,
-    'blue'   => l10n.cardBackNameBlue,
-    'green'  => l10n.cardBackNameGreen,
-    'pink'   => l10n.cardBackNamePink,
-    'yellow' => l10n.cardBackNameYellow,
-    _        => id,
+    'purple'   => l10n.cardBackNamePurple,
+    'blue'     => l10n.cardBackNameBlue,
+    'green'    => l10n.cardBackNameGreen,
+    'pink'     => l10n.cardBackNamePink,
+    'yellow'   => l10n.cardBackNameYellow,
+    'pinecone' => l10n.cardBackNamePinecone,
+    'cloud'    => l10n.cardBackNameCloud,
+    'crystal'  => l10n.cardBackNameCrystal,
+    'campfire' => l10n.cardBackNameCampfire,
+    'pizza'    => l10n.cardBackNamePizza,
+    _          => id,
   };
 }
 

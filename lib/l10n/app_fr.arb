@@ -512,6 +512,26 @@
   "@cardBackNameYellow": {
     "description": "Nom du dos de carte jaune"
   },
+  "cardBackNamePinecone": "Marron",
+  "@cardBackNamePinecone": {
+    "description": "Nom du dos de carte pomme de pin"
+  },
+  "cardBackNameCloud": "Blanc",
+  "@cardBackNameCloud": {
+    "description": "Nom du dos de carte nuage"
+  },
+  "cardBackNameCrystal": "Orange",
+  "@cardBackNameCrystal": {
+    "description": "Nom du dos de carte cristal"
+  },
+  "cardBackNameCampfire": "Rouge",
+  "@cardBackNameCampfire": {
+    "description": "Nom du dos de carte feu de camp"
+  },
+  "cardBackNamePizza": "Vert sapin",
+  "@cardBackNamePizza": {
+    "description": "Nom du dos de carte pizza"
+  },
   "cardBacksGamesCount": "{count, plural, one{{count} partie} other{{count} parties}}",
   "@cardBacksGamesCount": {
     "description": "Compteur de parties dans la bottom sheet des dos de cartes",
