@@ -11,7 +11,7 @@ class RewardedAdService {
 
   static final RewardedAdService instance = RewardedAdService._();
 
-  RewardedInterstitialAd? _rewardedInterstitialAd;
+  RewardedAd? _rewardedInterstitialAd;
   Completer<bool>? _loadCompleter;
 
   bool _isLoading = false;
@@ -54,10 +54,10 @@ class RewardedAdService {
     }
 
     unawaited(
-      RewardedInterstitialAd.load(
+      RewardedAd.load(
         adUnitId: _adUnitId,
         request: const AdRequest(),
-        rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (ad) {
             _rewardedInterstitialAd?.dispose();
             _rewardedInterstitialAd = ad;
@@ -75,7 +75,7 @@ class RewardedAdService {
               FirebaseCrashlytics.instance.recordError(
                 '[Ads] Failed to load: ${error.code} — ${error.message}',
                 null,
-                reason: 'rewarded_interstitial_load_failed',
+                reason: 'rewarded_ad_load_failed',
                 fatal: false,
               );
             }
@@ -198,7 +198,7 @@ class RewardedAdService {
   String get _adUnitId {
     if (kDebugMode) {
       if (defaultTargetPlatform == TargetPlatform.android) {
-        return 'ca-app-pub-3940256099942544/5354046379';
+        return 'ca-app-pub-3940256099942544/5224354917';
       }
       return 'ca-app-pub-3940256099942544/6978759866';
     }
