@@ -11,11 +11,16 @@ import 'purchase_service.dart';
 /// Service central de progression : déblocages de dos de cartes.
 ///
 /// Ordre MVP :
-/// 1. Violet  — débloqué par défaut
-/// 2. Bleu    — 5 parties
-/// 3. Vert    — 10 parties
-/// 4. Rose    — 20 parties
-/// 5. Jaune   — 30 parties
+/// 1.  Violet   — débloqué par défaut
+/// 2.  Bleu     — 5 parties
+/// 3.  Vert     — 10 parties
+/// 4.  Marron   — 15 parties
+/// 5.  Rose     — 20 parties
+/// 6.  Nuage    — 25 parties
+/// 7.  Orange   — 30 parties
+/// 8.  Feu      — 35 parties
+/// 9.  Pizza    — 40 parties
+/// 10. Jaune    — 45 parties
 ///
 /// Anti-doublon garanti : un dos déjà dans [unlockedCardBackIds] ne
 /// génère plus jamais de [RewardUnlock].
@@ -50,6 +55,13 @@ class ProgressionService {
       requiredGames: 10,
     ),
     CardBackConfig(
+      id: 'pinecone',
+      name: 'Marron',
+      assetPath: AppAssets.cardBackPinecone,
+      themeColor: Color(0xFF8D6E63),
+      requiredGames: 15,
+    ),
+    CardBackConfig(
       id: 'pink',
       name: 'Rose',
       assetPath: AppAssets.cardBackPink,
@@ -57,11 +69,39 @@ class ProgressionService {
       requiredGames: 20,
     ),
     CardBackConfig(
+      id: 'cloud',
+      name: 'Nuage',
+      assetPath: AppAssets.cardBackCloud,
+      themeColor: Color(0xFFB0BEC5),
+      requiredGames: 25,
+    ),
+    CardBackConfig(
+      id: 'crystal',
+      name: 'Orange',
+      assetPath: AppAssets.cardBackCrystal,
+      themeColor: Color(0xFFFF9800),
+      requiredGames: 30,
+    ),
+    CardBackConfig(
+      id: 'campfire',
+      name: 'Feu',
+      assetPath: AppAssets.cardBackCampfire,
+      themeColor: Color(0xFFE53935),
+      requiredGames: 35,
+    ),
+    CardBackConfig(
+      id: 'pizza',
+      name: 'Pizza',
+      assetPath: AppAssets.cardBackPizza,
+      themeColor: Color(0xFF2E7D32),
+      requiredGames: 40,
+    ),
+    CardBackConfig(
       id: 'yellow',
       name: 'Jaune',
       assetPath: AppAssets.cardBackYellow,
       themeColor: Color(0xFFFFC107),
-      requiredGames: 30,
+      requiredGames: 45,
     ),
   ];
 

@@ -373,9 +373,14 @@
   "@settingsDebugOnboardingReset": {
     "description": "Snackbar debug onboarding reset"
   },
-  "settingsVersionLabel": "v1.0.0 — Raccoon Bandit",
+  "settingsVersionLabel": "v{version} — Raccoon Bandit",
   "@settingsVersionLabel": {
-    "description": "Label version en bas de settings"
+    "description": "Label version en bas de settings",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
   },
   "premiumTitle": "PREMIUM",
   "@premiumTitle": {

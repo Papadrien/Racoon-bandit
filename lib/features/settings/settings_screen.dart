@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../app.dart';
@@ -35,17 +36,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late bool _vibrationEnabled;
   bool _privacyOptionsRequired = false;
 
+  // Version affichée en bas des paramètres, lue depuis les métadonnées natives
+  // (elles-mêmes générées à partir de `version:` dans pubspec.yaml) — donc
+  // toujours synchronisée avec la version réelle de l'app, sans duplication.
+  String? _appVersion;
+
   @override
   void initState() {
     super.initState();
     _soundEnabled = SettingsService.soundEnabled;
     _vibrationEnabled = SettingsService.vibrationEnabled;
     _loadPrivacyOptionsStatus();
+    _loadAppVersion();
   }
 
   Future<void> _loadPrivacyOptionsStatus() async {
     final required = await ConsentService.instance.privacyOptionsRequired();
     if (mounted) setState(() => _privacyOptionsRequired = required);
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      // ex. "1.1.0" (le build number `+2` n'est pas affiché à l'utilisateur).
+      if (mounted) setState(() => _appVersion = info.version);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Settings] Erreur lecture version app: $e');
+    }
   }
 
   void _onSoundChanged(bool value) {
@@ -368,16 +385,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
 
                       // ── Version ────────────────────────────────────
-                      Center(
-                        child: Text(
-                          l10n.settingsVersionLabel,
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                      // N'affiche rien tant que PackageInfo n'a pas répondu,
+                      // pour éviter de flasher un numéro de version erroné.
+                      if (_appVersion != null)
+                        Center(
+                          child: Text(
+                            l10n.settingsVersionLabel(_appVersion!),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
