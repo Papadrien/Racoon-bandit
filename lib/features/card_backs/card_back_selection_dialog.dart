@@ -1,8 +1,11 @@
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
 import '../../core/models/card_back_config.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/ui/app_colors.dart';
@@ -71,6 +74,10 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
 
     await ProgressionService.equipCardBack(cardBackId);
 
+    unawaited(AnalyticsService.instance.logCardBackSelected(
+      cardBackId: cardBackId,
+    ));
+
     await Future<void>.delayed(const Duration(milliseconds: 500));
     if (mounted) setState(() => animatingId = null);
   }
@@ -80,7 +87,7 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
     const accent = Color(0xFFFF6D00);
     return Builder(
       builder: (context) {
-        final unlockedIds = ProgressionService.progression.unlockedCardBackIds;
+        final unlockedIds = ProgressionService.unlockedCardBackIds;
         final allBacks = ProgressionService.cardBacks;
         final totalGames = ProgressionService.progression.totalGamesPlayed;
 

@@ -4,11 +4,14 @@ import 'package:flutter/services.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/audio_service.dart';
+import '../../core/services/cloud_save_service.dart';
 import '../../core/services/consent_service.dart';
 import '../../core/services/lobby_service.dart';
 import '../../core/services/onboarding_service.dart';
+import '../../core/services/play_games_service.dart';
 import '../../core/services/player_profiles_service.dart';
 import '../../core/services/progression_service.dart';
+import '../../core/services/purchase_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/services/settings_service.dart';
 import '../../core/services/stats_service.dart';
@@ -50,6 +53,20 @@ class _SplashScreenState extends State<SplashScreen> {
     await ProgressionService.load();
     await StatsService.load();
     await OnboardingService.load();
+
+    // Statut Premium (achats intégrés) — doit être connu avant l'écran
+    // d'accueil pour masquer correctement pubs / restriction de parties.
+    await PurchaseService.instance.initialize();
+
+    // Play Games : connexion silencieuse puis fusion de la sauvegarde
+    // cloud avec le local (jamais destructrice — voir CloudSaveService).
+    // Timeout de sécurité pour ne jamais bloquer le démarrage en cas de
+    // réseau lent ou absent : l'app continue alors avec la sauvegarde
+    // locale seule, comme avant cette fonctionnalité.
+    await PlayGamesService.signInSilently()
+        .timeout(const Duration(seconds: 4), onTimeout: () {});
+    await CloudSaveService.pullAndMerge()
+        .timeout(const Duration(seconds: 4), onTimeout: () {});
 
     if (!kDebugMode) {
       FirebaseCrashlytics.instance.log('Services: chargement terminé');

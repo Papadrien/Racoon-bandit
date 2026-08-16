@@ -10,6 +10,7 @@ import '../../core/services/consent_service.dart';
 import '../../core/services/haptic_service.dart';
 import '../../core/services/life_system_service.dart';
 import '../../core/services/onboarding_service.dart';
+import '../../core/services/purchase_service.dart';
 import '../../core/services/rewarded_ad_service.dart';
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_decorations.dart';
@@ -18,6 +19,7 @@ import 'package:raccoon_bandit/l10n/app_localizations.dart';
 import '../../widgets/game_ready_indicator.dart';
 import '../../widgets/raccoon_bandit_logo.dart';
 import '../onboarding/onboarding_screen.dart';
+import '../premium/premium_dialog.dart';
 import '../../widgets/primary_button.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -138,6 +140,12 @@ class _HomeScreenState extends State<HomeScreen>
     Navigator.pushNamed(context, AppRoutes.lobby);
   }
 
+  Future<void> _openPremium() async {
+    AudioService.instance.playButtonSound();
+    await PremiumDialog.show(context);
+    if (mounted) setState(() {});
+  }
+
   Future<void> _watchAdForLife() async {
     if (_isRewardLoading) return;
 
@@ -243,13 +251,22 @@ class _HomeScreenState extends State<HomeScreen>
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               if (!_isLoading)
-                                ScaleTransition(
-                                  scale: _rewardAnimationController,
-                                  child: GameReadyIndicator(
-                                    lives: _lifeSystemService.currentLives,
-                                    remainingDuration:
-                                        remainingDuration ?? Duration.zero,
-                                  ),
+                                ValueListenableBuilder<bool>(
+                                  valueListenable:
+                                      PurchaseService.instance.premiumNotifier,
+                                  builder: (context, isPremium, _) {
+                                    if (isPremium) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return ScaleTransition(
+                                      scale: _rewardAnimationController,
+                                      child: GameReadyIndicator(
+                                        lives: _lifeSystemService.currentLives,
+                                        remainingDuration:
+                                            remainingDuration ?? Duration.zero,
+                                      ),
+                                    );
+                                  },
                                 )
                               else
                                 const SizedBox.shrink(),
@@ -257,6 +274,28 @@ class _HomeScreenState extends State<HomeScreen>
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  ValueListenableBuilder<bool>(
+                                    valueListenable: PurchaseService
+                                        .instance.premiumNotifier,
+                                    builder: (context, isPremium, _) {
+                                      if (isPremium) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                            right: AppSpacing.sm),
+                                        child: _FloatingIconButton(
+                                          icon: Icons
+                                              .workspace_premium_rounded,
+                                          color: AppColors.orange,
+                                          tooltip: AppLocalizations.of(
+                                                  context)!
+                                              .tooltipPremium,
+                                          onPressed: _openPremium,
+                                        ),
+                                      );
+                                    },
+                                  ),
                                   _FloatingIconButton(
                                     icon: Icons.settings,
                                     color: AppColors.textMuted,

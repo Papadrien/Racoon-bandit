@@ -23,6 +23,23 @@ class LifeSystemService {
 
   bool _isUpdating = false;
 
+  /// Vrai si l'utilisateur possède le pack Premium : les parties ne sont
+  /// alors jamais consommées et le compteur reste bloqué à [maxLives].
+  /// Piloté par [PurchaseService], jamais modifié directement ailleurs.
+  bool unlimitedLives = false;
+
+  /// Active/désactive les parties illimitées (achat Premium).
+  /// Quand activé, remet immédiatement le compteur au maximum et efface
+  /// tout minuteur de recharge en cours.
+  Future<void> setUnlimitedLives(bool value) async {
+    unlimitedLives = value;
+    if (value) {
+      currentLives = maxLives;
+      lastLifeRechargeTimestamp = null;
+      await _save();
+    }
+  }
+
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -62,6 +79,8 @@ class LifeSystemService {
   }
 
   Future<void> consumeLife() async {
+    if (unlimitedLives) return;
+
     await updateLivesFromTime();
 
     if (currentLives <= 0) return;

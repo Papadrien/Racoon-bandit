@@ -127,6 +127,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   void _onCountChanged(int count) {
+    unawaited(AnalyticsService.instance.logPlayerCountSelected(count));
     setState(() {
       _playerCount = count;
       final old = List<PlayerProfile?>.from(_selectedProfiles);
@@ -177,9 +178,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   Future<void> _openChaosTutorial() async {
     AudioService.instance.playButtonSound();
+    unawaited(AnalyticsService.instance.logChaosTutorialOpened());
     final activated = await ChaosTutorial.show(context);
     if (activated && mounted) {
       setState(() => _chaosModeEnabled = true);
+      unawaited(AnalyticsService.instance.logChaosModeActivated());
     }
   }
 
@@ -375,6 +378,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                     enabled: _chaosModeEnabled,
                                     onToggle: (value) {
                                       setState(() => _chaosModeEnabled = value);
+                                      if (value) {
+                                        unawaited(AnalyticsService.instance
+                                            .logChaosModeActivated());
+                                      }
                                     },
                                     onHelpTap: _openChaosTutorial,
                                   ),

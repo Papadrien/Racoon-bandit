@@ -397,6 +397,62 @@
   "@premiumRestorePurchases": {
     "description": "Restore purchases button"
   },
+  "premiumDescription": "Unlock all of Raccoon Bandit with a single purchase:",
+  "@premiumDescription": {
+    "description": "Intro line in the Premium pop-up"
+  },
+  "premiumBenefitNoAds": "No ads",
+  "@premiumBenefitNoAds": {
+    "description": "Premium benefit — no ads"
+  },
+  "premiumBenefitUnlimitedGames": "Unlimited games, no waiting",
+  "@premiumBenefitUnlimitedGames": {
+    "description": "Premium benefit — no more game restriction"
+  },
+  "premiumBenefitAllCardBacks": "All card backs unlocked",
+  "@premiumBenefitAllCardBacks": {
+    "description": "Premium benefit — all card backs unlocked"
+  },
+  "premiumBuying": "Purchasing...",
+  "@premiumBuying": {
+    "description": "Premium buy button label while purchasing"
+  },
+  "premiumRestoring": "Restoring...",
+  "@premiumRestoring": {
+    "description": "Restore button label while restoring"
+  },
+  "premiumPurchaseSuccess": "Thank you! Premium mode is now active.",
+  "@premiumPurchaseSuccess": {
+    "description": "Snackbar on successful premium purchase"
+  },
+  "premiumPurchaseError": "The purchase couldn't be completed. Please try again later.",
+  "@premiumPurchaseError": {
+    "description": "Snackbar on failed premium purchase"
+  },
+  "premiumRestoreDone": "Purchase check complete.",
+  "@premiumRestoreDone": {
+    "description": "Snackbar after restoring purchases"
+  },
+  "premiumUnavailable": "Purchases are unavailable right now.",
+  "@premiumUnavailable": {
+    "description": "Snackbar when the store is unavailable"
+  },
+  "premiumActiveLabel": "Premium active",
+  "@premiumActiveLabel": {
+    "description": "Label indicating Premium is active"
+  },
+  "premiumActiveThanks": "Thanks for your support 💛",
+  "@premiumActiveThanks": {
+    "description": "Subtext shown when Premium is already active"
+  },
+  "settingsSectionPremium": "Premium",
+  "@settingsSectionPremium": {
+    "description": "Premium section title in settings"
+  },
+  "settingsPremiumUpsellLabel": "Unlock Premium",
+  "@settingsPremiumUpsellLabel": {
+    "description": "Label of the button opening the Premium pop-up from settings"
+  },
   "livesAdButton": "Game +1",
   "@livesAdButton": {
     "description": "Label for ad +1 game button in indicator"
@@ -585,7 +641,7 @@
   "@privacyAdsContent": {},
   "privacyPurchasesTitle": "In-App Purchases",
   "@privacyPurchasesTitle": {},
-  "privacyPurchasesContent": "Raccoon Bandit does not offer in-app purchases in its current version.",
+  "privacyPurchasesContent": "Raccoon Bandit offers one optional in-app purchase (Premium pack, one-time purchase) to remove ads, unlock unlimited games, and unlock all card backs. Payment is processed by Google Play; Raccoon Bandit does not store any payment data.",
   "@privacyPurchasesContent": {},
   "privacyAnalyticsTitle": "Analytics",
   "@privacyAnalyticsTitle": {},

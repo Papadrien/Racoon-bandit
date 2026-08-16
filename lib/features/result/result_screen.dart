@@ -9,6 +9,8 @@ import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/audio_service.dart';
+import '../../core/services/review_service.dart';
+import '../../core/services/stats_service.dart';
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
@@ -60,7 +62,10 @@ class _ResultScreenState extends State<ResultScreen>
       duration: const Duration(milliseconds: 2400),
     )..repeat();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _showRewardPopups());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _showRewardPopups();
+      await _maybeRequestReview();
+    });
   }
 
   @override
@@ -81,6 +86,18 @@ class _ResultScreenState extends State<ResultScreen>
     if (!mounted) return;
 
     await RewardUnlockDialog.showAll(context, args.newUnlocks);
+  }
+
+  /// Sollicite un avis Play Store à la fin de la 2e puis de la 6e partie
+  /// (jamais après). Voir [ReviewService] pour le détail de la stratégie.
+  Future<void> _maybeRequestReview() async {
+    if (!mounted) return;
+    // Laisse le temps à l'animation d'écran + aux popups de récompense de
+    // se terminer avant de proposer la popup native, pour ne pas la faire
+    // apparaître pendant une transition.
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    await ReviewService.maybeRequestReview(StatsService.current.gamesPlayed);
   }
 
   GameState _getGameState(BuildContext context) {

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      TODO(Adrien) : remplacer par le vrai ID Play Games de l'app.
+      À récupérer dans Play Console > [Raccoon Bandit] > Croissance >
+      Play Games Services > Configuration > Identifiants > "ID du jeu"
+      (un nombre, ex: 123456789012). Sans ça, Play Games Services ne
+      s'initialisera pas — l'app continuera de fonctionner normalement,
+      simplement sans connexion Play Games.
+    -->
+    <string name="game_services_project_id" translatable="false">TODO_REPLACE_WITH_PLAY_GAMES_APP_ID</string>
+</resources>

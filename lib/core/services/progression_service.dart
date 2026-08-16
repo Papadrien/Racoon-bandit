@@ -6,6 +6,7 @@ import '../constants/app_assets.dart';
 import '../models/card_back_config.dart';
 import '../models/global_progression.dart';
 import '../models/reward_unlock.dart';
+import 'purchase_service.dart';
 
 /// Service central de progression : déblocages de dos de cartes.
 ///
@@ -70,6 +71,16 @@ class ProgressionService {
 
   static GlobalProgression get progression => _progression;
 
+  /// Dos de cartes réellement débloqués pour l'affichage/sélection.
+  /// Le pack Premium débloque instantanément tous les dos, sans toucher à
+  /// la progression persistée (utile si l'achat est un jour remboursé).
+  static Set<String> get unlockedCardBackIds {
+    if (PurchaseService.instance.isPremium) {
+      return cardBacks.map((cb) => cb.id).toSet();
+    }
+    return _progression.unlockedCardBackIds;
+  }
+
   // ── Chargement / sauvegarde ──────────────────────────────────────────────
 
   static Future<void> load() async {
@@ -95,6 +106,26 @@ class ProgressionService {
     await prefs.setString(_storageKey, _progression.toJsonString());
   }
 
+  /// Fusionne une progression reçue du cloud avec la progression locale,
+  /// sans jamais rien perdre : union des dos de cartes débloqués, et le
+  /// plus grand des deux compteurs de parties. Le dos actuellement équipé
+  /// localement est conservé tel quel.
+  static Future<void> mergeFromCloud(GlobalProgression cloud) async {
+    final mergedUnlocked = <String>{
+      ..._progression.unlockedCardBackIds,
+      ...cloud.unlockedCardBackIds,
+    };
+    final mergedGames = _progression.totalGamesPlayed > cloud.totalGamesPlayed
+        ? _progression.totalGamesPlayed
+        : cloud.totalGamesPlayed;
+
+    _progression = _progression.copyWith(
+      totalGamesPlayed: mergedGames,
+      unlockedCardBackIds: mergedUnlocked,
+    );
+    await save();
+  }
+
   // ── Enregistrement d'une partie ─────────────────────────────────────────
 
   /// Enregistre une partie terminée et retourne les [RewardUnlock] débloqués.
@@ -115,7 +146,7 @@ class ProgressionService {
       selectCardBack(cardBackId);
 
   static Future<void> selectCardBack(String cardBackId) async {
-    if (!_progression.unlockedCardBackIds.contains(cardBackId)) return;
+    if (!unlockedCardBackIds.contains(cardBackId)) return;
     _progression = _progression.copyWith(selectedCardBackId: cardBackId);
     await save();
   }
@@ -156,13 +187,20 @@ class ProgressionService {
       if (!shouldUnlock) continue;
 
       unlockedIds.add(cardBack.id);
-      newUnlocks.add(RewardUnlock(
-        id: cardBack.id,
-        name: cardBack.name,
-        type: RewardType.cardBack,
-        assetPath: AppAssets.cardBackAsset(cardBack.id),
-        requiredGames: cardBack.requiredGames,
-      ));
+
+      // Le pack Premium donne déjà accès à tous les dos : ce déblocage
+      // "naturel" est enregistré (utile si l'achat est un jour remboursé),
+      // mais on n'affiche pas la pop-up puisque rien de nouveau n'est
+      // réellement débloqué pour le joueur.
+      if (!PurchaseService.instance.isPremium) {
+        newUnlocks.add(RewardUnlock(
+          id: cardBack.id,
+          name: cardBack.name,
+          type: RewardType.cardBack,
+          assetPath: AppAssets.cardBackAsset(cardBack.id),
+          requiredGames: cardBack.requiredGames,
+        ));
+      }
     }
 
     _progression = _progression.copyWith(unlockedCardBackIds: unlockedIds);
