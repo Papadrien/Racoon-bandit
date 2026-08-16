@@ -16,7 +16,7 @@ dependencies:
   shared_preferences: ^2.5.4
   in_app_review: ^2.0.9
   in_app_purchase: ^3.2.3
-  package_info_plus: ^8.1.2
+  package_info_plus: ^10.2.1
   games_services: ^4.0.4
   audioplayers: ^6.6.0
   wakelock_plus: ^1.4.0
