@@ -373,9 +373,14 @@
   "@settingsDebugOnboardingReset": {
     "description": "Snackbar debug onboarding reset"
   },
-  "settingsVersionLabel": "v1.0.0 — Raccoon Bandit",
+  "settingsVersionLabel": "v{version} — Raccoon Bandit",
   "@settingsVersionLabel": {
-    "description": "Label version en bas de settings"
+    "description": "Label version en bas de settings",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
   },
   "premiumTitle": "PREMIUM",
   "@premiumTitle": {
@@ -396,6 +401,62 @@
   "premiumRestorePurchases": "Restaurer les achats",
   "@premiumRestorePurchases": {
     "description": "Bouton restaurer achats premium"
+  },
+  "premiumDescription": "Débloquez tout Raccoon Bandit, en un seul achat :",
+  "@premiumDescription": {
+    "description": "Phrase d'intro dans la pop-up Premium"
+  },
+  "premiumBenefitNoAds": "Aucune publicité",
+  "@premiumBenefitNoAds": {
+    "description": "Avantage Premium — sans publicité"
+  },
+  "premiumBenefitUnlimitedGames": "Parties illimitées, sans attente",
+  "@premiumBenefitUnlimitedGames": {
+    "description": "Avantage Premium — plus de restriction de parties"
+  },
+  "premiumBenefitAllCardBacks": "Tous les dos de cartes débloqués",
+  "@premiumBenefitAllCardBacks": {
+    "description": "Avantage Premium — tous les dos de cartes débloqués"
+  },
+  "premiumBuying": "Achat en cours...",
+  "@premiumBuying": {
+    "description": "Label bouton achat premium en cours"
+  },
+  "premiumRestoring": "Restauration en cours...",
+  "@premiumRestoring": {
+    "description": "Label bouton restauration en cours"
+  },
+  "premiumPurchaseSuccess": "Merci ! Le mode Premium est activé.",
+  "@premiumPurchaseSuccess": {
+    "description": "Snackbar achat premium réussi"
+  },
+  "premiumPurchaseError": "L'achat n'a pas pu être finalisé. Réessayez plus tard.",
+  "@premiumPurchaseError": {
+    "description": "Snackbar échec achat premium"
+  },
+  "premiumRestoreDone": "Vérification des achats terminée.",
+  "@premiumRestoreDone": {
+    "description": "Snackbar restauration des achats terminée"
+  },
+  "premiumUnavailable": "Achats indisponibles pour le moment.",
+  "@premiumUnavailable": {
+    "description": "Snackbar boutique indisponible"
+  },
+  "premiumActiveLabel": "Premium activé",
+  "@premiumActiveLabel": {
+    "description": "Label indiquant que le pack Premium est actif"
+  },
+  "premiumActiveThanks": "Merci pour votre soutien 💛",
+  "@premiumActiveThanks": {
+    "description": "Sous-texte affiché quand Premium est déjà actif"
+  },
+  "settingsSectionPremium": "Premium",
+  "@settingsSectionPremium": {
+    "description": "Titre de section Premium dans les paramètres"
+  },
+  "settingsPremiumUpsellLabel": "Débloquer Premium",
+  "@settingsPremiumUpsellLabel": {
+    "description": "Label du bouton ouvrant la pop-up Premium depuis les paramètres"
   },
   "livesAdButton": "Partie +1",
   "@livesAdButton": {
@@ -450,6 +511,26 @@
   "cardBackNameYellow": "Jaune",
   "@cardBackNameYellow": {
     "description": "Nom du dos de carte jaune"
+  },
+  "cardBackNamePinecone": "Marron",
+  "@cardBackNamePinecone": {
+    "description": "Nom du dos de carte pomme de pin"
+  },
+  "cardBackNameCloud": "Blanc",
+  "@cardBackNameCloud": {
+    "description": "Nom du dos de carte nuage"
+  },
+  "cardBackNameCrystal": "Orange",
+  "@cardBackNameCrystal": {
+    "description": "Nom du dos de carte cristal"
+  },
+  "cardBackNameCampfire": "Rouge",
+  "@cardBackNameCampfire": {
+    "description": "Nom du dos de carte feu de camp"
+  },
+  "cardBackNamePizza": "Vert sapin",
+  "@cardBackNamePizza": {
+    "description": "Nom du dos de carte pizza"
   },
   "cardBacksGamesCount": "{count, plural, one{{count} partie} other{{count} parties}}",
   "@cardBacksGamesCount": {
@@ -585,7 +666,7 @@
   "@privacyAdsContent": {},
   "privacyPurchasesTitle": "Achats intégrés",
   "@privacyPurchasesTitle": {},
-  "privacyPurchasesContent": "Raccoon Bandit ne propose pas d'achats intégrés dans sa version actuelle.",
+  "privacyPurchasesContent": "Raccoon Bandit propose un achat intégré facultatif (pack Premium, achat unique) pour supprimer les publicités, débloquer des parties illimitées et tous les dos de cartes. Le paiement est traité par Google Play ; Raccoon Bandit ne stocke aucune donnée bancaire.",
   "@privacyPurchasesContent": {},
   "privacyAnalyticsTitle": "Statistiques et analyses",
   "@privacyAnalyticsTitle": {},

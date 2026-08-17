@@ -6,15 +6,21 @@ import '../constants/app_assets.dart';
 import '../models/card_back_config.dart';
 import '../models/global_progression.dart';
 import '../models/reward_unlock.dart';
+import 'purchase_service.dart';
 
 /// Service central de progression : déblocages de dos de cartes.
 ///
 /// Ordre MVP :
-/// 1. Violet  — débloqué par défaut
-/// 2. Bleu    — 5 parties
-/// 3. Vert    — 10 parties
-/// 4. Rose    — 20 parties
-/// 5. Jaune   — 30 parties
+/// 1.  Violet   — débloqué par défaut
+/// 2.  Bleu     — 5 parties
+/// 3.  Vert     — 10 parties
+/// 4.  Marron   — 15 parties
+/// 5.  Rose     — 20 parties
+/// 6.  Nuage    — 25 parties
+/// 7.  Orange   — 30 parties
+/// 8.  Feu      — 35 parties
+/// 9.  Pizza    — 40 parties
+/// 10. Jaune    — 45 parties
 ///
 /// Anti-doublon garanti : un dos déjà dans [unlockedCardBackIds] ne
 /// génère plus jamais de [RewardUnlock].
@@ -49,6 +55,13 @@ class ProgressionService {
       requiredGames: 10,
     ),
     CardBackConfig(
+      id: 'pinecone',
+      name: 'Marron',
+      assetPath: AppAssets.cardBackPinecone,
+      themeColor: Color(0xFF8D6E63),
+      requiredGames: 15,
+    ),
+    CardBackConfig(
       id: 'pink',
       name: 'Rose',
       assetPath: AppAssets.cardBackPink,
@@ -56,11 +69,39 @@ class ProgressionService {
       requiredGames: 20,
     ),
     CardBackConfig(
+      id: 'cloud',
+      name: 'Blanc',
+      assetPath: AppAssets.cardBackCloud,
+      themeColor: Color(0xFFB0BEC5),
+      requiredGames: 25,
+    ),
+    CardBackConfig(
+      id: 'crystal',
+      name: 'Orange',
+      assetPath: AppAssets.cardBackCrystal,
+      themeColor: Color(0xFFFF9800),
+      requiredGames: 30,
+    ),
+    CardBackConfig(
+      id: 'campfire',
+      name: 'Rouge',
+      assetPath: AppAssets.cardBackCampfire,
+      themeColor: Color(0xFFE53935),
+      requiredGames: 35,
+    ),
+    CardBackConfig(
+      id: 'pizza',
+      name: 'Vert sapin',
+      assetPath: AppAssets.cardBackPizza,
+      themeColor: Color(0xFF2E7D32),
+      requiredGames: 40,
+    ),
+    CardBackConfig(
       id: 'yellow',
       name: 'Jaune',
       assetPath: AppAssets.cardBackYellow,
       themeColor: Color(0xFFFFC107),
-      requiredGames: 30,
+      requiredGames: 45,
     ),
   ];
 
@@ -69,6 +110,16 @@ class ProgressionService {
   static GlobalProgression _progression = GlobalProgression.initial();
 
   static GlobalProgression get progression => _progression;
+
+  /// Dos de cartes réellement débloqués pour l'affichage/sélection.
+  /// Le pack Premium débloque instantanément tous les dos, sans toucher à
+  /// la progression persistée (utile si l'achat est un jour remboursé).
+  static Set<String> get unlockedCardBackIds {
+    if (PurchaseService.instance.isPremium) {
+      return cardBacks.map((cb) => cb.id).toSet();
+    }
+    return _progression.unlockedCardBackIds;
+  }
 
   // ── Chargement / sauvegarde ──────────────────────────────────────────────
 
@@ -95,6 +146,26 @@ class ProgressionService {
     await prefs.setString(_storageKey, _progression.toJsonString());
   }
 
+  /// Fusionne une progression reçue du cloud avec la progression locale,
+  /// sans jamais rien perdre : union des dos de cartes débloqués, et le
+  /// plus grand des deux compteurs de parties. Le dos actuellement équipé
+  /// localement est conservé tel quel.
+  static Future<void> mergeFromCloud(GlobalProgression cloud) async {
+    final mergedUnlocked = <String>{
+      ..._progression.unlockedCardBackIds,
+      ...cloud.unlockedCardBackIds,
+    };
+    final mergedGames = _progression.totalGamesPlayed > cloud.totalGamesPlayed
+        ? _progression.totalGamesPlayed
+        : cloud.totalGamesPlayed;
+
+    _progression = _progression.copyWith(
+      totalGamesPlayed: mergedGames,
+      unlockedCardBackIds: mergedUnlocked,
+    );
+    await save();
+  }
+
   // ── Enregistrement d'une partie ─────────────────────────────────────────
 
   /// Enregistre une partie terminée et retourne les [RewardUnlock] débloqués.
@@ -115,7 +186,7 @@ class ProgressionService {
       selectCardBack(cardBackId);
 
   static Future<void> selectCardBack(String cardBackId) async {
-    if (!_progression.unlockedCardBackIds.contains(cardBackId)) return;
+    if (!unlockedCardBackIds.contains(cardBackId)) return;
     _progression = _progression.copyWith(selectedCardBackId: cardBackId);
     await save();
   }
@@ -156,13 +227,20 @@ class ProgressionService {
       if (!shouldUnlock) continue;
 
       unlockedIds.add(cardBack.id);
-      newUnlocks.add(RewardUnlock(
-        id: cardBack.id,
-        name: cardBack.name,
-        type: RewardType.cardBack,
-        assetPath: AppAssets.cardBackAsset(cardBack.id),
-        requiredGames: cardBack.requiredGames,
-      ));
+
+      // Le pack Premium donne déjà accès à tous les dos : ce déblocage
+      // "naturel" est enregistré (utile si l'achat est un jour remboursé),
+      // mais on n'affiche pas la pop-up puisque rien de nouveau n'est
+      // réellement débloqué pour le joueur.
+      if (!PurchaseService.instance.isPremium) {
+        newUnlocks.add(RewardUnlock(
+          id: cardBack.id,
+          name: cardBack.name,
+          type: RewardType.cardBack,
+          assetPath: AppAssets.cardBackAsset(cardBack.id),
+          requiredGames: cardBack.requiredGames,
+        ));
+      }
     }
 
     _progression = _progression.copyWith(unlockedCardBackIds: unlockedIds);

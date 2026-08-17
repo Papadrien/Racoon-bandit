@@ -112,6 +112,57 @@ class AnalyticsService {
     await _send('rewarded_ad_rewarded', {});
   }
 
+  // ── Personnalisation ────────────────────────────────────────────────────
+
+  /// Sélection (équipement) d'un dos de carte, depuis la bottom sheet
+  /// de personnalisation ou depuis le lobby.
+  Future<void> logCardBackSelected({required String cardBackId}) async {
+    await _send('card_back_selected', {
+      'dos_carte': cardBackId,
+    });
+  }
+
+  // ── Mode Pagaille ────────────────────────────────────────────────────────
+
+  /// Ouverture du tutoriel du mode Pagaille (icône aide dans le lobby).
+  Future<void> logChaosTutorialOpened() async {
+    await _send('chaos_tutorial_opened', {});
+  }
+
+  /// Activation du mode Pagaille (via le tutoriel ou le switch direct).
+  Future<void> logChaosModeActivated() async {
+    await _send('chaos_mode_activated', {});
+  }
+
+  // ── Lobby ────────────────────────────────────────────────────────────────
+
+  /// Sélection du nombre de joueurs dans le lobby — un nom d'événement
+  /// distinct par valeur (2, 3 ou 4 joueurs) pour un suivi simple côté
+  /// Firebase, sans avoir à filtrer sur un paramètre.
+  Future<void> logPlayerCountSelected(int count) async {
+    final eventName = switch (count) {
+      2 => 'player_count_2_selected',
+      3 => 'player_count_3_selected',
+      4 => 'player_count_4_selected',
+      _ => 'player_count_selected',
+    };
+    await _send(eventName, {});
+  }
+
+  // ── Profils ──────────────────────────────────────────────────────────────
+
+  /// Clic sur le bouton "Profils" dans les paramètres.
+  Future<void> logProfilesButtonClicked() async {
+    await _send('profiles_button_clicked', {});
+  }
+
+  // ── Avis (In-App Review) ────────────────────────────────────────────────
+
+  /// [attempt] = 1 (fin de partie 2) ou 2 (fin de partie 6).
+  Future<void> logReviewPromptShown({required int attempt}) async {
+    await _send('review_prompt_shown', {'attempt': attempt});
+  }
+
   // ── Interne ───────────────────────────────────────────────────────────────
 
   Future<void> _send(String name, Map<String, Object> params) async {

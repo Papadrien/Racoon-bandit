@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// À déployer via : firebase deploy --only firestore:rules
+// (ou coller manuellement dans Firebase Console > Firestore > Règles)
+//
+// ⚠️ Voir le commentaire de sécurité en tête de
+// lib/core/services/cloud_save_service.dart : sans pont Play Games →
+// Firebase Auth, ces règles ne vérifient PAS cryptographiquement l'identité
+// du joueur, seulement que le document ciblé correspond à un playerId
+// syntaxiquement valide. Acceptable pour de la progression de jeu non
+// sensible, à durcir plus tard si des achats venaient à être liés au cloud.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /cloud_saves/{playerId} {
+      // Un playerId Play Games est une chaîne non vide et raisonnablement
+      // courte : on rejette au moins les documents mal formés/abusifs.
+      allow read, write: if playerId is string
+                          && playerId.size() > 0
+                          && playerId.size() < 128;
+    }
+
+    // Tout le reste est fermé par défaut.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

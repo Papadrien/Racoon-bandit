@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
 
 import '../../app.dart';
@@ -8,14 +11,17 @@ import '../../core/models/player_state.dart';
 import '../../core/models/result_screen_args.dart';
 import '../../core/navigation/app_router.dart';
 import '../../core/models/reward_unlock.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/services/onboarding_service.dart';
 import '../../core/services/consent_service.dart';
 import '../../core/services/progression_service.dart';
+import '../../core/services/purchase_service.dart';
 import '../../core/services/settings_service.dart';
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_shadows.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../widgets/reward_unlock_dialog.dart';
+import '../premium/premium_dialog.dart';
 import 'widgets/settings_secondary_header.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -30,17 +36,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late bool _vibrationEnabled;
   bool _privacyOptionsRequired = false;
 
+  // Version affichée en bas des paramètres, lue depuis les métadonnées natives
+  // (elles-mêmes générées à partir de `version:` dans pubspec.yaml) — donc
+  // toujours synchronisée avec la version réelle de l'app, sans duplication.
+  String? _appVersion;
+
   @override
   void initState() {
     super.initState();
     _soundEnabled = SettingsService.soundEnabled;
     _vibrationEnabled = SettingsService.vibrationEnabled;
     _loadPrivacyOptionsStatus();
+    _loadAppVersion();
   }
 
   Future<void> _loadPrivacyOptionsStatus() async {
     final required = await ConsentService.instance.privacyOptionsRequired();
     if (mounted) setState(() => _privacyOptionsRequired = required);
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      // ex. "1.1.0" (le build number `+2` n'est pas affiché à l'utilisateur).
+      if (mounted) setState(() => _appVersion = info.version);
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Settings] Erreur lecture version app: $e');
+    }
   }
 
   void _onSoundChanged(bool value) {
@@ -108,6 +130,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _restorePurchases() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    await PurchaseService.instance.restorePurchases();
+    if (!mounted) return;
+
+    setState(() {});
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.premiumRestoreDone)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -164,6 +199,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                       const SizedBox(height: AppSpacing.xl),
 
+                      // ── Premium ──────────────────────────────────────
+                      _SectionLabel(label: l10n.settingsSectionPremium),
+                      const SizedBox(height: AppSpacing.sm),
+                      ValueListenableBuilder<bool>(
+                        valueListenable:
+                            PurchaseService.instance.premiumNotifier,
+                        builder: (context, isPremium, _) {
+                          return _SettingsCard(
+                            children: [
+                              if (isPremium)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.lg,
+                                    vertical: AppSpacing.md,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.orange
+                                              .withValues(alpha: 0.10),
+                                          borderRadius: BorderRadius.circular(
+                                              AppSpacing.radiusSmall),
+                                        ),
+                                        child: const Icon(
+                                          Icons.workspace_premium_rounded,
+                                          color: AppColors.orange,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.md),
+                                      Text(
+                                        l10n.premiumActiveLabel,
+                                        style: const TextStyle(
+                                          color: AppColors.textDark,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else
+                                _NavTile(
+                                  icon: Icons.workspace_premium_rounded,
+                                  label: l10n.settingsPremiumUpsellLabel,
+                                  onTap: () async {
+                                    await PremiumDialog.show(context);
+                                    if (mounted) setState(() {});
+                                  },
+                                ),
+                              const _CardDivider(),
+                              _NavTile(
+                                icon: Icons.restore_rounded,
+                                label: l10n.premiumRestorePurchases,
+                                onTap: _restorePurchases,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: AppSpacing.xl),
+
                       // ── Jeu ────────────────────────────────────────
                       _SectionLabel(label: l10n.settingsSectionGame),
                       const SizedBox(height: AppSpacing.sm),
@@ -172,10 +273,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           _NavTile(
                             icon: Icons.person_outline_rounded,
                             label: l10n.settingsProfilesLabel,
-                            onTap: () => Navigator.pushNamed(
-                              context,
-                              AppRoutes.profiles,
-                            ),
+                            onTap: () {
+                              unawaited(AnalyticsService.instance
+                                  .logProfilesButtonClicked());
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.profiles,
+                              );
+                            },
                           ),
                           const _CardDivider(),
                           _NavTile(
@@ -280,16 +385,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
 
                       // ── Version ────────────────────────────────────
-                      Center(
-                        child: Text(
-                          l10n.settingsVersionLabel,
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                      // N'affiche rien tant que PackageInfo n'a pas répondu,
+                      // pour éviter de flasher un numéro de version erroné.
+                      if (_appVersion != null)
+                        Center(
+                          child: Text(
+                            l10n.settingsVersionLabel(_appVersion!),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

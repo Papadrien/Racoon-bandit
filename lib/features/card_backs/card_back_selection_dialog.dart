@@ -1,8 +1,11 @@
 import 'package:raccoon_bandit/l10n/app_localizations.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_assets.dart';
 import '../../core/models/card_back_config.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/ui/app_colors.dart';
@@ -12,12 +15,17 @@ import '../../core/ui/app_spacing.dart';
 String _localizedCardBackName(BuildContext context, String id) {
   final l10n = AppLocalizations.of(context)!;
   return switch (id) {
-    'purple' => l10n.cardBackNamePurple,
-    'blue'   => l10n.cardBackNameBlue,
-    'green'  => l10n.cardBackNameGreen,
-    'pink'   => l10n.cardBackNamePink,
-    'yellow' => l10n.cardBackNameYellow,
-    _        => id,
+    'purple'   => l10n.cardBackNamePurple,
+    'blue'     => l10n.cardBackNameBlue,
+    'green'    => l10n.cardBackNameGreen,
+    'pink'     => l10n.cardBackNamePink,
+    'yellow'   => l10n.cardBackNameYellow,
+    'pinecone' => l10n.cardBackNamePinecone,
+    'cloud'    => l10n.cardBackNameCloud,
+    'crystal'  => l10n.cardBackNameCrystal,
+    'campfire' => l10n.cardBackNameCampfire,
+    'pizza'    => l10n.cardBackNamePizza,
+    _          => id,
   };
 }
 
@@ -71,6 +79,10 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
 
     await ProgressionService.equipCardBack(cardBackId);
 
+    unawaited(AnalyticsService.instance.logCardBackSelected(
+      cardBackId: cardBackId,
+    ));
+
     await Future<void>.delayed(const Duration(milliseconds: 500));
     if (mounted) setState(() => animatingId = null);
   }
@@ -80,7 +92,7 @@ class _CardBackSelectionDialogState extends State<CardBackSelectionDialog> {
     const accent = Color(0xFFFF6D00);
     return Builder(
       builder: (context) {
-        final unlockedIds = ProgressionService.progression.unlockedCardBackIds;
+        final unlockedIds = ProgressionService.unlockedCardBackIds;
         final allBacks = ProgressionService.cardBacks;
         final totalGames = ProgressionService.progression.totalGamesPlayed;
 

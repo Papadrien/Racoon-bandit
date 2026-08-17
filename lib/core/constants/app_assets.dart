@@ -37,35 +37,50 @@ class AppAssets {
   };
 
   // ── Dos de cartes (assets définitifs) ───────────────────────────────────
-  static const cardBackPurple = 'assets/images/cards/card_back_purple.png';
-  static const cardBackBlue   = 'assets/images/cards/card_back_blue.png';
-  static const cardBackGreen  = 'assets/images/cards/card_back_green.png';
-  static const cardBackPink   = 'assets/images/cards/card_back_pink.png';
-  static const cardBackYellow = 'assets/images/cards/card_back_yellow.png';
+  static const cardBackPurple   = 'assets/images/cards/card_back_purple.png';
+  static const cardBackBlue     = 'assets/images/cards/card_back_blue.png';
+  static const cardBackGreen    = 'assets/images/cards/card_back_green.png';
+  static const cardBackPink     = 'assets/images/cards/card_back_pink.png';
+  static const cardBackPinecone = 'assets/images/cards/card_back_pinecone.png';
+  static const cardBackCloud    = 'assets/images/cards/card_back_cloud.png';
+  static const cardBackCrystal  = 'assets/images/cards/card_back_crystal.png';
+  static const cardBackCampfire = 'assets/images/cards/card_back_campfire.png';
+  static const cardBackPizza    = 'assets/images/cards/card_back_pizza.png';
+  static const cardBackYellow   = 'assets/images/cards/card_back_yellow.png';
 
   // Alias legacy conservé pour compatibilité
   static const cardBackClassic = cardBackPurple;
 
   /// Retourne le chemin asset pour un dos de carte donné.
   static String cardBackAsset(String cardBackId) => switch (cardBackId) {
-        'purple'  => cardBackPurple,
-        'blue'    => cardBackBlue,
-        'green'   => cardBackGreen,
-        'pink'    => cardBackPink,
-        'yellow'  => cardBackYellow,
-        'classic' => cardBackPurple,  // legacy
-        _         => cardBackPurple,
+        'purple'   => cardBackPurple,
+        'blue'     => cardBackBlue,
+        'green'    => cardBackGreen,
+        'pink'     => cardBackPink,
+        'pinecone' => cardBackPinecone,
+        'cloud'    => cardBackCloud,
+        'crystal'  => cardBackCrystal,
+        'campfire' => cardBackCampfire,
+        'pizza'    => cardBackPizza,
+        'yellow'   => cardBackYellow,
+        'classic'  => cardBackPurple,  // legacy
+        _          => cardBackPurple,
       };
 
   /// Couleur de fallback affichée dans les widgets colorés (ex. sélecteur).
   static Color cardBackFallbackColor(String cardBackId) => switch (cardBackId) {
-        'purple'  => const Color(0xFF7C4DFF),
-        'blue'    => const Color(0xFF2196F3),
-        'green'   => const Color(0xFF4CAF50),
-        'pink'    => const Color(0xFFE91E8C),
-        'yellow'  => const Color(0xFFFFC107),
-        'classic' => const Color(0xFF7C4DFF),
-        _         => const Color(0xFF37474F),
+        'purple'   => const Color(0xFF7C4DFF),
+        'blue'     => const Color(0xFF2196F3),
+        'green'    => const Color(0xFF4CAF50),
+        'pink'     => const Color(0xFFE91E8C),
+        'pinecone' => const Color(0xFF8D6E63),
+        'cloud'    => const Color(0xFFB0BEC5),
+        'crystal'  => const Color(0xFFFF9800),
+        'campfire' => const Color(0xFFE53935),
+        'pizza'    => const Color(0xFF2E7D32),
+        'yellow'   => const Color(0xFFFFC107),
+        'classic'  => const Color(0xFF7C4DFF),
+        _          => const Color(0xFF37474F),
       };
 }
 

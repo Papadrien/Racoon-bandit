@@ -1,7 +1,7 @@
 name: raccoon_bandit
 description: Raccoon Bandit - Jeu multijoueur local.
 publish_to: 'none'
-version: 1.0.1+1
+version: 1.1.0+2
 
 environment:
   sdk: ^3.9.0
@@ -14,6 +14,10 @@ dependencies:
     sdk: flutter
   intl: ^0.20.2
   shared_preferences: ^2.5.4
+  in_app_review: ^2.0.9
+  in_app_purchase: ^3.2.3
+  package_info_plus: ^10.2.1
+  games_services: ^4.0.4
   audioplayers: ^6.6.0
   wakelock_plus: ^1.4.0
   google_mobile_ads: ^8.0.0
@@ -21,6 +25,7 @@ dependencies:
   firebase_core: ^3.13.1
   firebase_analytics: ^11.4.5
   firebase_crashlytics: ^4.3.0
+  cloud_firestore: ^5.6.6
 
 dev_dependencies:
   flutter_test:
@@ -51,6 +56,11 @@ flutter:
     - assets/images/cards/card_back_blue.png
     - assets/images/cards/card_back_green.png
     - assets/images/cards/card_back_pink.png
+    - assets/images/cards/card_back_pinecone.png
+    - assets/images/cards/card_back_cloud.png
+    - assets/images/cards/card_back_crystal.png
+    - assets/images/cards/card_back_campfire.png
+    - assets/images/cards/card_back_pizza.png
     - assets/images/cards/card_back_yellow.png
     - assets/fonts/
 

@@ -13,7 +13,9 @@ import '../../core/navigation/app_router.dart';
 import '../../core/navigation/navigation_guard.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/audio_service.dart';
+import '../../core/services/cloud_save_service.dart';
 import '../../core/services/haptic_service.dart';
+import '../../core/services/play_games_service.dart';
 import '../../core/services/progression_service.dart';
 import '../../core/services/stats_service.dart';
 import '../../core/services/wakelock_service.dart';
@@ -508,6 +510,14 @@ class _GameScreenState extends State<GameScreen>
 
       final newUnlocks = await ProgressionService.registerCompletedGame();
       await StatsService.registerGame(_gameState);
+
+      // Synchronisation Play Games (classements + succès) et sauvegarde
+      // cloud complète — en tâche de fond, ne bloquent jamais la
+      // navigation vers l'écran de résultat.
+      unawaited(PlayGamesService.syncAfterGame(
+        unlockedCardBackIds: ProgressionService.progression.unlockedCardBackIds,
+      ));
+      unawaited(CloudSaveService.pushAfterGame());
 
       final ranking = _gameState.ranking;
       final winner = ranking.isNotEmpty ? ranking.first : null;
