@@ -8,5 +8,5 @@
       s'initialisera pas — l'app continuera de fonctionner normalement,
       simplement sans connexion Play Games.
     -->
-    <string name="game_services_project_id" translatable="false">TODO_REPLACE_WITH_PLAY_GAMES_APP_ID</string>
+    <string name="game_services_project_id" translatable="false">871553107711</string>
 </resources>
