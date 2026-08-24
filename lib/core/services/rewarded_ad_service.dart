@@ -25,9 +25,23 @@ class RewardedAdService {
 
   static Future<void> initialize() async {
     // Configuration globale AdMob :
-    // - L'app est familiale mais n'est PAS inscrite au programme Google Families.
-    //   tagForChildDirectedTreatment doit donc rester à "unspecified" (valeur par défaut).
-    // - Le consentement UMP gère la personnalisation selon la région de l'utilisateur.
+    // - La tranche d'âge cible déclarée dans Play Console (5 ans et moins,
+    //   6-8, 9-12) place l'app sous la politique "Ads format requirements
+    //   for families" : les requêtes pub DOIVENT être taguées comme
+    //   destinées à des enfants (COPPA / tagForChildDirectedTreatment),
+    //   sans quoi AdMob peut livrer des créas tout-public non conformes
+    //   (bouton de fermeture manquant/buggé) — cause probable du rejet.
+    // - maxAdContentRating limite les créas au contenu "G" (tout public).
+    // - npa=1 dans les extras est une double sécurité recommandée par
+    //   Google pour les utilisateurs TFCD/TFUA, notamment vis-à-vis des
+    //   réseaux tiers pouvant intervenir via les enchères AdMob.
+    await MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
+        maxAdContentRating: MaxAdContentRating.g,
+      ),
+    );
     await MobileAds.instance.initialize();
   }
 
@@ -56,7 +70,11 @@ class RewardedAdService {
     unawaited(
       RewardedAd.load(
         adUnitId: _adUnitId,
-        request: const AdRequest(),
+        request: const AdRequest(
+          // Sécurité supplémentaire : force des pubs non personnalisées,
+          // en complément du tag TFCD/TFUA global (voir initialize()).
+          extras: {'npa': '1'},
+        ),
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (ad) {
             _rewardedInterstitialAd?.dispose();
